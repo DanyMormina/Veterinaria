@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Veterinaria.WinForms/Veterinaria.WinForms.csproj" />
+    <Project Path="src/Veterinaria.Controllers/Veterinaria.Controllers.csproj" />
+    <Project Path="src/Veterinaria.CrossCutting/Veterinaria.CrossCutting.csproj" />
+    <Project Path="src/Veterinaria.Domain/Veterinaria.Domain.csproj" />
+    <Project Path="src/Veterinaria.Infrastructure/Veterinaria.Infrastructure.csproj" />
+    <Project Path="src/Veterinaria.Interfaces/Veterinaria.Interfaces.csproj" />
+    <Project Path="src/Veterinaria.Services/Veterinaria.Services.csproj" />
+  </Folder>
+</Solution>

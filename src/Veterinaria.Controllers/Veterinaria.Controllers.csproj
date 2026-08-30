@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Veterinaria.Domain\Veterinaria.Domain.csproj" />
+    <ProjectReference Include="..\Veterinaria.Interfaces\Veterinaria.Interfaces.csproj" />
+    <ProjectReference Include="..\Veterinaria.CrossCutting\Veterinaria.CrossCutting.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
