@@ -1,1 +1,85 @@
+## =====================================
+## Directorios de Compilación (.NET / C#)
+## =====================================
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+
+## =====================================
+## Visual Studio & Archivos de Usuario
+## =====================================
 .vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.rsuser
+
+## =====================================
+## Archivos Temporales y Logs
+## =====================================
+*.tmp
+*.temp
+[Ll]og/
+[Ll]ogs/
+[Bb]uild[Ll]og.*
+
+## =====================================
+## Resultados de Pruebas Unitarias
+## =====================================
+[Tt]est[Rr]esult*/
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coveragexml
+
+## =====================================
+## Publicación y Despliegue
+## =====================================
+publish/
+*.publishproj
+*.pubxml
+*.azurePubxml
+
+## =====================================
+## Paquetes NuGet & Caché
+## =====================================
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+project.lock.json
+project.fragment.lock.json
+.dotnet/
+
+## =====================================
+## Bases de Datos Locales / Adjuntos
+## =====================================
+*.mdf
+*.ldf
+*.ndf
+*.db
+*.sqlite
+*.sqlite3
+
+## =====================================
+## Configuración Local y Secretos
+## =====================================
+secrets.json
+.env
+.env.*
+!.env.example
+
+## =====================================
+## Otros Editores e IDEs (Rider, VS Code)
+## =====================================
+.idea/
+*.sln.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
