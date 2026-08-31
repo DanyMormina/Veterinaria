@@ -11,7 +11,7 @@ using Veterinaria.WinForms.Views.Veterinario;
 namespace Veterinaria.WinForms.Views.Auth;
 
 /// <summary>
-/// Formulario de autenticación compacto (200x200) con paleta romantic executive y ruteo basado en roles.
+/// Formulario de autenticación compacto (200x200) con paleta romantic executive y ruteo basado en roles/tipos de usuario.
 /// </summary>
 public partial class FormLogin : Form
 {
@@ -19,7 +19,6 @@ public partial class FormLogin : Form
     private const string PlaceholderPassword = "Contraseña";
 
     private readonly UsuarioController _usuarioController;
-    private readonly SesionController _sesionController;
     private readonly IServiceProvider _serviceProvider;
 
     [DllImport("user32.dll")]
@@ -33,11 +32,9 @@ public partial class FormLogin : Form
 
     public FormLogin(
         UsuarioController usuarioController,
-        SesionController sesionController,
         IServiceProvider serviceProvider)
     {
         _usuarioController = usuarioController;
-        _sesionController = sesionController;
         _serviceProvider = serviceProvider;
 
         InitializeComponent();
@@ -157,17 +154,11 @@ public partial class FormLogin : Form
                 return;
             }
 
-            // Registrar sesión de usuario en base de datos
-            var sesionResult = await _sesionController.CrearAsync(new SesionRequestDto
-            {
-                IdUsuario = usuario.Id
-            });
-
             // Establecer sesión global en memoria
-            SesionActual.IniciarSesion(usuario, sesionResult.EsExitoso ? sesionResult.Valor : null);
+            SesionActual.IniciarSesion(usuario);
 
-            // Despachar al formulario correspondiente según el rol del usuario
-            DespacharSegunRol(usuario.NombreRol);
+            // Despachar al formulario correspondiente según el tipo de usuario
+            DespacharSegunRol(usuario.NombreTipoUsuario);
         }
         catch (Exception ex)
         {

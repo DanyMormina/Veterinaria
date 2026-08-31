@@ -6,4 +6,5 @@ public class Raza : Satelite
 {
     public long IdEspecie { get; set; }
     public Especie Especie { get; set; } = null!;
+    public ICollection<Mascota> Mascotas { get; set; } = [];
 }

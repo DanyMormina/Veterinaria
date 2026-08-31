@@ -33,11 +33,6 @@ public static class SesionActual
     public static string Rol => TipoUsuario;
 
     /// <summary>
-    /// Identificador del registro de auditoría de sesión en base de datos.
-    /// </summary>
-    public static long? IdSesion { get; set; }
-
-    /// <summary>
     /// Indica si existe una sesión activa actualmente.
     /// </summary>
     public static bool EstaAutenticado => IdUsuario.HasValue && IdUsuario.Value > 0;
@@ -45,7 +40,7 @@ public static class SesionActual
     /// <summary>
     /// Inicia la sesión en memoria a partir de los datos del DTO de respuesta.
     /// </summary>
-    public static void IniciarSesion(UsuarioResponseDto usuario, long? idSesion = null)
+    public static void IniciarSesion(UsuarioResponseDto usuario)
     {
         ArgumentNullException.ThrowIfNull(usuario);
 
@@ -53,19 +48,17 @@ public static class SesionActual
         Username = usuario.Username;
         NombreCompleto = $"{usuario.Nombre} {usuario.Apellido}".Trim();
         TipoUsuario = usuario.NombreTipoUsuario;
-        IdSesion = idSesion;
     }
 
     /// <summary>
     /// Inicia la sesión en memoria mediante parámetros explícitos.
     /// </summary>
-    public static void IniciarSesion(long idUsuario, string username, string nombreCompleto, string tipoUsuario, long? idSesion = null)
+    public static void IniciarSesion(long idUsuario, string username, string nombreCompleto, string tipoUsuario)
     {
         IdUsuario = idUsuario;
         Username = username;
         NombreCompleto = nombreCompleto;
         TipoUsuario = tipoUsuario;
-        IdSesion = idSesion;
     }
 
     /// <summary>
@@ -77,6 +70,5 @@ public static class SesionActual
         Username = string.Empty;
         NombreCompleto = string.Empty;
         TipoUsuario = string.Empty;
-        IdSesion = null;
     }
 }

@@ -6,8 +6,8 @@ using Veterinaria.Domain.Entidades;
 namespace Veterinaria.Infrastructure;
 
 /// <summary>
-/// Contexto principal de Entity Framework Core para la base de datos de Veterinaria (DER v2).
-/// Incluye mapeo Fluent segmentado por módulos, soft delete global y auditoría automática.
+/// Contexto principal de Entity Framework Core para la base de datos de Veterinaria.
+/// Incluye mapeo Fluent segmentado por módulos, soft delete global y filtros automáticos.
 /// </summary>
 public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options) : DbContext(options)
 {
@@ -22,11 +22,9 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
     public DbSet<Tratamiento> Tratamientos => Set<Tratamiento>();
 
     // =========================================================================
-    // 2. Seguridad y Auditoría
+    // 2. Seguridad y Usuarios
     // =========================================================================
     public DbSet<Usuario> Usuarios => Set<Usuario>();
-    public DbSet<Sesion> Sesiones => Set<Sesion>();
-    public DbSet<Auditoria> Auditorias => Set<Auditoria>();
 
     // =========================================================================
     // 3. Clientes y Pacientes
@@ -71,7 +69,7 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Construcción y Mapeo Fluent de Entidades por Módulos
         // ---------------------------------------------------------------------
         BuildCatalogos(modelBuilder);
-        BuildSeguridadAuditoria(modelBuilder);
+        BuildSeguridad(modelBuilder);
         BuildClientesPacientes(modelBuilder);
         BuildClinicaConsultas(modelBuilder);
         BuildPagos(modelBuilder);
@@ -155,9 +153,9 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
     }
 
     /// <summary>
-    /// Mapeo de entidades de Seguridad, Usuarios, Sesiones y Auditoría.
+    /// Mapeo de entidades de Seguridad y Usuarios.
     /// </summary>
-    private static void BuildSeguridadAuditoria(ModelBuilder builder)
+    private static void BuildSeguridad(ModelBuilder builder)
     {
         // Usuario
         builder.Entity<Usuario>(b =>
@@ -192,41 +190,6 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
             b.HasOne(u => u.TipoUsuario)
                 .WithMany(t => t.Usuarios)
                 .HasForeignKey(u => u.IdTipoUsuario)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        // Sesion
-        builder.Entity<Sesion>(b =>
-        {
-            b.ToTable("Sesion");
-            b.HasIndex(s => s.FechaInicio);
-
-            b.HasOne(s => s.Usuario)
-                .WithMany()
-                .HasForeignKey(s => s.IdUsuario)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        // Auditoria
-        builder.Entity<Auditoria>(b =>
-        {
-            b.ToTable("Auditoria");
-            b.HasIndex(a => a.FechaHora);
-
-            b.Property(a => a.Accion)
-                .HasMaxLength(100)
-                .IsRequired();
-
-            b.Property(a => a.TablaAfectada)
-                .HasMaxLength(100)
-                .IsRequired();
-
-            b.Property(a => a.Detalle)
-                .HasMaxLength(2000);
-
-            b.HasOne(a => a.Usuario)
-                .WithMany()
-                .HasForeignKey(a => a.IdUsuario)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
@@ -290,9 +253,9 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
                 .HasForeignKey(m => m.IdPropietario)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            b.HasOne(m => m.Especie)
-                .WithMany(e => e.Mascotas)
-                .HasForeignKey(m => m.IdEspecie)
+            b.HasOne(m => m.Raza)
+                .WithMany(r => r.Mascotas)
+                .HasForeignKey(m => m.IdRaza)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
@@ -423,7 +386,7 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
     }
 
     /// <summary>
-    /// Intercepta el guardado de cambios para aplicar auditoría automática y soft delete defensivo.
+    /// Intercepta el guardado de cambios para aplicar soft delete defensivo.
     /// </summary>
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

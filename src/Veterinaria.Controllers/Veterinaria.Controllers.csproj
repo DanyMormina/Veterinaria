@@ -1,9 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Veterinaria.Domain\Veterinaria.Domain.csproj" />
     <ProjectReference Include="..\Veterinaria.Interfaces\Veterinaria.Interfaces.csproj" />
     <ProjectReference Include="..\Veterinaria.CrossCutting\Veterinaria.CrossCutting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
   </ItemGroup>
 
   <PropertyGroup>

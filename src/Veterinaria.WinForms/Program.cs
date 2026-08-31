@@ -46,6 +46,7 @@ internal static class Program
 
         // Registrar servicios de negocio y controladores del sistema
         services.AddApplicationServices();
+        services.AddApplicationControllers();
 
         // Registrar vistas de la interfaz de usuario en el contenedor
         services.AddTransient<FormLogin>();

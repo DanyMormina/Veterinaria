@@ -5,7 +5,6 @@
     <ProjectReference Include="..\Veterinaria.Interfaces\Veterinaria.Interfaces.csproj" />
     <ProjectReference Include="..\Veterinaria.Infrastructure\Veterinaria.Infrastructure.csproj" />
     <ProjectReference Include="..\Veterinaria.CrossCutting\Veterinaria.CrossCutting.csproj" />
-    <ProjectReference Include="..\Veterinaria.Controllers\Veterinaria.Controllers.csproj" />
   </ItemGroup>
 
   <ItemGroup>

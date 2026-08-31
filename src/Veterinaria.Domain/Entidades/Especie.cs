@@ -4,6 +4,5 @@ namespace Veterinaria.Domain.Entidades;
 
 public class Especie : Satelite
 {
-    public ICollection<Mascota> Mascotas { get; set; } = [];
     public ICollection<Raza> Razas { get; set; } = [];
 }
