@@ -4,7 +4,7 @@ using Veterinaria.Domain.Entidades;
 namespace Veterinaria.Infrastructure;
 
 /// <summary>
-/// Seeder inicial para garantizar la existencia de roles maestros, catálogos base y usuario administrador.
+/// Seeder inicial para garantizar la existencia de tipos de usuario, catálogos base y usuario administrador (DER v2).
 /// </summary>
 public static class DatabaseSeeder
 {
@@ -13,13 +13,13 @@ public static class DatabaseSeeder
         // 1. Asegurar la creación del esquema de base de datos
         await context.Database.EnsureCreatedAsync();
 
-        // 2. Sembrar Roles Maestros si la tabla está vacía
-        if (!await context.Roles.AnyAsync())
+        // 2. Sembrar Tipos de Usuario si la tabla está vacía
+        if (!await context.TiposUsuario.AnyAsync())
         {
-            context.Roles.AddRange(
-                new Rol { Nombre = "Administrador", Activo = true },
-                new Rol { Nombre = "Veterinario", Activo = true },
-                new Rol { Nombre = "Secretario", Activo = true }
+            context.TiposUsuario.AddRange(
+                new TipoUsuario { Nombre = "Administrador", Activo = true },
+                new TipoUsuario { Nombre = "Veterinario", Activo = true },
+                new TipoUsuario { Nombre = "Secretario", Activo = true }
             );
 
             await context.SaveChangesAsync();
@@ -52,17 +52,17 @@ public static class DatabaseSeeder
         }
 
         // 5. Sembrar Usuario Administrador inicial si no existe
-        var rolAdmin = await context.Roles.FirstOrDefaultAsync(r => r.Nombre == "Administrador");
-        if (rolAdmin != null)
+        var tipoAdmin = await context.TiposUsuario.FirstOrDefaultAsync(t => t.Nombre == "Administrador");
+        if (tipoAdmin != null)
         {
             var adminExiste = await context.Usuarios.AnyAsync(u => u.Username.ToLower() == "admin");
             if (!adminExiste)
             {
                 var adminUsuario = new Usuario
                 {
-                    IdRol = rolAdmin.Id,
+                    IdTipoUsuario = tipoAdmin.Id,
                     Username = "admin",
-                    PasswordHash = "admin123",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                     Nombre = "Administrador",
                     Apellido = "Sistema",
                     DNI = "12345678",

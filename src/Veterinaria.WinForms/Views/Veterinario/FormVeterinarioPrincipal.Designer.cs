@@ -21,92 +21,97 @@ partial class FormVeterinarioPrincipal
 
     private void InitializeComponent()
     {
-        pnlHeader = new System.Windows.Forms.Panel();
-        lblTitulo = new System.Windows.Forms.Label();
-        lblUsuarioSesion = new System.Windows.Forms.Label();
-        pnlContenido = new System.Windows.Forms.Panel();
-        statusStrip = new System.Windows.Forms.StatusStrip();
-        lblStatusInfo = new System.Windows.Forms.ToolStripStatusLabel();
+        pnlHeader = new Panel();
+        lblTitulo = new Label();
+        lblUsuarioSesion = new Label();
+        pnlContenido = new Panel();
+        statusStrip = new StatusStrip();
+        lblStatusInfo = new ToolStripStatusLabel();
         pnlHeader.SuspendLayout();
         statusStrip.SuspendLayout();
         SuspendLayout();
         // 
         // pnlHeader
         // 
-        pnlHeader.BackColor = System.Drawing.Color.FromArgb(200, 138, 150);
+        pnlHeader.BackColor = Color.FromArgb(200, 138, 150);
         pnlHeader.Controls.Add(lblTitulo);
         pnlHeader.Controls.Add(lblUsuarioSesion);
-        pnlHeader.Dock = System.Windows.Forms.DockStyle.Top;
-        pnlHeader.Location = new System.Drawing.Point(0, 0);
+        pnlHeader.Dock = DockStyle.Top;
+        pnlHeader.Location = new Point(0, 0);
+        pnlHeader.Margin = new Padding(3, 4, 3, 4);
         pnlHeader.Name = "pnlHeader";
-        pnlHeader.Padding = new System.Windows.Forms.Padding(16, 0, 16, 0);
-        pnlHeader.Size = new System.Drawing.Size(1100, 50);
+        pnlHeader.Padding = new Padding(18, 0, 18, 0);
+        pnlHeader.Size = new Size(1257, 67);
         pnlHeader.TabIndex = 0;
         // 
         // lblTitulo
         // 
-        lblTitulo.Dock = System.Windows.Forms.DockStyle.Left;
-        lblTitulo.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-        lblTitulo.ForeColor = System.Drawing.Color.White;
-        lblTitulo.Location = new System.Drawing.Point(16, 0);
+        lblTitulo.Dock = DockStyle.Left;
+        lblTitulo.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+        lblTitulo.ForeColor = Color.White;
+        lblTitulo.Location = new Point(18, 0);
         lblTitulo.Name = "lblTitulo";
-        lblTitulo.Size = new System.Drawing.Size(350, 50);
+        lblTitulo.Size = new Size(455, 67);
         lblTitulo.TabIndex = 0;
         lblTitulo.Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA";
-        lblTitulo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+        lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
         // 
-        lblUsuarioSesion.Dock = System.Windows.Forms.DockStyle.Right;
-        lblUsuarioSesion.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-        lblUsuarioSesion.ForeColor = System.Drawing.Color.FromArgb(250, 244, 244);
-        lblUsuarioSesion.Location = new System.Drawing.Point(684, 0);
+        lblUsuarioSesion.Dock = DockStyle.Right;
+        lblUsuarioSesion.Font = new Font("Segoe UI", 9.75F);
+        lblUsuarioSesion.ForeColor = Color.FromArgb(250, 244, 244);
+        lblUsuarioSesion.Location = new Point(782, 0);
         lblUsuarioSesion.Name = "lblUsuarioSesion";
-        lblUsuarioSesion.Size = new System.Drawing.Size(400, 50);
+        lblUsuarioSesion.Size = new Size(457, 67);
         lblUsuarioSesion.TabIndex = 1;
         lblUsuarioSesion.Text = "Médico: Veterinario";
-        lblUsuarioSesion.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+        lblUsuarioSesion.TextAlign = ContentAlignment.MiddleRight;
         // 
         // pnlContenido
         // 
-        pnlContenido.BackColor = System.Drawing.Color.FromArgb(250, 244, 244);
-        pnlContenido.Dock = System.Windows.Forms.DockStyle.Fill;
-        pnlContenido.Location = new System.Drawing.Point(0, 50);
+        pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
+        pnlContenido.Dock = DockStyle.Fill;
+        pnlContenido.Location = new Point(0, 67);
+        pnlContenido.Margin = new Padding(3, 4, 3, 4);
         pnlContenido.Name = "pnlContenido";
-        pnlContenido.Size = new System.Drawing.Size(1100, 628);
+        pnlContenido.Size = new Size(1257, 841);
         pnlContenido.TabIndex = 1;
         // 
         // statusStrip
         // 
-        statusStrip.BackColor = System.Drawing.Color.FromArgb(249, 240, 242);
-        statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { lblStatusInfo });
-        statusStrip.Location = new System.Drawing.Point(0, 678);
+        statusStrip.BackColor = Color.FromArgb(249, 240, 242);
+        statusStrip.ImageScalingSize = new Size(20, 20);
+        statusStrip.Items.AddRange(new ToolStripItem[] { lblStatusInfo });
+        statusStrip.Location = new Point(0, 908);
         statusStrip.Name = "statusStrip";
-        statusStrip.Size = new System.Drawing.Size(1100, 22);
+        statusStrip.Padding = new Padding(1, 0, 16, 0);
+        statusStrip.Size = new Size(1257, 25);
         statusStrip.TabIndex = 2;
         // 
         // lblStatusInfo
         // 
-        lblStatusInfo.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-        lblStatusInfo.ForeColor = System.Drawing.Color.FromArgb(58, 53, 59);
+        lblStatusInfo.Font = new Font("Segoe UI", 8.25F);
+        lblStatusInfo.ForeColor = Color.FromArgb(58, 53, 59);
         lblStatusInfo.Name = "lblStatusInfo";
-        lblStatusInfo.Size = new System.Drawing.Size(130, 17);
+        lblStatusInfo.Size = new Size(127, 19);
         lblStatusInfo.Text = "Módulo clínico listo";
         // 
         // FormVeterinarioPrincipal
         // 
-        AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        BackColor = System.Drawing.Color.FromArgb(250, 244, 244);
-        ClientSize = new System.Drawing.Size(1100, 700);
+        AutoScaleDimensions = new SizeF(8F, 20F);
+        AutoScaleMode = AutoScaleMode.Font;
+        BackColor = Color.FromArgb(250, 244, 244);
+        ClientSize = new Size(1257, 933);
         Controls.Add(pnlContenido);
         Controls.Add(statusStrip);
         Controls.Add(pnlHeader);
-        Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-        ForeColor = System.Drawing.Color.FromArgb(58, 53, 59);
-        MinimumSize = new System.Drawing.Size(800, 500);
+        Font = new Font("Segoe UI", 9F);
+        ForeColor = Color.FromArgb(58, 53, 59);
+        Margin = new Padding(3, 4, 3, 4);
+        MinimumSize = new Size(912, 651);
         Name = "FormVeterinarioPrincipal";
-        StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+        StartPosition = FormStartPosition.CenterScreen;
         Text = "Veterinaria - Panel Veterinario";
         Load += FormVeterinarioPrincipal_Load;
         pnlHeader.ResumeLayout(false);

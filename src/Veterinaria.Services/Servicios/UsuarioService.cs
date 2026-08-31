@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.CrossCutting.Comunes;
 using Veterinaria.CrossCutting.Security;
@@ -18,12 +17,12 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
     {
         var usuarios = await context.Usuarios
             .AsNoTracking()
-            .Include(u => u.Rol)
+            .Include(u => u.TipoUsuario)
             .Select(u => new UsuarioResponseDto
             {
                 Id = u.Id,
-                IdRol = u.IdRol,
-                NombreRol = u.Rol != null ? u.Rol.Nombre : string.Empty,
+                IdTipoUsuario = u.IdTipoUsuario,
+                NombreTipoUsuario = u.TipoUsuario != null ? u.TipoUsuario.Nombre : string.Empty,
                 Username = u.Username,
                 Nombre = u.Nombre,
                 Apellido = u.Apellido,
@@ -43,13 +42,13 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
 
         var usuario = await context.Usuarios
             .AsNoTracking()
-            .Include(u => u.Rol)
+            .Include(u => u.TipoUsuario)
             .Where(u => u.Id == id)
             .Select(u => new UsuarioResponseDto
             {
                 Id = u.Id,
-                IdRol = u.IdRol,
-                NombreRol = u.Rol != null ? u.Rol.Nombre : string.Empty,
+                IdTipoUsuario = u.IdTipoUsuario,
+                NombreTipoUsuario = u.TipoUsuario != null ? u.TipoUsuario.Nombre : string.Empty,
                 Username = u.Username,
                 Nombre = u.Nombre,
                 Apellido = u.Apellido,
@@ -73,13 +72,13 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
         var usernameNormalizado = username.Trim();
         var usuario = await context.Usuarios
             .AsNoTracking()
-            .Include(u => u.Rol)
+            .Include(u => u.TipoUsuario)
             .Where(u => u.Username.ToLower() == usernameNormalizado.ToLower())
             .Select(u => new UsuarioResponseDto
             {
                 Id = u.Id,
-                IdRol = u.IdRol,
-                NombreRol = u.Rol != null ? u.Rol.Nombre : string.Empty,
+                IdTipoUsuario = u.IdTipoUsuario,
+                NombreTipoUsuario = u.TipoUsuario != null ? u.TipoUsuario.Nombre : string.Empty,
                 Username = u.Username,
                 Nombre = u.Nombre,
                 Apellido = u.Apellido,
@@ -106,7 +105,7 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
         {
             var usuario = await context.Usuarios
                 .AsNoTracking()
-                .Include(u => u.Rol)
+                .Include(u => u.TipoUsuario)
                 .FirstOrDefaultAsync(u => u.Username.ToLower() == usernameNormalizado.ToLower());
 
             if (usuario is null)
@@ -121,8 +120,8 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
             var response = new UsuarioResponseDto
             {
                 Id = usuario.Id,
-                IdRol = usuario.IdRol,
-                NombreRol = usuario.Rol != null ? usuario.Rol.Nombre : string.Empty,
+                IdTipoUsuario = usuario.IdTipoUsuario,
+                NombreTipoUsuario = usuario.TipoUsuario != null ? usuario.TipoUsuario.Nombre : string.Empty,
                 Username = usuario.Username,
                 Nombre = usuario.Nombre,
                 Apellido = usuario.Apellido,
@@ -141,8 +140,8 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
 
     public async Task<Result<long>> CrearAsync(UsuarioRequestDto request)
     {
-        if (request.IdRol <= 0)
-            return Result<long>.Falla("El identificador del rol debe ser mayor a cero.");
+        if (request.IdTipoUsuario <= 0)
+            return Result<long>.Falla("El identificador del tipo de usuario debe ser mayor a cero.");
 
         if (string.IsNullOrWhiteSpace(request.Username))
             return Result<long>.Falla("El nombre de usuario es obligatorio.");
@@ -159,9 +158,9 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
         if (string.IsNullOrWhiteSpace(request.DNI))
             return Result<long>.Falla("El DNI del usuario es obligatorio.");
 
-        var rolExiste = await context.Roles.AnyAsync(r => r.Id == request.IdRol);
-        if (!rolExiste)
-            return Result<long>.Falla($"No existe un rol registrado con ID {request.IdRol}.");
+        var tipoExiste = await context.TiposUsuario.AnyAsync(r => r.Id == request.IdTipoUsuario);
+        if (!tipoExiste)
+            return Result<long>.Falla($"No existe un tipo de usuario registrado con ID {request.IdTipoUsuario}.");
 
         var usernameNormalizado = request.Username.Trim();
         var existeUsername = await context.Usuarios
@@ -172,7 +171,7 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
 
         var entidad = new Usuario
         {
-            IdRol = request.IdRol,
+            IdTipoUsuario = request.IdTipoUsuario,
             Username = usernameNormalizado,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password.Trim()),
             Nombre = request.Nombre.Trim(),
@@ -193,8 +192,8 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
         if (id <= 0)
             return Result.Falla("El identificador del usuario debe ser mayor a cero.");
 
-        if (request.IdRol <= 0)
-            return Result.Falla("El identificador del rol debe ser mayor a cero.");
+        if (request.IdTipoUsuario <= 0)
+            return Result.Falla("El identificador del tipo de usuario debe ser mayor a cero.");
 
         if (string.IsNullOrWhiteSpace(request.Username))
             return Result.Falla("El nombre de usuario es obligatorio.");
@@ -212,9 +211,9 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
         if (entidad is null)
             return Result.Falla($"No se encontró el usuario con ID {id}.");
 
-        var rolExiste = await context.Roles.AnyAsync(r => r.Id == request.IdRol);
-        if (!rolExiste)
-            return Result.Falla($"No existe un rol registrado con ID {request.IdRol}.");
+        var tipoExiste = await context.TiposUsuario.AnyAsync(r => r.Id == request.IdTipoUsuario);
+        if (!tipoExiste)
+            return Result.Falla($"No existe un tipo de usuario registrado con ID {request.IdTipoUsuario}.");
 
         var usernameNormalizado = request.Username.Trim();
         var existeUsername = await context.Usuarios
@@ -223,7 +222,7 @@ public class UsuarioService(VeterinariaDbContext context) : IUsuarioService
         if (existeUsername)
             return Result.Falla($"El nombre de usuario '{usernameNormalizado}' ya está en uso por otro usuario.");
 
-        entidad.IdRol = request.IdRol;
+        entidad.IdTipoUsuario = request.IdTipoUsuario;
         entidad.Username = usernameNormalizado;
         entidad.Nombre = request.Nombre.Trim();
         entidad.Apellido = request.Apellido.Trim();

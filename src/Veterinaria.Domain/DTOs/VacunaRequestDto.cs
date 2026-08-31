@@ -6,5 +6,5 @@ namespace Veterinaria.Domain.Dtos;
 public class VacunaRequestDto
 {
     public string Nombre { get; set; } = string.Empty;
-    public long PeriodoMesesRecomendado { get; set; }
+    public int PeriodoMesesRecomendado { get; set; } = 12;
 }

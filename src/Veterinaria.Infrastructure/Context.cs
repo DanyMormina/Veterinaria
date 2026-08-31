@@ -6,19 +6,20 @@ using Veterinaria.Domain.Entidades;
 namespace Veterinaria.Infrastructure;
 
 /// <summary>
-/// Contexto principal de Entity Framework Core para la base de datos de Veterinaria.
+/// Contexto principal de Entity Framework Core para la base de datos de Veterinaria (DER v2).
 /// Incluye mapeo Fluent segmentado por módulos, soft delete global y auditoría automática.
 /// </summary>
 public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options) : DbContext(options)
 {
     // =========================================================================
-    // 1. Catálogos y Satélites
+    // 1. Catálogos Maestros y Satélites
     // =========================================================================
-    public DbSet<Rol> Roles => Set<Rol>();
+    public DbSet<TipoUsuario> TiposUsuario => Set<TipoUsuario>();
     public DbSet<Especie> Especies => Set<Especie>();
     public DbSet<Raza> Razas => Set<Raza>();
     public DbSet<Vacuna> Vacunas => Set<Vacuna>();
     public DbSet<MetodoPago> MetodosPago => Set<MetodoPago>();
+    public DbSet<Tratamiento> Tratamientos => Set<Tratamiento>();
 
     // =========================================================================
     // 2. Seguridad y Auditoría
@@ -34,17 +35,16 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
     public DbSet<Mascota> Mascotas => Set<Mascota>();
 
     // =========================================================================
-    // 4. Clínica y Agenda
+    // 4. Clínica y Consultas Médicas
     // =========================================================================
-    public DbSet<Turno> Turnos => Set<Turno>();
     public DbSet<Consulta> Consultas => Set<Consulta>();
-    public DbSet<Tratamiento> Tratamientos => Set<Tratamiento>();
+    public DbSet<DetalleConsulta> DetalleConsultas => Set<DetalleConsulta>();
+    public DbSet<AplicacionVacuna> AplicacionesVacuna => Set<AplicacionVacuna>();
 
     // =========================================================================
-    // 5. Facturación
+    // 5. Pagos y Cobranzas
     // =========================================================================
-    public DbSet<Factura> Facturas => Set<Factura>();
-    public DbSet<DetalleFactura> DetalleFacturas => Set<DetalleFactura>();
+    public DbSet<Pago> Pagos => Set<Pago>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,8 +73,8 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         BuildCatalogos(modelBuilder);
         BuildSeguridadAuditoria(modelBuilder);
         BuildClientesPacientes(modelBuilder);
-        BuildClinicaAgenda(modelBuilder);
-        BuildFacturacion(modelBuilder);
+        BuildClinicaConsultas(modelBuilder);
+        BuildPagos(modelBuilder);
     }
 
     /// <summary>
@@ -82,10 +82,11 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
     /// </summary>
     private static void BuildCatalogos(ModelBuilder builder)
     {
-        // Rol
-        builder.Entity<Rol>(b =>
+        // TipoUsuario
+        builder.Entity<TipoUsuario>(b =>
         {
-            b.Property(r => r.Nombre)
+            b.ToTable("TipoUsuario");
+            b.Property(t => t.Nombre)
                 .HasMaxLength(50)
                 .IsRequired();
         });
@@ -93,6 +94,7 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Especie
         builder.Entity<Especie>(b =>
         {
+            b.ToTable("Especie");
             b.Property(e => e.Nombre)
                 .HasMaxLength(50)
                 .IsRequired();
@@ -101,12 +103,13 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Raza
         builder.Entity<Raza>(b =>
         {
+            b.ToTable("Raza");
             b.Property(r => r.Nombre)
-                .HasMaxLength(50)
+                .HasMaxLength(80)
                 .IsRequired();
 
             b.HasOne(r => r.Especie)
-                .WithMany()
+                .WithMany(e => e.Razas)
                 .HasForeignKey(r => r.IdEspecie)
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -114,17 +117,40 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Vacuna
         builder.Entity<Vacuna>(b =>
         {
+            b.ToTable("Vacuna");
             b.Property(v => v.Nombre)
                 .HasMaxLength(100)
                 .IsRequired();
+
+            b.Property(v => v.PeriodoMesesRecomendado)
+                .HasDefaultValue(12);
         });
 
         // MetodoPago
         builder.Entity<MetodoPago>(b =>
         {
+            b.ToTable("MetodoPago");
             b.Property(m => m.Nombre)
                 .HasMaxLength(50)
                 .IsRequired();
+        });
+
+        // Tratamiento (Catálogo Maestro)
+        builder.Entity<Tratamiento>(b =>
+        {
+            b.ToTable("Tratamiento");
+            b.Property(t => t.TipoTratamiento)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            b.Property(t => t.Descripcion)
+                .IsRequired();
+
+            b.Property(t => t.Dosis)
+                .HasMaxLength(100);
+
+            b.Property(t => t.Precio)
+                .HasColumnType("decimal(18,2)");
         });
     }
 
@@ -136,6 +162,7 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Usuario
         builder.Entity<Usuario>(b =>
         {
+            b.ToTable("Usuario");
             b.HasIndex(u => u.Username)
                 .IsUnique();
 
@@ -162,15 +189,16 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
             b.Property(u => u.Matricula)
                 .HasMaxLength(50);
 
-            b.HasOne(u => u.Rol)
-                .WithMany()
-                .HasForeignKey(u => u.IdRol)
+            b.HasOne(u => u.TipoUsuario)
+                .WithMany(t => t.Usuarios)
+                .HasForeignKey(u => u.IdTipoUsuario)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Sesion
         builder.Entity<Sesion>(b =>
         {
+            b.ToTable("Sesion");
             b.HasIndex(s => s.FechaInicio);
 
             b.HasOne(s => s.Usuario)
@@ -182,6 +210,7 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Auditoria
         builder.Entity<Auditoria>(b =>
         {
+            b.ToTable("Auditoria");
             b.HasIndex(a => a.FechaHora);
 
             b.Property(a => a.Accion)
@@ -210,6 +239,7 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Propietario
         builder.Entity<Propietario>(b =>
         {
+            b.ToTable("Propietario");
             b.HasIndex(p => p.DNI)
                 .IsUnique();
 
@@ -226,13 +256,13 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
                 .IsRequired();
 
             b.Property(p => p.Telefono)
-                .HasMaxLength(50);
+                .HasMaxLength(30);
 
             b.Property(p => p.Email)
-                .HasMaxLength(150);
+                .HasMaxLength(100);
 
             b.Property(p => p.Direccion)
-                .HasMaxLength(250);
+                .HasMaxLength(200);
 
             b.HasMany(p => p.Mascotas)
                 .WithOne(m => m.Propietario)
@@ -243,170 +273,85 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         // Mascota
         builder.Entity<Mascota>(b =>
         {
+            b.ToTable("Mascota");
             b.Property(m => m.Nombre)
-                .HasMaxLength(100)
+                .HasMaxLength(80)
                 .IsRequired();
 
             b.Property(m => m.Sexo)
-                .HasMaxLength(20)
+                .HasMaxLength(10)
                 .IsRequired();
 
             b.Property(m => m.Color)
                 .HasMaxLength(50);
-
-            b.Property(m => m.Peso)
-                .HasColumnType("decimal(18,2)");
 
             b.HasOne(m => m.Propietario)
                 .WithMany(p => p.Mascotas)
                 .HasForeignKey(m => m.IdPropietario)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            b.HasOne(m => m.Raza)
-                .WithMany()
-                .HasForeignKey(m => m.IdRaza)
+            b.HasOne(m => m.Especie)
+                .WithMany(e => e.Mascotas)
+                .HasForeignKey(m => m.IdEspecie)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
 
     /// <summary>
-    /// Mapeo de entidades de Atención Clínica, Turnos, Consultas y Tratamientos.
+    /// Mapeo de entidades de Atención Clínica, Consultas, Detalles de Tratamiento y Vacunación.
     /// </summary>
-    private static void BuildClinicaAgenda(ModelBuilder builder)
+    private static void BuildClinicaConsultas(ModelBuilder builder)
     {
-        // Turno
-        builder.Entity<Turno>(b =>
-        {
-            b.HasIndex(t => t.FechaHora);
-
-            b.Property(t => t.Motivo)
-                .HasMaxLength(250);
-
-            b.Property(t => t.Estado)
-                .HasMaxLength(50)
-                .IsRequired();
-
-            b.HasOne(t => t.Mascota)
-                .WithMany()
-                .HasForeignKey(t => t.IdMascota)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            b.HasOne(t => t.Veterinario)
-                .WithMany()
-                .HasForeignKey(t => t.IdVeterinario)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            b.HasOne(t => t.Consulta)
-                .WithMany()
-                .HasForeignKey(t => t.IdConsulta)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
         // Consulta
         builder.Entity<Consulta>(b =>
         {
+            b.ToTable("Consulta");
             b.HasIndex(c => c.FechaHora);
 
+            b.Property(c => c.Motivo)
+                .HasMaxLength(250);
+
             b.Property(c => c.PesoKg)
-                .HasColumnType("decimal(18,2)");
+                .HasColumnType("decimal(6,2)");
 
             b.Property(c => c.Temperatura)
-                .HasColumnType("decimal(18,2)");
+                .HasColumnType("decimal(4,2)");
 
             b.Property(c => c.Diagnostico)
-                .HasMaxLength(2000)
                 .IsRequired();
 
-            b.Property(c => c.Observaciones)
-                .HasMaxLength(2000);
-
             b.HasOne(c => c.Mascota)
-                .WithMany()
+                .WithMany(m => m.Consultas)
                 .HasForeignKey(c => c.IdMascota)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            b.HasOne(c => c.Veterinario)
-                .WithMany()
-                .HasForeignKey(c => c.IdVeterinario)
+            b.HasOne(c => c.Usuario)
+                .WithMany(u => u.Consultas)
+                .HasForeignKey(c => c.IdUsuario)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            b.HasMany(c => c.Tratamientos)
-                .WithOne(t => t.Consulta)
-                .HasForeignKey(t => t.IdConsulta)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // Tratamiento
-        builder.Entity<Tratamiento>(b =>
-        {
-            b.Property(t => t.TipoTratamiento)
-                .HasMaxLength(100)
-                .IsRequired();
-
-            b.Property(t => t.Descripcion)
-                .HasMaxLength(1000)
-                .IsRequired();
-
-            b.Property(t => t.Dosis)
-                .HasMaxLength(200);
-
-            b.Property(t => t.Indicaciones)
-                .HasMaxLength(2000);
-
-            b.HasOne(t => t.Consulta)
-                .WithMany(c => c.Tratamientos)
-                .HasForeignKey(t => t.IdConsulta)
+            b.HasMany(c => c.DetallesConsulta)
+                .WithOne(d => d.Consulta)
+                .HasForeignKey(d => d.IdConsulta)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            b.HasOne(t => t.Vacuna)
-                .WithMany()
-                .HasForeignKey(t => t.IdVacuna)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-    }
-
-    /// <summary>
-    /// Mapeo de entidades de Facturación y Cobranzas.
-    /// </summary>
-    private static void BuildFacturacion(ModelBuilder builder)
-    {
-        // Factura
-        builder.Entity<Factura>(b =>
-        {
-            b.HasIndex(f => f.FechaEmision);
-
-            b.Property(f => f.Total)
-                .HasColumnType("decimal(18,2)");
-
-            b.HasOne(f => f.Propietario)
-                .WithMany()
-                .HasForeignKey(f => f.IdPropietario)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            b.HasOne(f => f.Usuario)
-                .WithMany()
-                .HasForeignKey(f => f.IdUsuario)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            b.HasOne(f => f.MetodoPago)
-                .WithMany()
-                .HasForeignKey(f => f.IdMetodoPago)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            b.HasMany(f => f.Detalles)
-                .WithOne(d => d.Factura)
-                .HasForeignKey(d => d.IdFactura)
+            b.HasMany(c => c.AplicacionesVacuna)
+                .WithOne(a => a.Consulta)
+                .HasForeignKey(a => a.IdConsulta)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasMany(c => c.Pagos)
+                .WithOne(p => p.Consulta)
+                .HasForeignKey(p => p.IdConsulta)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // DetalleFactura
-        builder.Entity<DetalleFactura>(b =>
+        // DetalleConsulta
+        builder.Entity<DetalleConsulta>(b =>
         {
-            b.Property(d => d.Concepto)
-                .HasMaxLength(250)
-                .IsRequired();
+            b.ToTable("DetalleConsulta");
+            b.Property(d => d.Cantidad)
+                .HasDefaultValue(1);
 
             b.Property(d => d.PrecioUnitario)
                 .HasColumnType("decimal(18,2)");
@@ -414,10 +359,66 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
             b.Property(d => d.Subtotal)
                 .HasColumnType("decimal(18,2)");
 
-            b.HasOne(d => d.Factura)
-                .WithMany(f => f.Detalles)
-                .HasForeignKey(d => d.IdFactura)
+            b.HasOne(d => d.Consulta)
+                .WithMany(c => c.DetallesConsulta)
+                .HasForeignKey(d => d.IdConsulta)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(d => d.Tratamiento)
+                .WithMany(t => t.DetallesConsulta)
+                .HasForeignKey(d => d.IdTratamiento)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // AplicacionVacuna
+        builder.Entity<AplicacionVacuna>(b =>
+        {
+            b.ToTable("AplicacionVacuna");
+            b.Property(a => a.Observaciones)
+                .HasMaxLength(250);
+
+            b.Property(a => a.PrecioAplicado)
+                .HasColumnType("decimal(18,2)");
+
+            b.HasOne(a => a.Consulta)
+                .WithMany(c => c.AplicacionesVacuna)
+                .HasForeignKey(a => a.IdConsulta)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(a => a.Vacuna)
+                .WithMany(v => v.AplicacionesVacuna)
+                .HasForeignKey(a => a.IdVacuna)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    /// <summary>
+    /// Mapeo de entidades de Pagos y Cobranzas.
+    /// </summary>
+    private static void BuildPagos(ModelBuilder builder)
+    {
+        // Pago
+        builder.Entity<Pago>(b =>
+        {
+            b.ToTable("Pago");
+            b.HasIndex(p => p.Fecha);
+
+            b.Property(p => p.Importe)
+                .HasColumnType("decimal(18,2)");
+
+            b.Property(p => p.Estado)
+                .HasMaxLength(30)
+                .HasDefaultValue("Completado");
+
+            b.HasOne(p => p.Consulta)
+                .WithMany(c => c.Pagos)
+                .HasForeignKey(p => p.IdConsulta)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(p => p.MetodoPago)
+                .WithMany(m => m.Pagos)
+                .HasForeignKey(p => p.IdMetodoPago)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 

@@ -1,12 +1,8 @@
 namespace Veterinaria.Domain.Dtos;
 
-/// <summary>
-/// DTO de respuesta para la entidad Vacuna.
-/// </summary>
-public class VacunaResponseDto
+public class TipoUsuarioResponseDto
 {
     public long Id { get; set; }
     public string Nombre { get; set; } = string.Empty;
-    public int PeriodoMesesRecomendado { get; set; }
     public bool Activo { get; set; }
 }

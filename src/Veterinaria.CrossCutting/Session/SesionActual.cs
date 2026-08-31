@@ -23,9 +23,14 @@ public static class SesionActual
     public static string NombreCompleto { get; private set; } = string.Empty;
 
     /// <summary>
-    /// Nombre del Rol asignado al usuario (e.g., "Administrador", "Veterinario", "Secretario").
+    /// Nombre del Tipo de Usuario / Rol asignado (e.g., "Administrador", "Veterinario", "Secretario").
     /// </summary>
-    public static string Rol { get; private set; } = string.Empty;
+    public static string TipoUsuario { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Alias para compatibilidad con código existente.
+    /// </summary>
+    public static string Rol => TipoUsuario;
 
     /// <summary>
     /// Identificador del registro de auditoría de sesión en base de datos.
@@ -47,19 +52,19 @@ public static class SesionActual
         IdUsuario = usuario.Id;
         Username = usuario.Username;
         NombreCompleto = $"{usuario.Nombre} {usuario.Apellido}".Trim();
-        Rol = usuario.NombreRol;
+        TipoUsuario = usuario.NombreTipoUsuario;
         IdSesion = idSesion;
     }
 
     /// <summary>
     /// Inicia la sesión en memoria mediante parámetros explícitos.
     /// </summary>
-    public static void IniciarSesion(long idUsuario, string username, string nombreCompleto, string rol, long? idSesion = null)
+    public static void IniciarSesion(long idUsuario, string username, string nombreCompleto, string tipoUsuario, long? idSesion = null)
     {
         IdUsuario = idUsuario;
         Username = username;
         NombreCompleto = nombreCompleto;
-        Rol = rol;
+        TipoUsuario = tipoUsuario;
         IdSesion = idSesion;
     }
 
@@ -71,7 +76,7 @@ public static class SesionActual
         IdUsuario = null;
         Username = string.Empty;
         NombreCompleto = string.Empty;
-        Rol = string.Empty;
+        TipoUsuario = string.Empty;
         IdSesion = null;
     }
 }

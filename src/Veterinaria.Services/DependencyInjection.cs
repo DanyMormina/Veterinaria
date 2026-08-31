@@ -11,7 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class DependencyInjectionExtensions
 {
     /// <summary>
-    /// Registra todos los Servicios de Aplicación (Scoped) y Controladores (Transient) de la solución veterinaria.
+    /// Registra todos los Servicios de Aplicación (Scoped) y Controladores (Transient) de la solución veterinaria (DER v2).
     /// </summary>
     /// <param name="services">Colección de servicios del contenedor de dependencias.</param>
     /// <returns>La misma colección para encadenamiento fluido.</returns>
@@ -20,7 +20,7 @@ public static class DependencyInjectionExtensions
         // -------------------------------------------------------------
         // 1. Servicios de Catálogo y Satélites (Scoped)
         // -------------------------------------------------------------
-        services.AddScoped<IRolService, RolService>();
+        services.AddScoped<ITipoUsuarioService, TipoUsuarioService>();
         services.AddScoped<IEspecieService, EspecieService>();
         services.AddScoped<IRazaService, RazaService>();
         services.AddScoped<IVacunaService, VacunaService>();
@@ -40,22 +40,22 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IMascotaService, MascotaService>();
 
         // -------------------------------------------------------------
-        // 4. Servicios Clínicos y Agenda (Scoped)
+        // 4. Servicios Clínicos y Tratamientos (Scoped)
         // -------------------------------------------------------------
-        services.AddScoped<ITurnoService, TurnoService>();
         services.AddScoped<IConsultaService, ConsultaService>();
         services.AddScoped<ITratamientoService, TratamientoService>();
+        services.AddScoped<IDetalleConsultaService, DetalleConsultaService>();
+        services.AddScoped<IAplicacionVacunaService, AplicacionVacunaService>();
 
         // -------------------------------------------------------------
-        // 5. Servicios de Facturación (Scoped)
+        // 5. Servicios de Pagos y Cobranzas (Scoped)
         // -------------------------------------------------------------
-        services.AddScoped<IFacturaService, FacturaService>();
-        services.AddScoped<IDetalleFacturaService, DetalleFacturaService>();
+        services.AddScoped<IPagoService, PagoService>();
 
         // -------------------------------------------------------------
         // Controladores (Transient)
         // -------------------------------------------------------------
-        services.AddTransient<RolController>();
+        services.AddTransient<TipoUsuarioController>();
         services.AddTransient<EspecieController>();
         services.AddTransient<RazaController>();
         services.AddTransient<VacunaController>();
@@ -68,12 +68,12 @@ public static class DependencyInjectionExtensions
         services.AddTransient<PropietarioController>();
         services.AddTransient<MascotaController>();
 
-        services.AddTransient<TurnoController>();
         services.AddTransient<ConsultaController>();
         services.AddTransient<TratamientoController>();
+        services.AddTransient<DetalleConsultaController>();
+        services.AddTransient<AplicacionVacunaController>();
 
-        services.AddTransient<FacturaController>();
-        services.AddTransient<DetalleFacturaController>();
+        services.AddTransient<PagoController>();
 
         return services;
     }

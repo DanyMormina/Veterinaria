@@ -8,7 +8,7 @@ using Veterinaria.Interfaces.Interfaces;
 namespace Veterinaria.Services.Servicios;
 
 /// <summary>
-/// Servicio para la gestión de Mascotas (pacientes).
+/// Servicio para la gestión de Mascotas (pacientes) según DER v2.
 /// </summary>
 public class MascotaService(VeterinariaDbContext context) : IMascotaService
 {
@@ -17,22 +17,21 @@ public class MascotaService(VeterinariaDbContext context) : IMascotaService
         var mascotas = await context.Mascotas
             .AsNoTracking()
             .Include(m => m.Propietario)
-            .Include(m => m.Raza)
-                .ThenInclude(r => r.Especie)
+            .Include(m => m.Especie)
+            .Include(m => m.Consultas)
             .Select(m => new MascotaResponseDto
             {
                 Id = m.Id,
                 IdPropietario = m.IdPropietario,
                 NombrePropietario = m.Propietario != null ? $"{m.Propietario.Nombre} {m.Propietario.Apellido}".Trim() : string.Empty,
-                IdRaza = m.IdRaza,
-                NombreRaza = m.Raza != null ? m.Raza.Nombre : string.Empty,
-                NombreEspecie = m.Raza != null && m.Raza.Especie != null ? m.Raza.Especie.Nombre : string.Empty,
+                IdEspecie = m.IdEspecie,
+                NombreEspecie = m.Especie != null ? m.Especie.Nombre : string.Empty,
                 Nombre = m.Nombre,
                 Sexo = m.Sexo,
                 FechaNacimiento = m.FechaNacimiento,
                 Color = m.Color,
-                Peso = m.Peso,
-                Activo = m.Activo
+                Activo = m.Activo,
+                CantidadConsultas = m.Consultas.Count
             })
             .ToListAsync();
 
@@ -47,23 +46,22 @@ public class MascotaService(VeterinariaDbContext context) : IMascotaService
         var mascota = await context.Mascotas
             .AsNoTracking()
             .Include(m => m.Propietario)
-            .Include(m => m.Raza)
-                .ThenInclude(r => r.Especie)
+            .Include(m => m.Especie)
+            .Include(m => m.Consultas)
             .Where(m => m.Id == id)
             .Select(m => new MascotaResponseDto
             {
                 Id = m.Id,
                 IdPropietario = m.IdPropietario,
                 NombrePropietario = m.Propietario != null ? $"{m.Propietario.Nombre} {m.Propietario.Apellido}".Trim() : string.Empty,
-                IdRaza = m.IdRaza,
-                NombreRaza = m.Raza != null ? m.Raza.Nombre : string.Empty,
-                NombreEspecie = m.Raza != null && m.Raza.Especie != null ? m.Raza.Especie.Nombre : string.Empty,
+                IdEspecie = m.IdEspecie,
+                NombreEspecie = m.Especie != null ? m.Especie.Nombre : string.Empty,
                 Nombre = m.Nombre,
                 Sexo = m.Sexo,
                 FechaNacimiento = m.FechaNacimiento,
                 Color = m.Color,
-                Peso = m.Peso,
-                Activo = m.Activo
+                Activo = m.Activo,
+                CantidadConsultas = m.Consultas.Count
             })
             .FirstOrDefaultAsync();
 
@@ -78,8 +76,8 @@ public class MascotaService(VeterinariaDbContext context) : IMascotaService
         if (request.IdPropietario <= 0)
             return Result<long>.Falla("El identificador del propietario debe ser mayor a cero.");
 
-        if (request.IdRaza <= 0)
-            return Result<long>.Falla("El identificador de la raza debe ser mayor a cero.");
+        if (request.IdEspecie <= 0)
+            return Result<long>.Falla("El identificador de la especie debe ser mayor a cero.");
 
         if (string.IsNullOrWhiteSpace(request.Nombre))
             return Result<long>.Falla("El nombre de la mascota es obligatorio.");
@@ -87,26 +85,22 @@ public class MascotaService(VeterinariaDbContext context) : IMascotaService
         if (string.IsNullOrWhiteSpace(request.Sexo))
             return Result<long>.Falla("El sexo de la mascota es obligatorio.");
 
-        if (request.Peso <= 0)
-            return Result<long>.Falla("El peso de la mascota debe ser mayor a cero.");
-
         var propietarioExiste = await context.Propietarios.AnyAsync(p => p.Id == request.IdPropietario);
         if (!propietarioExiste)
             return Result<long>.Falla($"No existe un propietario registrado con ID {request.IdPropietario}.");
 
-        var razaExiste = await context.Razas.AnyAsync(r => r.Id == request.IdRaza);
-        if (!razaExiste)
-            return Result<long>.Falla($"No existe una raza registrada con ID {request.IdRaza}.");
+        var especieExiste = await context.Especies.AnyAsync(e => e.Id == request.IdEspecie);
+        if (!especieExiste)
+            return Result<long>.Falla($"No existe una especie registrada con ID {request.IdEspecie}.");
 
         var entidad = new Mascota
         {
             IdPropietario = request.IdPropietario,
-            IdRaza = request.IdRaza,
+            IdEspecie = request.IdEspecie,
             Nombre = request.Nombre.Trim(),
             Sexo = request.Sexo.Trim(),
             FechaNacimiento = request.FechaNacimiento,
             Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim(),
-            Peso = request.Peso,
             Activo = true
         };
 
@@ -124,17 +118,14 @@ public class MascotaService(VeterinariaDbContext context) : IMascotaService
         if (request.IdPropietario <= 0)
             return Result.Falla("El identificador del propietario debe ser mayor a cero.");
 
-        if (request.IdRaza <= 0)
-            return Result.Falla("El identificador de la raza debe ser mayor a cero.");
+        if (request.IdEspecie <= 0)
+            return Result.Falla("El identificador de la especie debe ser mayor a cero.");
 
         if (string.IsNullOrWhiteSpace(request.Nombre))
             return Result.Falla("El nombre de la mascota es obligatorio.");
 
         if (string.IsNullOrWhiteSpace(request.Sexo))
             return Result.Falla("El sexo de la mascota es obligatorio.");
-
-        if (request.Peso <= 0)
-            return Result.Falla("El peso de la mascota debe ser mayor a cero.");
 
         var entidad = await context.Mascotas.FirstOrDefaultAsync(m => m.Id == id);
         if (entidad is null)
@@ -144,17 +135,16 @@ public class MascotaService(VeterinariaDbContext context) : IMascotaService
         if (!propietarioExiste)
             return Result.Falla($"No existe un propietario registrado con ID {request.IdPropietario}.");
 
-        var razaExiste = await context.Razas.AnyAsync(r => r.Id == request.IdRaza);
-        if (!razaExiste)
-            return Result.Falla($"No existe una raza registrada con ID {request.IdRaza}.");
+        var especieExiste = await context.Especies.AnyAsync(e => e.Id == request.IdEspecie);
+        if (!especieExiste)
+            return Result.Falla($"No existe una especie registrada con ID {request.IdEspecie}.");
 
         entidad.IdPropietario = request.IdPropietario;
-        entidad.IdRaza = request.IdRaza;
+        entidad.IdEspecie = request.IdEspecie;
         entidad.Nombre = request.Nombre.Trim();
         entidad.Sexo = request.Sexo.Trim();
         entidad.FechaNacimiento = request.FechaNacimiento;
         entidad.Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim();
-        entidad.Peso = request.Peso;
 
         await context.SaveChangesAsync();
 

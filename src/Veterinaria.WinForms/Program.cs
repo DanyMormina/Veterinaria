@@ -16,7 +16,7 @@ namespace Veterinaria.WinForms;
 internal static class Program
 {
     private const string FallbackConnectionString =
-        "Server=(localdb)\\mssqllocaldb;Database=VeterinariaDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
+        "Server=localhost,1433;Database=VeterinariaDb;User Id=sa;Password=Pass123456!;TrustServerCertificate=True;MultipleActiveResultSets=true;";
 
     /// <summary>
     /// Punto de inicio de la aplicación con validación de base de datos e inyección de dependencias.
@@ -109,7 +109,12 @@ internal static class Program
     {
         try
         {
-            const string appSettingsPath = "appsettings.json";
+            var appSettingsPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+            if (!File.Exists(appSettingsPath))
+            {
+                appSettingsPath = "appsettings.json";
+            }
+
             if (File.Exists(appSettingsPath))
             {
                 var json = File.ReadAllText(appSettingsPath);
