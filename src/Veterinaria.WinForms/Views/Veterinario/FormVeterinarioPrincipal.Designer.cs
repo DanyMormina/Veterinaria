@@ -38,10 +38,9 @@ partial class FormVeterinarioPrincipal
         pnlHeader.Controls.Add(lblUsuarioSesion);
         pnlHeader.Dock = DockStyle.Top;
         pnlHeader.Location = new Point(0, 0);
-        pnlHeader.Margin = new Padding(3, 4, 3, 4);
         pnlHeader.Name = "pnlHeader";
-        pnlHeader.Padding = new Padding(18, 0, 18, 0);
-        pnlHeader.Size = new Size(1257, 67);
+        pnlHeader.Padding = new Padding(16, 0, 16, 0);
+        pnlHeader.Size = new Size(1100, 50);
         pnlHeader.TabIndex = 0;
         // 
         // lblTitulo
@@ -49,9 +48,9 @@ partial class FormVeterinarioPrincipal
         lblTitulo.Dock = DockStyle.Left;
         lblTitulo.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
         lblTitulo.ForeColor = Color.White;
-        lblTitulo.Location = new Point(18, 0);
+        lblTitulo.Location = new Point(16, 0);
         lblTitulo.Name = "lblTitulo";
-        lblTitulo.Size = new Size(455, 67);
+        lblTitulo.Size = new Size(398, 50);
         lblTitulo.TabIndex = 0;
         lblTitulo.Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
@@ -61,9 +60,9 @@ partial class FormVeterinarioPrincipal
         lblUsuarioSesion.Dock = DockStyle.Right;
         lblUsuarioSesion.Font = new Font("Segoe UI", 9.75F);
         lblUsuarioSesion.ForeColor = Color.FromArgb(250, 244, 244);
-        lblUsuarioSesion.Location = new Point(782, 0);
+        lblUsuarioSesion.Location = new Point(684, 0);
         lblUsuarioSesion.Name = "lblUsuarioSesion";
-        lblUsuarioSesion.Size = new Size(457, 67);
+        lblUsuarioSesion.Size = new Size(400, 50);
         lblUsuarioSesion.TabIndex = 1;
         lblUsuarioSesion.Text = "Médico: Veterinario";
         lblUsuarioSesion.TextAlign = ContentAlignment.MiddleRight;
@@ -72,10 +71,9 @@ partial class FormVeterinarioPrincipal
         // 
         pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
         pnlContenido.Dock = DockStyle.Fill;
-        pnlContenido.Location = new Point(0, 67);
-        pnlContenido.Margin = new Padding(3, 4, 3, 4);
+        pnlContenido.Location = new Point(0, 50);
         pnlContenido.Name = "pnlContenido";
-        pnlContenido.Size = new Size(1257, 841);
+        pnlContenido.Size = new Size(1100, 628);
         pnlContenido.TabIndex = 1;
         // 
         // statusStrip
@@ -83,10 +81,9 @@ partial class FormVeterinarioPrincipal
         statusStrip.BackColor = Color.FromArgb(249, 240, 242);
         statusStrip.ImageScalingSize = new Size(20, 20);
         statusStrip.Items.AddRange(new ToolStripItem[] { lblStatusInfo });
-        statusStrip.Location = new Point(0, 908);
+        statusStrip.Location = new Point(0, 678);
         statusStrip.Name = "statusStrip";
-        statusStrip.Padding = new Padding(1, 0, 16, 0);
-        statusStrip.Size = new Size(1257, 25);
+        statusStrip.Size = new Size(1100, 22);
         statusStrip.TabIndex = 2;
         // 
         // lblStatusInfo
@@ -94,22 +91,21 @@ partial class FormVeterinarioPrincipal
         lblStatusInfo.Font = new Font("Segoe UI", 8.25F);
         lblStatusInfo.ForeColor = Color.FromArgb(58, 53, 59);
         lblStatusInfo.Name = "lblStatusInfo";
-        lblStatusInfo.Size = new Size(127, 19);
+        lblStatusInfo.Size = new Size(109, 17);
         lblStatusInfo.Text = "Módulo clínico listo";
         // 
         // FormVeterinarioPrincipal
         // 
-        AutoScaleDimensions = new SizeF(8F, 20F);
+        AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
-        ClientSize = new Size(1257, 933);
+        ClientSize = new Size(1100, 700);
         Controls.Add(pnlContenido);
         Controls.Add(statusStrip);
         Controls.Add(pnlHeader);
         Font = new Font("Segoe UI", 9F);
         ForeColor = Color.FromArgb(58, 53, 59);
-        Margin = new Padding(3, 4, 3, 4);
-        MinimumSize = new Size(912, 651);
+        MinimumSize = new Size(800, 498);
         Name = "FormVeterinarioPrincipal";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Veterinaria - Panel Veterinario";

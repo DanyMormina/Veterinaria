@@ -23,4 +23,9 @@ public partial class FormVeterinarioPrincipal : Form
 
         lblStatusInfo.Text = $"Sesión clínica activa: {SesionActual.Username} - {DateTime.Now:dd/MM/yyyy}";
     }
+
+    private void button1_Click(object sender, EventArgs e)
+    {
+
+    }
 }

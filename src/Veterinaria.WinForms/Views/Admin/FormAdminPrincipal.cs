@@ -23,4 +23,27 @@ public partial class FormAdminPrincipal : Form
 
         lblStatusInfo.Text = $"Conectado como {SesionActual.Username} ({SesionActual.Rol}) - {DateTime.Now:dd/MM/yyyy}";
     }
+
+    private void button1_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void BTUSUARIOS_Click(object sender, EventArgs e)
+    {
+        // Como ambos formularios están en la carpeta Admin, Visual Studio los conecta directamente
+        FormUsuarios vistaUsuarios = new FormUsuarios();
+
+        vistaUsuarios.ShowDialog();
+    }
+
+    private void BTMASCOTAS_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void BTREPORTES_Click(object sender, EventArgs e)
+    {
+
+    }
 }
