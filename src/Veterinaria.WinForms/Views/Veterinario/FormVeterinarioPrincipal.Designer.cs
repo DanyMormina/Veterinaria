@@ -27,8 +27,13 @@ partial class FormVeterinarioPrincipal
         pnlContenido = new Panel();
         statusStrip = new StatusStrip();
         lblStatusInfo = new ToolStripStatusLabel();
+        BTCONSULTAS = new Button();
+        BTFICHAMEDICA = new Button();
+        BTTRATAMIENTOS = new Button();
+        BTVACUNAS = new Button();
         pnlHeader.SuspendLayout();
         statusStrip.SuspendLayout();
+        pnlContenido.SuspendLayout();
         SuspendLayout();
         // 
         // pnlHeader
@@ -67,9 +72,77 @@ partial class FormVeterinarioPrincipal
         lblUsuarioSesion.Text = "Médico: Veterinario";
         lblUsuarioSesion.TextAlign = ContentAlignment.MiddleRight;
         // 
+        // BTCONSULTAS
+        // 
+        BTCONSULTAS.BackColor = Color.White;
+        BTCONSULTAS.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTCONSULTAS.FlatStyle = FlatStyle.Flat;
+        BTCONSULTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTCONSULTAS.ImageAlign = ContentAlignment.TopCenter;
+        BTCONSULTAS.Location = new Point(64, 143);
+        BTCONSULTAS.Name = "BTCONSULTAS";
+        BTCONSULTAS.Size = new Size(214, 277);
+        BTCONSULTAS.TabIndex = 0;
+        BTCONSULTAS.Text = "CONSULTAS";
+        BTCONSULTAS.TextAlign = ContentAlignment.BottomCenter;
+        BTCONSULTAS.UseVisualStyleBackColor = false;
+        BTCONSULTAS.Click += BTCONSULTAS_Click;
+        // 
+        // BTFICHAMEDICA
+        // 
+        BTFICHAMEDICA.BackColor = Color.White;
+        BTFICHAMEDICA.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTFICHAMEDICA.FlatStyle = FlatStyle.Flat;
+        BTFICHAMEDICA.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTFICHAMEDICA.ImageAlign = ContentAlignment.TopCenter;
+        BTFICHAMEDICA.Location = new Point(319, 143);
+        BTFICHAMEDICA.Name = "BTFICHAMEDICA";
+        BTFICHAMEDICA.Size = new Size(214, 277);
+        BTFICHAMEDICA.TabIndex = 1;
+        BTFICHAMEDICA.Text = "FICHA MÉDICA";
+        BTFICHAMEDICA.TextAlign = ContentAlignment.BottomCenter;
+        BTFICHAMEDICA.UseVisualStyleBackColor = false;
+        BTFICHAMEDICA.Click += BTFICHAMEDICA_Click;
+        // 
+        // BTTRATAMIENTOS
+        // 
+        BTTRATAMIENTOS.BackColor = Color.White;
+        BTTRATAMIENTOS.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTTRATAMIENTOS.FlatStyle = FlatStyle.Flat;
+        BTTRATAMIENTOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTTRATAMIENTOS.ImageAlign = ContentAlignment.TopCenter;
+        BTTRATAMIENTOS.Location = new Point(568, 143);
+        BTTRATAMIENTOS.Name = "BTTRATAMIENTOS";
+        BTTRATAMIENTOS.Size = new Size(214, 277);
+        BTTRATAMIENTOS.TabIndex = 2;
+        BTTRATAMIENTOS.Text = "TRATAMIENTOS";
+        BTTRATAMIENTOS.TextAlign = ContentAlignment.BottomCenter;
+        BTTRATAMIENTOS.UseVisualStyleBackColor = false;
+        BTTRATAMIENTOS.Click += BTTRATAMIENTOS_Click;
+        // 
+        // BTVACUNAS
+        // 
+        BTVACUNAS.BackColor = Color.White;
+        BTVACUNAS.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTVACUNAS.FlatStyle = FlatStyle.Flat;
+        BTVACUNAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTVACUNAS.ImageAlign = ContentAlignment.TopCenter;
+        BTVACUNAS.Location = new Point(811, 143);
+        BTVACUNAS.Name = "BTVACUNAS";
+        BTVACUNAS.Size = new Size(214, 277);
+        BTVACUNAS.TabIndex = 3;
+        BTVACUNAS.Text = "VACUNAS Y CONTROLES";
+        BTVACUNAS.TextAlign = ContentAlignment.BottomCenter;
+        BTVACUNAS.UseVisualStyleBackColor = false;
+        BTVACUNAS.Click += BTVACUNAS_Click;
+        // 
         // pnlContenido
         // 
         pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
+        pnlContenido.Controls.Add(BTVACUNAS);
+        pnlContenido.Controls.Add(BTTRATAMIENTOS);
+        pnlContenido.Controls.Add(BTFICHAMEDICA);
+        pnlContenido.Controls.Add(BTCONSULTAS);
         pnlContenido.Dock = DockStyle.Fill;
         pnlContenido.Location = new Point(0, 50);
         pnlContenido.Name = "pnlContenido";
@@ -113,7 +186,13 @@ partial class FormVeterinarioPrincipal
         pnlHeader.ResumeLayout(false);
         statusStrip.ResumeLayout(false);
         statusStrip.PerformLayout();
+        pnlContenido.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
     }
+
+    private Button BTCONSULTAS;
+    private Button BTFICHAMEDICA;
+    private Button BTTRATAMIENTOS;
+    private Button BTVACUNAS;
 }
