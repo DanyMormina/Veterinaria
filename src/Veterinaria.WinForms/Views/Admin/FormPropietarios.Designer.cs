@@ -37,6 +37,7 @@ partial class FormPropietarios
         btnGuardar = new Button();
         btnModificar = new Button();
         btnCancelar = new Button();
+        btnVerDetalle = new Button();
         btnVolver = new Button();
         pnlListado = new Panel();
         lblBuscar = new Label();
@@ -236,6 +237,7 @@ partial class FormPropietarios
         pnlBotones.Controls.Add(btnGuardar);
         pnlBotones.Controls.Add(btnModificar);
         pnlBotones.Controls.Add(btnCancelar);
+        pnlBotones.Controls.Add(btnVerDetalle);
         pnlBotones.Controls.Add(btnVolver);
         pnlBotones.Location = new Point(16, 550);
         pnlBotones.Name = "pnlBotones";
@@ -253,6 +255,7 @@ partial class FormPropietarios
         btnNuevo.Size = new Size(100, 32);
         btnNuevo.Text = "Nuevo";
         btnNuevo.UseVisualStyleBackColor = false;
+        btnNuevo.Visible = false;
         // 
         // btnGuardar
         // 
@@ -265,6 +268,7 @@ partial class FormPropietarios
         btnGuardar.Size = new Size(100, 32);
         btnGuardar.Text = "Guardar";
         btnGuardar.UseVisualStyleBackColor = false;
+        btnGuardar.Visible = false;
         // 
         // btnModificar
         // 
@@ -277,6 +281,7 @@ partial class FormPropietarios
         btnModificar.Size = new Size(100, 32);
         btnModificar.Text = "Modificar";
         btnModificar.UseVisualStyleBackColor = false;
+        btnModificar.Visible = false;
         // 
         // btnCancelar
         // 
@@ -289,6 +294,19 @@ partial class FormPropietarios
         btnCancelar.Size = new Size(100, 32);
         btnCancelar.Text = "Cancelar";
         btnCancelar.UseVisualStyleBackColor = false;
+        btnCancelar.Visible = false;
+        // 
+        // btnVerDetalle
+        // 
+        btnVerDetalle.BackColor = Color.FromArgb(230, 196, 202);
+        btnVerDetalle.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
+        btnVerDetalle.FlatStyle = FlatStyle.Flat;
+        btnVerDetalle.ForeColor = Color.FromArgb(58, 53, 59);
+        btnVerDetalle.Location = new Point(0, 4);
+        btnVerDetalle.Name = "btnVerDetalle";
+        btnVerDetalle.Size = new Size(140, 32);
+        btnVerDetalle.Text = "Ver detalle";
+        btnVerDetalle.UseVisualStyleBackColor = false;
         // 
         // btnVolver
         // 
@@ -459,6 +477,7 @@ partial class FormPropietarios
     private Button btnGuardar;
     private Button btnModificar;
     private Button btnCancelar;
+    private Button btnVerDetalle;
     private Button btnVolver;
     private Panel pnlListado;
     private Label lblBuscar;

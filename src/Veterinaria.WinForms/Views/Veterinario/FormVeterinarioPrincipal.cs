@@ -71,6 +71,6 @@ public partial class FormVeterinarioPrincipal : Form
         }
 
         using var original = Image.FromFile(ruta);
-        return new Bitmap(original, new Size(186, 186));
+        return new Bitmap(original, new Size(174, 232));
     }
 }

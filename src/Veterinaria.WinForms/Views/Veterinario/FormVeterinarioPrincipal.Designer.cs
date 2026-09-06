@@ -81,10 +81,12 @@ partial class FormVeterinarioPrincipal
         BTCONSULTAS.ImageAlign = ContentAlignment.TopCenter;
         BTCONSULTAS.Location = new Point(64, 143);
         BTCONSULTAS.Name = "BTCONSULTAS";
+        BTCONSULTAS.Padding = new Padding(12, 8, 12, 10);
         BTCONSULTAS.Size = new Size(214, 277);
         BTCONSULTAS.TabIndex = 0;
         BTCONSULTAS.Text = "CONSULTAS";
         BTCONSULTAS.TextAlign = ContentAlignment.BottomCenter;
+        BTCONSULTAS.TextImageRelation = TextImageRelation.ImageAboveText;
         BTCONSULTAS.UseVisualStyleBackColor = false;
         BTCONSULTAS.Click += BTCONSULTAS_Click;
         // 
@@ -97,10 +99,12 @@ partial class FormVeterinarioPrincipal
         BTFICHAMEDICA.ImageAlign = ContentAlignment.TopCenter;
         BTFICHAMEDICA.Location = new Point(319, 143);
         BTFICHAMEDICA.Name = "BTFICHAMEDICA";
+        BTFICHAMEDICA.Padding = new Padding(12, 8, 12, 10);
         BTFICHAMEDICA.Size = new Size(214, 277);
         BTFICHAMEDICA.TabIndex = 1;
-        BTFICHAMEDICA.Text = "FICHA MÉDICA";
+        BTFICHAMEDICA.Text = "HISTORIAL CLÍNICO";
         BTFICHAMEDICA.TextAlign = ContentAlignment.BottomCenter;
+        BTFICHAMEDICA.TextImageRelation = TextImageRelation.ImageAboveText;
         BTFICHAMEDICA.UseVisualStyleBackColor = false;
         BTFICHAMEDICA.Click += BTFICHAMEDICA_Click;
         // 
@@ -113,10 +117,12 @@ partial class FormVeterinarioPrincipal
         BTTRATAMIENTOS.ImageAlign = ContentAlignment.TopCenter;
         BTTRATAMIENTOS.Location = new Point(568, 143);
         BTTRATAMIENTOS.Name = "BTTRATAMIENTOS";
+        BTTRATAMIENTOS.Padding = new Padding(12, 8, 12, 10);
         BTTRATAMIENTOS.Size = new Size(214, 277);
         BTTRATAMIENTOS.TabIndex = 2;
         BTTRATAMIENTOS.Text = "TRATAMIENTOS";
         BTTRATAMIENTOS.TextAlign = ContentAlignment.BottomCenter;
+        BTTRATAMIENTOS.TextImageRelation = TextImageRelation.ImageAboveText;
         BTTRATAMIENTOS.UseVisualStyleBackColor = false;
         BTTRATAMIENTOS.Click += BTTRATAMIENTOS_Click;
         // 
@@ -129,10 +135,12 @@ partial class FormVeterinarioPrincipal
         BTVACUNAS.ImageAlign = ContentAlignment.TopCenter;
         BTVACUNAS.Location = new Point(811, 143);
         BTVACUNAS.Name = "BTVACUNAS";
+        BTVACUNAS.Padding = new Padding(12, 8, 12, 10);
         BTVACUNAS.Size = new Size(214, 277);
         BTVACUNAS.TabIndex = 3;
-        BTVACUNAS.Text = "VACUNAS Y CONTROLES";
+        BTVACUNAS.Text = "CONTROLES";
         BTVACUNAS.TextAlign = ContentAlignment.BottomCenter;
+        BTVACUNAS.TextImageRelation = TextImageRelation.ImageAboveText;
         BTVACUNAS.UseVisualStyleBackColor = false;
         BTVACUNAS.Click += BTVACUNAS_Click;
         // 

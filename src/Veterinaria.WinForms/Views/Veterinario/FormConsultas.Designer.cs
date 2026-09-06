@@ -333,10 +333,10 @@ partial class FormConsultas
         // 
         // btnGuardar
         // 
-        btnGuardar.BackColor = Color.FromArgb(72, 148, 96);
-        btnGuardar.FlatAppearance.BorderColor = Color.FromArgb(48, 118, 74);
+        btnGuardar.BackColor = Color.FromArgb(152, 196, 164);
+        btnGuardar.FlatAppearance.BorderColor = Color.FromArgb(112, 158, 124);
         btnGuardar.FlatStyle = FlatStyle.Flat;
-        btnGuardar.ForeColor = Color.White;
+        btnGuardar.ForeColor = Color.FromArgb(58, 53, 59);
         btnGuardar.Location = new Point(108, 4);
         btnGuardar.Name = "btnGuardar";
         btnGuardar.Size = new Size(100, 32);
@@ -345,10 +345,10 @@ partial class FormConsultas
         // 
         // btnModificar
         // 
-        btnModificar.BackColor = Color.FromArgb(64, 126, 186);
-        btnModificar.FlatAppearance.BorderColor = Color.FromArgb(44, 102, 158);
+        btnModificar.BackColor = Color.FromArgb(148, 176, 214);
+        btnModificar.FlatAppearance.BorderColor = Color.FromArgb(112, 142, 182);
         btnModificar.FlatStyle = FlatStyle.Flat;
-        btnModificar.ForeColor = Color.White;
+        btnModificar.ForeColor = Color.FromArgb(58, 53, 59);
         btnModificar.Location = new Point(216, 4);
         btnModificar.Name = "btnModificar";
         btnModificar.Size = new Size(100, 32);
@@ -357,10 +357,10 @@ partial class FormConsultas
         // 
         // btnCancelar
         // 
-        btnCancelar.BackColor = Color.FromArgb(196, 78, 86);
-        btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(164, 54, 62);
+        btnCancelar.BackColor = Color.FromArgb(220, 150, 154);
+        btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(186, 118, 122);
         btnCancelar.FlatStyle = FlatStyle.Flat;
-        btnCancelar.ForeColor = Color.White;
+        btnCancelar.ForeColor = Color.FromArgb(58, 53, 59);
         btnCancelar.Location = new Point(324, 4);
         btnCancelar.Name = "btnCancelar";
         btnCancelar.Size = new Size(100, 32);

@@ -81,7 +81,7 @@ partial class FormFichaMedica
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(680, 50);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — FICHA MÉDICA";
+        lblTitulo.Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — HISTORIAL CLÍNICO";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -389,7 +389,7 @@ partial class FormFichaMedica
         MinimumSize = new Size(1100, 700);
         Name = "FormFichaMedica";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — FICHA MÉDICA";
+        Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — HISTORIAL CLÍNICO";
         Load += FormFichaMedica_Load;
         pnlHeader.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);

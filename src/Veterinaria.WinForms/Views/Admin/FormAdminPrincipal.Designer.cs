@@ -96,9 +96,10 @@ partial class FormAdminPrincipal
         BTUSUARIOS.ImageAlign = ContentAlignment.TopCenter;
         BTUSUARIOS.Location = new Point(64, 143);
         BTUSUARIOS.Name = "BTUSUARIOS";
+        BTUSUARIOS.Padding = new Padding(8, 8, 8, 12);
         BTUSUARIOS.Size = new Size(214, 277);
         BTUSUARIOS.TabIndex = 0;
-        BTUSUARIOS.Text = "USUARIOS";
+        BTUSUARIOS.Text = "USUARIOS Y PERFILES";
         BTUSUARIOS.TextAlign = ContentAlignment.BottomCenter;
         BTUSUARIOS.UseVisualStyleBackColor = true;
         BTUSUARIOS.Click += BTUSUARIOS_Click;
@@ -110,9 +111,10 @@ partial class FormAdminPrincipal
         BTPROPIETARIOS.ImageAlign = ContentAlignment.TopCenter;
         BTPROPIETARIOS.Location = new Point(319, 143);
         BTPROPIETARIOS.Name = "BTPROPIETARIOS";
+        BTPROPIETARIOS.Padding = new Padding(8, 8, 8, 12);
         BTPROPIETARIOS.Size = new Size(214, 277);
         BTPROPIETARIOS.TabIndex = 0;
-        BTPROPIETARIOS.Text = "PROPIETARIOS";
+        BTPROPIETARIOS.Text = "CONSULTAR PROPIETARIOS";
         BTPROPIETARIOS.TextAlign = ContentAlignment.BottomCenter;
         BTPROPIETARIOS.UseVisualStyleBackColor = true;
         BTPROPIETARIOS.Click += button1_Click;
@@ -124,9 +126,10 @@ partial class FormAdminPrincipal
         BTMASCOTAS.ImageAlign = ContentAlignment.TopCenter;
         BTMASCOTAS.Location = new Point(568, 143);
         BTMASCOTAS.Name = "BTMASCOTAS";
+        BTMASCOTAS.Padding = new Padding(8, 8, 8, 12);
         BTMASCOTAS.Size = new Size(214, 277);
         BTMASCOTAS.TabIndex = 1;
-        BTMASCOTAS.Text = "MASCOTAS";
+        BTMASCOTAS.Text = "CONSULTAR MASCOTAS";
         BTMASCOTAS.TextAlign = ContentAlignment.BottomCenter;
         BTMASCOTAS.UseVisualStyleBackColor = true;
         BTMASCOTAS.Click += BTMASCOTAS_Click;
