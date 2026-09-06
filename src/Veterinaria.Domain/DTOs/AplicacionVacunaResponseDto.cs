@@ -9,6 +9,5 @@ public class AplicacionVacunaResponseDto
     public DateTime FechaAplicacion { get; set; }
     public DateTime? ProximaDosis { get; set; }
     public string? Observaciones { get; set; }
-    public decimal PrecioAplicado { get; set; }
-    public bool Activo { get; set; }
+    public decimal Precio { get; set; }
 }

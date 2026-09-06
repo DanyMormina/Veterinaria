@@ -51,28 +51,46 @@ public static class DatabaseSeeder
             await context.SaveChangesAsync();
         }
 
-        // 5. Sembrar Usuario Administrador inicial si no existe
-        var tipoAdmin = await context.TiposUsuario.FirstOrDefaultAsync(t => t.Nombre == "Administrador");
-        if (tipoAdmin != null)
-        {
-            var adminExiste = await context.Usuarios.AnyAsync(u => u.Username.ToLower() == "admin");
-            if (!adminExiste)
-            {
-                var adminUsuario = new Usuario
-                {
-                    IdTipoUsuario = tipoAdmin.Id,
-                    Username = "admin",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                    Nombre = "Administrador",
-                    Apellido = "Sistema",
-                    DNI = "12345678",
-                    Matricula = "ADM-001",
-                    Activo = true
-                };
+        // 5. Sembrar usuarios de demostración por rol si no existen
+        await SembrarUsuarioSiNoExisteAsync(context, "Administrador", "admin", "admin123", "Administrador", "Sistema", "12345678", "ADM-001");
+        await SembrarUsuarioSiNoExisteAsync(context, "Veterinario", "vet", "vet123", "Lucía", "Pérez", "23456789", "MN-1024");
+        await SembrarUsuarioSiNoExisteAsync(context, "Secretario", "secretario", "sec123", "Martín", "Gómez", "34567890", "REC-001");
+    }
 
-                context.Usuarios.Add(adminUsuario);
-                await context.SaveChangesAsync();
-            }
+    private static async Task SembrarUsuarioSiNoExisteAsync(
+        VeterinariaDbContext context,
+        string nombreTipo,
+        string username,
+        string password,
+        string nombre,
+        string apellido,
+        string dni,
+        string matricula)
+    {
+        var tipo = await context.TiposUsuario.FirstOrDefaultAsync(t => t.Nombre == nombreTipo);
+        if (tipo is null)
+        {
+            return;
         }
+
+        var existe = await context.Usuarios.AnyAsync(u => u.Username.ToLower() == username);
+        if (existe)
+        {
+            return;
+        }
+
+        context.Usuarios.Add(new Usuario
+        {
+            IdTipoUsuario = tipo.Id,
+            Username = username,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            Nombre = nombre,
+            Apellido = apellido,
+            DNI = dni,
+            Matricula = matricula,
+            Activo = true
+        });
+
+        await context.SaveChangesAsync();
     }
 }

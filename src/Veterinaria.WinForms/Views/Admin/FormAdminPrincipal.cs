@@ -1,4 +1,4 @@
-using Veterinaria.CrossCutting.Session;
+using Veterinaria.WinForms.Session;
 
 namespace Veterinaria.WinForms.Views.Admin;
 
@@ -26,7 +26,8 @@ public partial class FormAdminPrincipal : Form
 
     private void button1_Click(object sender, EventArgs e)
     {
-
+        FormPropietarios vistaPropietarios = new FormPropietarios();
+        vistaPropietarios.ShowDialog();
     }
 
     private void BTUSUARIOS_Click(object sender, EventArgs e)
@@ -39,11 +40,13 @@ public partial class FormAdminPrincipal : Form
 
     private void BTMASCOTAS_Click(object sender, EventArgs e)
     {
-
+        FormMascotas vistaMascotas = new FormMascotas();
+        vistaMascotas.ShowDialog();
     }
 
     private void BTREPORTES_Click(object sender, EventArgs e)
     {
-
+        FormReportes vistaReportes = new FormReportes();
+        vistaReportes.ShowDialog();
     }
 }

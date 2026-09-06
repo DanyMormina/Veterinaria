@@ -1,11 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Text;
-using System.Windows.Forms;
+using Veterinaria.WinForms.Session;
 
 namespace Veterinaria.WinForms.Views.Admin
 {
@@ -18,21 +11,14 @@ namespace Veterinaria.WinForms.Views.Admin
 
         private void FormUsuarios_Load(object? sender, EventArgs e)
         {
+            lblUsuarioSesion.Text = SesionActual.EstaAutenticado
+                ? $"Usuario: {SesionActual.NombreCompleto} | Rol: {SesionActual.Rol}"
+                : "Usuario: Administrador";
         }
 
-        private void lblTitulo_Click(object sender, EventArgs e)
+        private void btnVolver_Click(object? sender, EventArgs e)
         {
-
-        }
-
-        private void panel1_Paint(object sender, PaintEventArgs e)
-        {
-            
-        }
-
-        private void FormUsuarios_Paint(object sender, PaintEventArgs e)
-        {
-
+            Close();
         }
     }
 }

@@ -7,5 +7,4 @@ public class AplicacionVacunaRequestDto
     public DateTime FechaAplicacion { get; set; } = DateTime.Today;
     public DateTime? ProximaDosis { get; set; }
     public string? Observaciones { get; set; }
-    public decimal PrecioAplicado { get; set; }
 }

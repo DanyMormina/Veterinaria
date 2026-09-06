@@ -1,4 +1,4 @@
-using Veterinaria.CrossCutting.Session;
+using Veterinaria.WinForms.Session;
 
 namespace Veterinaria.WinForms.Views.Veterinario;
 

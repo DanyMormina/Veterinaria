@@ -2,7 +2,6 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.Infrastructure;
-using Veterinaria.Services;
 using Veterinaria.WinForms.Views.Admin;
 using Veterinaria.WinForms.Views.Auth;
 using Veterinaria.WinForms.Views.Secretario;
@@ -44,8 +43,6 @@ internal static class Program
             });
         });
 
-        // Registrar servicios de negocio y controladores del sistema
-        services.AddApplicationServices();
         services.AddApplicationControllers();
 
         // Registrar vistas de la interfaz de usuario en el contenedor

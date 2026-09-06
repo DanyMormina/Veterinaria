@@ -122,6 +122,14 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
 
             b.Property(v => v.PeriodoMesesRecomendado)
                 .HasDefaultValue(12);
+
+            b.Property(v => v.Precio)
+                .HasColumnType("decimal(18,2)");
+
+            b.HasOne(v => v.Especie)
+                .WithMany(e => e.Vacunas)
+                .HasForeignKey(v => v.IdEspecie)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // MetodoPago
@@ -337,11 +345,10 @@ public class VeterinariaDbContext(DbContextOptions<VeterinariaDbContext> options
         builder.Entity<AplicacionVacuna>(b =>
         {
             b.ToTable("AplicacionVacuna");
+            b.HasKey(a => a.Id);
+
             b.Property(a => a.Observaciones)
                 .HasMaxLength(250);
-
-            b.Property(a => a.PrecioAplicado)
-                .HasColumnType("decimal(18,2)");
 
             b.HasOne(a => a.Consulta)
                 .WithMany(c => c.AplicacionesVacuna)

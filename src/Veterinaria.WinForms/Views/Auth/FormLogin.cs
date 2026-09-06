@@ -1,8 +1,7 @@
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.Controllers.Controladores;
-using Veterinaria.CrossCutting.Security;
-using Veterinaria.CrossCutting.Session;
+using Veterinaria.WinForms.Session;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Views.Admin;
 using Veterinaria.WinForms.Views.Secretario;

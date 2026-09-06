@@ -2,9 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Veterinaria.Controllers\Veterinaria.Controllers.csproj" />
-    <ProjectReference Include="..\Veterinaria.CrossCutting\Veterinaria.CrossCutting.csproj" />
     <ProjectReference Include="..\Veterinaria.Infrastructure\Veterinaria.Infrastructure.csproj" />
-    <ProjectReference Include="..\Veterinaria.Services\Veterinaria.Services.csproj" />
   </ItemGroup>
 
   <ItemGroup>

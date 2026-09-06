@@ -106,10 +106,13 @@ GO
 -- Tabla: Vacuna
 CREATE TABLE dbo.Vacuna (
     Id BIGINT IDENTITY(1,1) NOT NULL,
+    IdEspecie BIGINT NOT NULL,
     Nombre NVARCHAR(100) NOT NULL,
     PeriodoMesesRecomendado INT NOT NULL CONSTRAINT DF_Vacuna_Periodo DEFAULT (12),
+    Precio DECIMAL(18,2) NOT NULL CONSTRAINT DF_Vacuna_Precio DEFAULT (0),
     Activo BIT NOT NULL CONSTRAINT DF_Vacuna_Activo DEFAULT (1),
-    CONSTRAINT PK_Vacuna PRIMARY KEY CLUSTERED (Id ASC)
+    CONSTRAINT PK_Vacuna PRIMARY KEY CLUSTERED (Id ASC),
+    CONSTRAINT FK_Vacuna_Especie FOREIGN KEY (IdEspecie) REFERENCES dbo.Especie (Id)
 );
 GO
 
@@ -180,8 +183,6 @@ CREATE TABLE dbo.AplicacionVacuna (
     FechaAplicacion DATE NOT NULL,
     ProximaDosis DATE NULL,
     Observaciones NVARCHAR(250) NULL,
-    PrecioAplicado DECIMAL(18,2) NOT NULL CONSTRAINT DF_AplicacionVacuna_Precio DEFAULT (0),
-    Activo BIT NOT NULL CONSTRAINT DF_AplicacionVacuna_Activo DEFAULT (1),
     CONSTRAINT PK_AplicacionVacuna PRIMARY KEY CLUSTERED (Id ASC),
     CONSTRAINT FK_AplicacionVacuna_Consulta FOREIGN KEY (IdConsulta) REFERENCES dbo.Consulta (Id) ON DELETE CASCADE,
     CONSTRAINT FK_AplicacionVacuna_Vacuna FOREIGN KEY (IdVacuna) REFERENCES dbo.Vacuna (Id)
@@ -210,6 +211,7 @@ CREATE NONCLUSTERED INDEX IX_Usuario_IdTipoUsuario ON dbo.Usuario(IdTipoUsuario)
 CREATE NONCLUSTERED INDEX IX_Mascota_IdPropietario ON dbo.Mascota(IdPropietario);
 CREATE NONCLUSTERED INDEX IX_Mascota_IdRaza ON dbo.Mascota(IdRaza);
 CREATE NONCLUSTERED INDEX IX_Raza_IdEspecie ON dbo.Raza(IdEspecie);
+CREATE NONCLUSTERED INDEX IX_Vacuna_IdEspecie ON dbo.Vacuna(IdEspecie);
 CREATE NONCLUSTERED INDEX IX_Consulta_IdUsuario ON dbo.Consulta(IdUsuario);
 CREATE NONCLUSTERED INDEX IX_Consulta_IdMascota ON dbo.Consulta(IdMascota);
 CREATE NONCLUSTERED INDEX IX_Consulta_FechaHora ON dbo.Consulta(FechaHora);
