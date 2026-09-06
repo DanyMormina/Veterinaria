@@ -1,8 +1,6 @@
-using Veterinaria.Domain.Comunes;
+namespace Veterinaria.Domain.Dtos;
 
-namespace Veterinaria.Domain.Entidades;
-
-public class Mascota : EntidadAuditable
+public class MascotaSolicitudDto
 {
     public long IdPropietario { get; set; }
     public long IdRaza { get; set; }
@@ -10,8 +8,4 @@ public class Mascota : EntidadAuditable
     public string Sexo { get; set; } = string.Empty;
     public DateTime? FechaNacimiento { get; set; }
     public string? Color { get; set; }
-
-    public Propietario Propietario { get; set; } = null!;
-    public Raza Raza { get; set; } = null!;
-    public ICollection<Consulta> Consultas { get; set; } = [];
 }

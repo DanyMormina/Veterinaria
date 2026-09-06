@@ -1,8 +1,6 @@
-using Veterinaria.Domain.Comunes;
+namespace Veterinaria.Domain.Dtos;
 
-namespace Veterinaria.Domain.Entidades;
-
-public class DetalleConsulta : EntidadAuditable
+public class DetalleConsultaSolicitudDto
 {
     public long IdConsulta { get; set; }
     public long IdTratamiento { get; set; }
@@ -10,7 +8,4 @@ public class DetalleConsulta : EntidadAuditable
     public decimal PrecioUnitario { get; set; }
     public decimal Subtotal { get; set; }
     public string? Indicaciones { get; set; }
-
-    public Consulta Consulta { get; set; } = null!;
-    public Tratamiento Tratamiento { get; set; } = null!;
 }

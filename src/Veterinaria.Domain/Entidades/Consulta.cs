@@ -2,7 +2,7 @@ using Veterinaria.Domain.Comunes;
 
 namespace Veterinaria.Domain.Entidades;
 
-public class Consulta : Auditable
+public class Consulta : EntidadAuditable
 {
     public long IdUsuario { get; set; }
     public long IdMascota { get; set; }

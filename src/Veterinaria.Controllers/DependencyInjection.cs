@@ -6,32 +6,32 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Métodos de extensión para el registro de Controladores en el contenedor de Inyección de Dependencias.
 /// </summary>
-public static class ControllerDependencyInjectionExtensions
+public static class ExtensionesInyeccionControladores
 {
     /// <summary>
     /// Registra todos los Controladores (Transient) de la solución.
     /// </summary>
     /// <param name="services">Colección de servicios del contenedor de dependencias.</param>
     /// <returns>La misma colección para encadenamiento fluido.</returns>
-    public static IServiceCollection AddApplicationControllers(this IServiceCollection services)
+    public static IServiceCollection AgregarControladoresAplicacion(this IServiceCollection services)
     {
-        services.AddTransient<TipoUsuarioController>();
-        services.AddTransient<EspecieController>();
-        services.AddTransient<RazaController>();
-        services.AddTransient<VacunaController>();
-        services.AddTransient<MetodoPagoController>();
+        services.AddTransient<TipoUsuarioControlador>();
+        services.AddTransient<EspecieControlador>();
+        services.AddTransient<RazaControlador>();
+        services.AddTransient<VacunaControlador>();
+        services.AddTransient<MetodoPagoControlador>();
 
-        services.AddTransient<UsuarioController>();
+        services.AddTransient<UsuarioControlador>();
 
-        services.AddTransient<PropietarioController>();
-        services.AddTransient<MascotaController>();
+        services.AddTransient<PropietarioControlador>();
+        services.AddTransient<MascotaControlador>();
 
-        services.AddTransient<ConsultaController>();
-        services.AddTransient<TratamientoController>();
-        services.AddTransient<DetalleConsultaController>();
-        services.AddTransient<AplicacionVacunaController>();
+        services.AddTransient<ConsultaControlador>();
+        services.AddTransient<TratamientoControlador>();
+        services.AddTransient<DetalleConsultaControlador>();
+        services.AddTransient<AplicacionVacunaControlador>();
 
-        services.AddTransient<PagoController>();
+        services.AddTransient<PagoControlador>();
 
         return services;
     }

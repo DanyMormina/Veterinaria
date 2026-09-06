@@ -2,7 +2,7 @@ using Veterinaria.Domain.Comunes;
 
 namespace Veterinaria.Domain.Entidades;
 
-public class Vacuna : Auditable
+public class Vacuna : EntidadAuditable
 {
     public long IdEspecie { get; set; }
     public string Nombre { get; set; } = string.Empty;

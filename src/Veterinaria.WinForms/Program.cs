@@ -2,10 +2,10 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.Infrastructure;
-using Veterinaria.WinForms.Views.Admin;
-using Veterinaria.WinForms.Views.Auth;
-using Veterinaria.WinForms.Views.Secretario;
-using Veterinaria.WinForms.Views.Veterinario;
+using Veterinaria.WinForms.Vistas.Administrador;
+using Veterinaria.WinForms.Vistas.Autenticacion;
+using Veterinaria.WinForms.Vistas.Secretario;
+using Veterinaria.WinForms.Vistas.Veterinario;
 
 namespace Veterinaria.WinForms;
 
@@ -14,7 +14,7 @@ namespace Veterinaria.WinForms;
 /// </summary>
 internal static class Program
 {
-    private const string FallbackConnectionString =
+    private const string CadenaConexionRespaldo =
         "Server=localhost,1433;Database=VeterinariaDb;User Id=sa;Password=Pass123456!;TrustServerCertificate=True;MultipleActiveResultSets=true;";
 
     /// <summary>
@@ -27,14 +27,14 @@ internal static class Program
         ApplicationConfiguration.Initialize();
 
         // 2. Obtener cadena de conexión desde appsettings.json o fallback por defecto
-        var connectionString = ObtenerCadenaConexion();
+        var cadenaConexion = ObtenerCadenaConexion();
 
         // 3. Configurar contenedor de Inyección de Dependencias
         var services = new ServiceCollection();
 
-        services.AddDbContext<VeterinariaDbContext>(options =>
+        services.AddDbContext<ContextoVeterinaria>(options =>
         {
-            options.UseSqlServer(connectionString, sqlOptions =>
+            options.UseSqlServer(cadenaConexion, sqlOptions =>
             {
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
@@ -43,10 +43,10 @@ internal static class Program
             });
         });
 
-        services.AddApplicationControllers();
+        services.AgregarControladoresAplicacion();
 
         // Registrar vistas de la interfaz de usuario en el contenedor
-        services.AddTransient<FormLogin>();
+        services.AddTransient<FormInicioSesion>();
         services.AddTransient<FormAdminPrincipal>();
         services.AddTransient<FormVeterinarioPrincipal>();
         services.AddTransient<FormSecretarioPrincipal>();
@@ -54,28 +54,28 @@ internal static class Program
         var serviceProvider = services.BuildServiceProvider();
 
         // 4. Validador previo e inicializador de base de datos
-        if (!ValidarEInicializarBaseDeDatos(serviceProvider, connectionString))
+        if (!ValidarEInicializarBaseDeDatos(serviceProvider, cadenaConexion))
         {
             return;
         }
 
         // 5. Resolver y ejecutar el formulario de inicio de sesión
-        var formLogin = serviceProvider.GetRequiredService<FormLogin>();
+        var formLogin = serviceProvider.GetRequiredService<FormInicioSesion>();
         Application.Run(formLogin);
     }
 
     /// <summary>
     /// Valida que el servidor de base de datos esté accesible e inicializa datos iniciales si no existen.
     /// </summary>
-    private static bool ValidarEInicializarBaseDeDatos(IServiceProvider serviceProvider, string connectionString)
+    private static bool ValidarEInicializarBaseDeDatos(IServiceProvider serviceProvider, string cadenaConexion)
     {
         try
         {
             using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<VeterinariaDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ContextoVeterinaria>();
 
             // Inicializar esquema y sembrado inicial de datos si la base está vacía
-            DatabaseSeeder.InicializarAsync(dbContext).GetAwaiter().GetResult();
+            InicializadorDatos.InicializarAsync(dbContext).GetAwaiter().GetResult();
 
             return true;
         }
@@ -83,17 +83,17 @@ internal static class Program
         {
             MostrarErrorConexion(
                 "Error al conectar con la base de datos SQL Server.",
-                connectionString,
+                cadenaConexion,
                 ex.Message);
             return false;
         }
     }
 
-    private static void MostrarErrorConexion(string mensajePrincipal, string connectionString, string detalleTecnico)
+    private static void MostrarErrorConexion(string mensajePrincipal, string cadenaConexion, string detalleTecnico)
     {
         var mensaje = $"{mensajePrincipal}\n\n" +
                       $"Detalle:\n{detalleTecnico}\n\n" +
-                      $"Cadena de conexión configurada:\n{connectionString}\n\n" +
+                      $"Cadena de conexión configurada:\n{cadenaConexion}\n\n" +
                       "Por favor verifique que el servicio de SQL Server / LocalDB esté iniciado y accesible antes de abrir la aplicación.";
 
         MessageBox.Show(
@@ -131,6 +131,6 @@ internal static class Program
             // Ignorar y usar fallback
         }
 
-        return FallbackConnectionString;
+        return CadenaConexionRespaldo;
     }
 }
