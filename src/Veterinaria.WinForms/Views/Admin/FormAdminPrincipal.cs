@@ -13,7 +13,32 @@ public partial class FormAdminPrincipal : Form
     {
         _serviceProvider = serviceProvider;
         InitializeComponent();
+        RestaurarImagenesCompactas();
     }
+
+    private void RestaurarImagenesCompactas()
+    {
+        BTUSUARIOS.Image = CompactarImagenTarjeta(BTUSUARIOS.Image);
+        BTPROPIETARIOS.Image = CompactarImagenTarjeta(BTPROPIETARIOS.Image);
+        BTMASCOTAS.Image = CompactarImagenTarjeta(BTMASCOTAS.Image);
+        BTREPORTES.Image = CompactarImagenTarjeta(BTREPORTES.Image);
+    }
+
+    private static Image? CompactarImagenTarjeta(Image? original)
+    {
+        if (original is null)
+        {
+            return null;
+        }
+
+        const int altoMaximo = 186;
+        var alto = Math.Min(altoMaximo, original.Height);
+        var ancho = Math.Max(1, (int)Math.Round(original.Width * (alto / (double)original.Height)));
+        var compacta = new Bitmap(original, new Size(ancho, alto));
+        original.Dispose();
+        return compacta;
+    }
+
 
     private void FormAdminPrincipal_Load(object? sender, EventArgs e)
     {
