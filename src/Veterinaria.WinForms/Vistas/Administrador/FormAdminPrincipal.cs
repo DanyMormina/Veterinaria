@@ -74,4 +74,9 @@ public partial class FormAdminPrincipal : Form
         FormReportes vistaReportes = new FormReportes();
         vistaReportes.ShowDialog();
     }
+
+    private void pnlContenido_Paint(object sender, PaintEventArgs e)
+    {
+
+    }
 }

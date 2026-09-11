@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.WinForms.Sesion;
-using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Vistas.Administrador;
 using Veterinaria.WinForms.Vistas.Secretario;
 using Veterinaria.WinForms.Vistas.Veterinario;
@@ -10,24 +9,15 @@ using Veterinaria.WinForms.Vistas.Veterinario;
 namespace Veterinaria.WinForms.Vistas.Autenticacion;
 
 /// <summary>
-/// Formulario de autenticación compacto (200x200) con paleta romantic executive y ruteo basado en roles/tipos de usuario.
+/// Formulario de autenticación con estética Ejecutivo Romántico Pastel y ruteo basado en roles.
 /// </summary>
 public partial class FormInicioSesion : Form
 {
-    private const string PlaceholderUsuario = "Usuario";
-    private const string PlaceholderContrasena = "Contraseña";
+    private const string PlaceholderUsuario = "Ingrese su usuario";
+    private const string PlaceholderContrasena = "Ingrese su contraseña";
 
     private readonly UsuarioControlador _usuarioControlador;
     private readonly IServiceProvider _serviceProvider;
-
-    [DllImport("user32.dll")]
-    private static extern bool ReleaseCapture();
-
-    [DllImport("user32.dll")]
-    private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-
-    private const int WM_NCLBUTTONDOWN = 0xA1;
-    private const int HT_CAPTION = 0x2;
 
     public FormInicioSesion(
         UsuarioControlador usuarioControlador,
@@ -37,18 +27,23 @@ public partial class FormInicioSesion : Form
         _serviceProvider = serviceProvider;
 
         InitializeComponent();
+        CargarImagenLogo();
     }
 
-    private void FormInicioSesion_MouseDown(object? sender, MouseEventArgs e)
+    /// <summary>
+    /// Carga la ilustración representativa de la clínica veterinaria en el panel lateral de autenticación.
+    /// </summary>
+    private void CargarImagenLogo()
     {
-        if (e.Button == MouseButtons.Left)
+        var ruta = Path.Combine(AppContext.BaseDirectory, "Resources", "vet-login.png");
+        if (File.Exists(ruta))
         {
-            ReleaseCapture();
-            SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            using var original = Image.FromFile(ruta);
+            picLogo.Image = new Bitmap(original);
         }
     }
 
-    private void btnCerrar_Click(object? sender, EventArgs e)
+    private void btnSalir_Click(object? sender, EventArgs e)
     {
         Application.Exit();
     }
@@ -69,7 +64,7 @@ public partial class FormInicioSesion : Form
         if (txtUsuario.Text == PlaceholderUsuario)
         {
             txtUsuario.Text = string.Empty;
-            txtUsuario.ForeColor = Color.FromArgb(58, 53, 59);
+            txtUsuario.ForeColor = Color.FromArgb(45, 40, 46);
         }
     }
 
@@ -78,7 +73,7 @@ public partial class FormInicioSesion : Form
         if (string.IsNullOrWhiteSpace(txtUsuario.Text))
         {
             txtUsuario.Text = PlaceholderUsuario;
-            txtUsuario.ForeColor = Color.FromArgb(142, 130, 138);
+            txtUsuario.ForeColor = Color.FromArgb(160, 140, 148);
         }
     }
 
@@ -88,7 +83,7 @@ public partial class FormInicioSesion : Form
         {
             txtContrasena.Text = string.Empty;
             txtContrasena.UseSystemPasswordChar = true;
-            txtContrasena.ForeColor = Color.FromArgb(58, 53, 59);
+            txtContrasena.ForeColor = Color.FromArgb(45, 40, 46);
         }
     }
 
@@ -98,7 +93,7 @@ public partial class FormInicioSesion : Form
         {
             txtContrasena.UseSystemPasswordChar = false;
             txtContrasena.Text = PlaceholderContrasena;
-            txtContrasena.ForeColor = Color.FromArgb(142, 130, 138);
+            txtContrasena.ForeColor = Color.FromArgb(160, 140, 148);
         }
     }
 
@@ -116,6 +111,7 @@ public partial class FormInicioSesion : Form
         var nombreUsuario = txtUsuario.Text.Trim();
         var contrasena = txtContrasena.Text;
 
+        // Validaciones de campos de entrada
         if (nombreUsuario == PlaceholderUsuario || string.IsNullOrWhiteSpace(nombreUsuario))
         {
             MostrarError("Ingrese su nombre de usuario.");
@@ -131,12 +127,12 @@ public partial class FormInicioSesion : Form
         }
 
         btnIngresar.Enabled = false;
-        btnIngresar.Text = "VALIDANDO...";
+        btnIngresar.Text = "Validando...";
         lblError.Visible = false;
 
         try
         {
-            // Autenticación asíncrona mediante el controlador
+            // 1. Autenticación asíncrona mediante el controlador de negocio
             var resultadoAuth = await _usuarioControlador.AutenticarAsync(nombreUsuario, contrasena);
 
             if (!resultadoAuth.EsExitoso || resultadoAuth.Valor is null)
@@ -147,16 +143,17 @@ public partial class FormInicioSesion : Form
 
             var usuario = resultadoAuth.Valor;
 
+            // 2. Validación de estado de usuario activo
             if (!usuario.Activo)
             {
                 MostrarError("El usuario se encuentra inactivo.");
                 return;
             }
 
-            // Establecer sesión global en memoria
+            // 3. Establecer sesión global en memoria
             SesionActual.IniciarSesion(usuario);
 
-            // Despachar al formulario correspondiente según el tipo de usuario
+            // 4. Despachar al formulario correspondiente según el tipo de usuario / rol
             DespacharSegunRol(usuario.NombreTipoUsuario);
         }
         catch (Exception ex)
@@ -166,10 +163,13 @@ public partial class FormInicioSesion : Form
         finally
         {
             btnIngresar.Enabled = true;
-            btnIngresar.Text = "INGRESAR";
+            btnIngresar.Text = "🐾  Ingresar";
         }
     }
 
+    /// <summary>
+    /// Rutea al usuario autenticado hacia su panel correspondiente según el rol asignado.
+    /// </summary>
     private void DespacharSegunRol(string rol)
     {
         Form formularioDestino;
@@ -189,7 +189,7 @@ public partial class FormInicioSesion : Form
         }
         else
         {
-            // Fallback por defecto al panel principal
+            // Fallback por defecto al panel administrador
             formularioDestino = _serviceProvider.GetRequiredService<FormAdminPrincipal>();
         }
 

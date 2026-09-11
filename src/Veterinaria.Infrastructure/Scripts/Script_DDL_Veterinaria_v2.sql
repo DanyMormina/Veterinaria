@@ -39,8 +39,8 @@ GO
 CREATE TABLE dbo.Usuario (
     Id BIGINT IDENTITY(1,1) NOT NULL,
     IdTipoUsuario BIGINT NOT NULL,
-    Username NVARCHAR(50) NOT NULL,
-    PasswordHash NVARCHAR(255) NOT NULL,
+    NombreUsuario NVARCHAR(50) NOT NULL,
+    HashContrasena NVARCHAR(255) NOT NULL,
     Nombre NVARCHAR(100) NOT NULL,
     Apellido NVARCHAR(100) NOT NULL,
     DNI NVARCHAR(20) NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE dbo.Usuario (
     Activo BIT NOT NULL CONSTRAINT DF_Usuario_Activo DEFAULT (1),
     CONSTRAINT PK_Usuario PRIMARY KEY CLUSTERED (Id ASC),
     CONSTRAINT FK_Usuario_TipoUsuario FOREIGN KEY (IdTipoUsuario) REFERENCES dbo.TipoUsuario (Id),
-    CONSTRAINT UQ_Usuario_Username UNIQUE (Username)
+    CONSTRAINT UQ_Usuario_NombreUsuario UNIQUE (NombreUsuario)
 );
 GO
 
@@ -59,7 +59,7 @@ CREATE TABLE dbo.Propietario (
     Nombre NVARCHAR(100) NOT NULL,
     Apellido NVARCHAR(100) NOT NULL,
     Telefono NVARCHAR(30) NULL,
-    Email NVARCHAR(100) NULL,
+    CorreoElectronico NVARCHAR(100) NULL,
     Direccion NVARCHAR(200) NULL,
     Activo BIT NOT NULL CONSTRAINT DF_Propietario_Activo DEFAULT (1),
     CONSTRAINT PK_Propietario PRIMARY KEY CLUSTERED (Id ASC),
@@ -265,7 +265,7 @@ SET IDENTITY_INSERT dbo.MetodoPago OFF;
 GO
 
 SET IDENTITY_INSERT dbo.Usuario ON;
-INSERT INTO dbo.Usuario (Id, IdTipoUsuario, Username, PasswordHash, Nombre, Apellido, DNI, Matricula, Activo)
+INSERT INTO dbo.Usuario (Id, IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, Activo)
 VALUES (1, 1, 'admin', '$2a$11$q9hM1K9oA5F8VzE9hX2Hke0bT.G7j5Z8U1j.H7y1N8r9o1V7e8i9a', 'Administrador', 'Sistema', '12345678', 'ADM-001', 1);
 SET IDENTITY_INSERT dbo.Usuario OFF;
 GO

@@ -20,7 +20,6 @@ partial class FormAdminPrincipal
 
     private void InitializeComponent()
     {
-        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormAdminPrincipal));
         pnlEncabezado = new Panel();
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
@@ -92,7 +91,6 @@ partial class FormAdminPrincipal
         // BTUSUARIOS
         // 
         BTUSUARIOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        BTUSUARIOS.Image = (Image)resources.GetObject("BTUSUARIOS.Image");
         BTUSUARIOS.ImageAlign = ContentAlignment.TopCenter;
         BTUSUARIOS.Location = new Point(64, 143);
         BTUSUARIOS.Name = "BTUSUARIOS";
@@ -107,7 +105,6 @@ partial class FormAdminPrincipal
         // BTPROPIETARIOS
         // 
         BTPROPIETARIOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        BTPROPIETARIOS.Image = (Image)resources.GetObject("BTPROPIETARIOS.Image");
         BTPROPIETARIOS.ImageAlign = ContentAlignment.TopCenter;
         BTPROPIETARIOS.Location = new Point(319, 143);
         BTPROPIETARIOS.Name = "BTPROPIETARIOS";
@@ -122,7 +119,6 @@ partial class FormAdminPrincipal
         // BTMASCOTAS
         // 
         BTMASCOTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        BTMASCOTAS.Image = (Image)resources.GetObject("BTMASCOTAS.Image");
         BTMASCOTAS.ImageAlign = ContentAlignment.TopCenter;
         BTMASCOTAS.Location = new Point(568, 143);
         BTMASCOTAS.Name = "BTMASCOTAS";
@@ -137,10 +133,10 @@ partial class FormAdminPrincipal
         // BTREPORTES
         // 
         BTREPORTES.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        BTREPORTES.Image = (Image)resources.GetObject("BTREPORTES.Image");
         BTREPORTES.ImageAlign = ContentAlignment.TopCenter;
         BTREPORTES.Location = new Point(811, 143);
         BTREPORTES.Name = "BTREPORTES";
+        BTREPORTES.Padding = new Padding(8, 8, 8, 12);
         BTREPORTES.Size = new Size(214, 277);
         BTREPORTES.TabIndex = 2;
         BTREPORTES.Text = "REPORTES";
@@ -160,6 +156,7 @@ partial class FormAdminPrincipal
         pnlContenido.Name = "pnlContenido";
         pnlContenido.Size = new Size(1100, 628);
         pnlContenido.TabIndex = 1;
+        pnlContenido.Paint += pnlContenido_Paint;
         // 
         // FormAdminPrincipal
         // 

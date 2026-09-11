@@ -23,4 +23,16 @@ public partial class FormSecretarioPrincipal : Form
 
         lblInfoEstado.Text = $"Operando como {SesionActual.NombreUsuario} - {DateTime.Now:dd/MM/yyyy}";
     }
+
+    private void BTPROPIETARIOS_Click(object? sender, EventArgs e)
+    {
+        using var vistaPropietarios = new FormPropietarios();
+        vistaPropietarios.ShowDialog(this);
+    }
+
+    private void BTMASCOTAS_Click(object? sender, EventArgs e)
+    {
+        using var vistaMascotas = new FormMascotas();
+        vistaMascotas.ShowDialog(this);
+    }
 }
