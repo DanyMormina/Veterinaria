@@ -48,6 +48,7 @@ internal static class Program
         // Registrar vistas de la interfaz de usuario en el contenedor
         services.AddTransient<FormInicioSesion>();
         services.AddTransient<FormAdminPrincipal>();
+        services.AddTransient<FormUsuarios>();
         services.AddTransient<FormVeterinarioPrincipal>();
         services.AddTransient<FormSecretarioPrincipal>();
 

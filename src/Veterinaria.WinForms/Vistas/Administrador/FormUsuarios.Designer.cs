@@ -48,6 +48,7 @@
             btnGuardar = new Button();
             btnModificar = new Button();
             btnCancelar = new Button();
+            btnDesactivar = new Button();
             btnVolver = new Button();
             pnlListado = new Panel();
             lblBuscar = new Label();
@@ -348,6 +349,7 @@
             pnlBotones.Controls.Add(btnGuardar);
             pnlBotones.Controls.Add(btnModificar);
             pnlBotones.Controls.Add(btnCancelar);
+            pnlBotones.Controls.Add(btnDesactivar);
             pnlBotones.Controls.Add(btnVolver);
             pnlBotones.Location = new Point(16, 550);
             pnlBotones.Name = "pnlBotones";
@@ -365,6 +367,7 @@
             btnNuevo.Size = new Size(100, 32);
             btnNuevo.Text = "Nuevo";
             btnNuevo.UseVisualStyleBackColor = false;
+            btnNuevo.Click += btnNuevo_Click;
             // 
             // btnGuardar
             // 
@@ -377,6 +380,7 @@
             btnGuardar.Size = new Size(100, 32);
             btnGuardar.Text = "Guardar";
             btnGuardar.UseVisualStyleBackColor = false;
+            btnGuardar.Click += btnGuardar_Click;
             // 
             // btnModificar
             // 
@@ -389,6 +393,7 @@
             btnModificar.Size = new Size(100, 32);
             btnModificar.Text = "Modificar";
             btnModificar.UseVisualStyleBackColor = false;
+            btnModificar.Click += btnModificar_Click;
             // 
             // btnCancelar
             // 
@@ -401,6 +406,20 @@
             btnCancelar.Size = new Size(100, 32);
             btnCancelar.Text = "Cancelar";
             btnCancelar.UseVisualStyleBackColor = false;
+            btnCancelar.Click += btnCancelar_Click;
+            // 
+            // btnDesactivar
+            // 
+            btnDesactivar.BackColor = Color.FromArgb(196, 78, 86);
+            btnDesactivar.FlatAppearance.BorderColor = Color.FromArgb(164, 54, 62);
+            btnDesactivar.FlatStyle = FlatStyle.Flat;
+            btnDesactivar.ForeColor = Color.White;
+            btnDesactivar.Location = new Point(216, 44);
+            btnDesactivar.Name = "btnDesactivar";
+            btnDesactivar.Size = new Size(208, 32);
+            btnDesactivar.Text = "Desactivar";
+            btnDesactivar.UseVisualStyleBackColor = false;
+            btnDesactivar.Click += btnDesactivar_Click;
             // 
             // btnVolver
             // 
@@ -503,6 +522,7 @@
             dgvUsuarios.RowHeadersVisible = false;
             dgvUsuarios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvUsuarios.Size = new Size(606, 558);
+            dgvUsuarios.CellClick += dgvUsuarios_CellClick;
             // 
             // columnas
             // 
@@ -582,6 +602,7 @@
         private Button btnGuardar;
         private Button btnModificar;
         private Button btnCancelar;
+        private Button btnDesactivar;
         private Button btnVolver;
         private Panel pnlListado;
         private Label lblBuscar;

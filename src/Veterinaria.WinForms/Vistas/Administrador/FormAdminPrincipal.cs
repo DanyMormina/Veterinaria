@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Administrador;
@@ -32,9 +33,7 @@ public partial class FormAdminPrincipal : Form
 
     private void BTUSUARIOS_Click(object sender, EventArgs e)
     {
-        // Como ambos formularios están en la carpeta Admin, Visual Studio los conecta directamente
-        FormUsuarios vistaUsuarios = new FormUsuarios();
-
+        var vistaUsuarios = _serviceProvider.GetRequiredService<FormUsuarios>();
         vistaUsuarios.ShowDialog();
     }
 
