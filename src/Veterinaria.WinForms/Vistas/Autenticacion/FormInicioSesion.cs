@@ -98,10 +98,9 @@ public partial class FormInicioSesion : Form
         var nombreUsuario = txtUsuario.Text.Trim();
         var contrasena = txtContrasena.Text;
 
-        // Validaciones de campos de entrada
         if (nombreUsuario == PlaceholderUsuario || string.IsNullOrWhiteSpace(nombreUsuario))
         {
-            MostrarError("Ingrese su nombre de usuario.");
+            MostrarError("Ingrese su usuario.");
             txtUsuario.Focus();
             return;
         }
@@ -119,33 +118,25 @@ public partial class FormInicioSesion : Form
 
         try
         {
-            // 1. Autenticación asíncrona mediante el controlador de negocio
+            // Credenciales existentes en el proyecto (InicializadorDatos):
+            // admin / admin123 → Administrador
+            // vet / vet123 → Veterinario
+            // secretario / sec123 → Secretario
             var resultadoAuth = await _usuarioControlador.AutenticarAsync(nombreUsuario, contrasena);
 
-            if (!resultadoAuth.EsExitoso || resultadoAuth.Valor is null)
+            if (!resultadoAuth.EsExitoso || resultadoAuth.Valor is null || !resultadoAuth.Valor.Activo)
             {
-                MostrarError(resultadoAuth.Mensaje);
+                MostrarError("Usuario o contraseña incorrectos.");
                 return;
             }
 
             var usuario = resultadoAuth.Valor;
-
-            // 2. Validación de estado de usuario activo
-            if (!usuario.Activo)
-            {
-                MostrarError("El usuario se encuentra inactivo.");
-                return;
-            }
-
-            // 3. Establecer sesión global en memoria
             SesionActual.IniciarSesion(usuario);
-
-            // 4. Despachar al formulario correspondiente según el tipo de usuario / rol
             DespacharSegunRol(usuario.NombreTipoUsuario);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            MostrarError($"Error: {ex.Message}");
+            MostrarError("Usuario o contraseña incorrectos.");
         }
         finally
         {
