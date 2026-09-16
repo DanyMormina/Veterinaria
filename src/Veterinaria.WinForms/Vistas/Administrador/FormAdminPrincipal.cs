@@ -49,6 +49,11 @@ public partial class FormAdminPrincipal : Form
         vistaReportes.ShowDialog();
     }
 
+    private void btnCerrarSesion_Click(object? sender, EventArgs e)
+    {
+        Close();
+    }
+
     private void pnlContenido_Paint(object sender, PaintEventArgs e)
     {
 

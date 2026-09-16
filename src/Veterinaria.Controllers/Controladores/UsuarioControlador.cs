@@ -14,6 +14,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
         try
         {
             var usuarios = await context.Usuarios
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Include(u => u.TipoUsuario)
                 .Select(u => Mapear(u))
@@ -182,7 +183,9 @@ public class UsuarioControlador(ContextoVeterinaria context)
             if (string.IsNullOrWhiteSpace(solicitud.DNI))
                 return Resultado.Falla("El DNI del usuario es obligatorio.");
 
-            var entidad = await context.Usuarios.FirstOrDefaultAsync(u => u.Id == id);
+            var entidad = await context.Usuarios
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el usuario con ID {id}.");
 
@@ -223,7 +226,9 @@ public class UsuarioControlador(ContextoVeterinaria context)
             if (id <= 0)
                 return Resultado.Falla("El identificador del usuario debe ser mayor a cero.");
 
-            var entidad = await context.Usuarios.FirstOrDefaultAsync(u => u.Id == id);
+            var entidad = await context.Usuarios
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el usuario con ID {id}.");
 

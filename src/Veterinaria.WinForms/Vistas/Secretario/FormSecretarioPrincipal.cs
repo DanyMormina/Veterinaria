@@ -35,4 +35,9 @@ public partial class FormSecretarioPrincipal : Form
         using var vistaMascotas = new FormMascotas();
         vistaMascotas.ShowDialog(this);
     }
+
+    private void btnCerrarSesion_Click(object? sender, EventArgs e)
+    {
+        Close();
+    }
 }

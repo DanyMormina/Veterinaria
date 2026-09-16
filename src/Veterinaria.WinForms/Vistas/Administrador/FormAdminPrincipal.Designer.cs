@@ -24,6 +24,7 @@ partial class FormAdminPrincipal
         pnlEncabezado = new Panel();
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
+        btnCerrarSesion = new Button();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         BTUSUARIOS = new Button();
@@ -49,6 +50,7 @@ partial class FormAdminPrincipal
         pnlEncabezado.BackColor = Color.FromArgb(200, 138, 150);
         pnlEncabezado.Controls.Add(lblTitulo);
         pnlEncabezado.Controls.Add(lblUsuarioSesion);
+        pnlEncabezado.Controls.Add(btnCerrarSesion);
         pnlEncabezado.Dock = DockStyle.Top;
         pnlEncabezado.Location = new Point(0, 0);
         pnlEncabezado.Name = "pnlEncabezado";
@@ -70,15 +72,32 @@ partial class FormAdminPrincipal
         // 
         // lblUsuarioSesion
         // 
-        lblUsuarioSesion.Dock = DockStyle.Right;
+        lblUsuarioSesion.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         lblUsuarioSesion.Font = new Font("Segoe UI", 9.75F);
         lblUsuarioSesion.ForeColor = Color.FromArgb(250, 244, 244);
-        lblUsuarioSesion.Location = new Point(684, 0);
+        lblUsuarioSesion.Location = new Point(520, 0);
         lblUsuarioSesion.Name = "lblUsuarioSesion";
-        lblUsuarioSesion.Size = new Size(400, 50);
+        lblUsuarioSesion.Size = new Size(420, 50);
         lblUsuarioSesion.TabIndex = 1;
         lblUsuarioSesion.Text = "Usuario: Admin";
         lblUsuarioSesion.TextAlign = ContentAlignment.MiddleRight;
+        // 
+        // btnCerrarSesion
+        // 
+        btnCerrarSesion.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnCerrarSesion.BackColor = Color.FromArgb(180, 110, 120);
+        btnCerrarSesion.Cursor = Cursors.Hand;
+        btnCerrarSesion.FlatAppearance.BorderColor = Color.FromArgb(160, 90, 100);
+        btnCerrarSesion.FlatStyle = FlatStyle.Flat;
+        btnCerrarSesion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnCerrarSesion.ForeColor = Color.White;
+        btnCerrarSesion.Location = new Point(952, 10);
+        btnCerrarSesion.Name = "btnCerrarSesion";
+        btnCerrarSesion.Size = new Size(124, 30);
+        btnCerrarSesion.TabIndex = 2;
+        btnCerrarSesion.Text = "Cerrar sesión";
+        btnCerrarSesion.UseVisualStyleBackColor = false;
+        btnCerrarSesion.Click += btnCerrarSesion_Click;
         // 
         // barraEstado
         // 
@@ -239,6 +258,7 @@ partial class FormAdminPrincipal
     private Button BTPROPIETARIOS;
     private Button BTMASCOTAS;
     private Button BTREPORTES;
+    private Button btnCerrarSesion;
     private PictureBox picReportes;
     private PictureBox picPropietarios;
     private PictureBox picUsuarios;

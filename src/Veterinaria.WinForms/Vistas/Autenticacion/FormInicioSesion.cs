@@ -171,9 +171,24 @@ public partial class FormInicioSesion : Form
             formularioDestino = _serviceProvider.GetRequiredService<FormAdminPrincipal>();
         }
 
-        formularioDestino.FormClosed += (_, _) => Application.Exit();
+        formularioDestino.FormClosed += (_, _) =>
+        {
+            SesionActual.CerrarSesion();
+            LimpiarCamposLogin();
+            lblError.Visible = false;
+            Show();
+        };
         Hide();
         formularioDestino.Show();
+    }
+
+    private void LimpiarCamposLogin()
+    {
+        txtUsuario.Text = PlaceholderUsuario;
+        txtUsuario.ForeColor = Color.FromArgb(160, 140, 148);
+        txtContrasena.UseSystemPasswordChar = false;
+        txtContrasena.Text = PlaceholderContrasena;
+        txtContrasena.ForeColor = Color.FromArgb(160, 140, 148);
     }
 
     private void MostrarError(string mensaje)

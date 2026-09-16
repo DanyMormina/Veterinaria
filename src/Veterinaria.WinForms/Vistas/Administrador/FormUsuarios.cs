@@ -86,8 +86,6 @@ public partial class FormUsuarios : Form
                 usuario.Apellido,
                 usuario.NombreUsuario,
                 usuario.NombreTipoUsuario,
-                usuario.DNI,
-                string.Empty,
                 usuario.Activo ? "Activo" : "Inactivo");
         }
     }
@@ -211,6 +209,38 @@ public partial class FormUsuarios : Form
         LimpiarFormulario();
     }
 
+    private void btnBuscar_Click(object? sender, EventArgs e)
+    {
+        var texto = txtBuscar.Text.Trim();
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            MostrarUsuariosEnGrilla(_usuarios);
+            return;
+        }
+
+        var filtrados = _usuarios.Where(u =>
+            u.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+            u.Apellido.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+            u.NombreUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+            u.NombreTipoUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+            u.DNI.Contains(texto, StringComparison.OrdinalIgnoreCase));
+
+        MostrarUsuariosEnGrilla(filtrados);
+        LimpiarFormularioSinTocarGrilla();
+    }
+
+    private void btnActivos_Click(object? sender, EventArgs e)
+    {
+        MostrarUsuariosEnGrilla(_usuarios.Where(u => u.Activo));
+        LimpiarFormularioSinTocarGrilla();
+    }
+
+    private void btnInactivos_Click(object? sender, EventArgs e)
+    {
+        MostrarUsuariosEnGrilla(_usuarios.Where(u => !u.Activo));
+        LimpiarFormularioSinTocarGrilla();
+    }
+
     private void btnVolver_Click(object? sender, EventArgs e)
     {
         Close();
@@ -304,6 +334,12 @@ public partial class FormUsuarios : Form
 
     private void LimpiarFormulario()
     {
+        LimpiarFormularioSinTocarGrilla();
+        dgvUsuarios.ClearSelection();
+    }
+
+    private void LimpiarFormularioSinTocarGrilla()
+    {
         _idSeleccionado = null;
         txtNombre.Clear();
         txtApellido.Clear();
@@ -316,6 +352,5 @@ public partial class FormUsuarios : Form
         rbHombre.Checked = false;
         rbMujer.Checked = false;
         cboPerfil.SelectedIndex = -1;
-        dgvUsuarios.ClearSelection();
     }
 }

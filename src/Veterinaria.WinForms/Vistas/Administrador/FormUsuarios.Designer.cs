@@ -478,6 +478,7 @@
             btnBuscar.Size = new Size(90, 27);
             btnBuscar.Text = "Buscar";
             btnBuscar.UseVisualStyleBackColor = false;
+            btnBuscar.Click += btnBuscar_Click;
             // 
             // btnActivos
             // 
@@ -491,6 +492,7 @@
             btnActivos.Size = new Size(104, 27);
             btnActivos.Text = "Activos";
             btnActivos.UseVisualStyleBackColor = false;
+            btnActivos.Click += btnActivos_Click;
             // 
             // btnInactivos
             // 
@@ -504,6 +506,7 @@
             btnInactivos.Size = new Size(110, 27);
             btnInactivos.Text = "Inactivos";
             btnInactivos.UseVisualStyleBackColor = false;
+            btnInactivos.Click += btnInactivos_Click;
             // 
             // dgvUsuarios
             // 
@@ -514,7 +517,7 @@
             dgvUsuarios.BackgroundColor = Color.White;
             dgvUsuarios.BorderStyle = BorderStyle.FixedSingle;
             dgvUsuarios.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvUsuarios.Columns.AddRange(new DataGridViewColumn[] { colId, colNombre, colApellido, colUsuario, colPerfil, colDni, colCorreoElectronico, colEstado });
+            dgvUsuarios.Columns.AddRange(new DataGridViewColumn[] { colId, colNombre, colApellido, colUsuario, colPerfil, colEstado });
             dgvUsuarios.Location = new Point(10, 48);
             dgvUsuarios.MultiSelect = false;
             dgvUsuarios.Name = "dgvUsuarios";
@@ -528,6 +531,7 @@
             // 
             colId.HeaderText = "ID";
             colId.Name = "colId";
+            colId.Visible = false;
             colNombre.HeaderText = "Nombre";
             colNombre.Name = "colNombre";
             colApellido.HeaderText = "Apellido";
@@ -536,10 +540,6 @@
             colUsuario.Name = "colUsuario";
             colPerfil.HeaderText = "Perfil";
             colPerfil.Name = "colPerfil";
-            colDni.HeaderText = "DNI";
-            colDni.Name = "colDni";
-            colCorreoElectronico.HeaderText = "CorreoElectronico";
-            colCorreoElectronico.Name = "colCorreoElectronico";
             colEstado.HeaderText = "Estado";
             colEstado.Name = "colEstado";
             // 
