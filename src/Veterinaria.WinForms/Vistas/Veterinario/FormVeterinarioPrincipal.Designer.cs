@@ -21,6 +21,7 @@ partial class FormVeterinarioPrincipal
 
     private void InitializeComponent()
     {
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormVeterinarioPrincipal));
         pnlEncabezado = new Panel();
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
@@ -79,6 +80,7 @@ partial class FormVeterinarioPrincipal
         BTCONSULTAS.FlatStyle = FlatStyle.Flat;
         BTCONSULTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTCONSULTAS.ImageAlign = ContentAlignment.TopCenter;
+        BTCONSULTAS.Image = (Image)resources.GetObject("BTCONSULTAS.Image");
         BTCONSULTAS.Location = new Point(64, 143);
         BTCONSULTAS.Name = "BTCONSULTAS";
         BTCONSULTAS.Padding = new Padding(12, 8, 12, 10);
@@ -97,6 +99,7 @@ partial class FormVeterinarioPrincipal
         BTFICHAMEDICA.FlatStyle = FlatStyle.Flat;
         BTFICHAMEDICA.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTFICHAMEDICA.ImageAlign = ContentAlignment.TopCenter;
+        BTFICHAMEDICA.Image = (Image)resources.GetObject("BTFICHAMEDICA.Image");
         BTFICHAMEDICA.Location = new Point(319, 143);
         BTFICHAMEDICA.Name = "BTFICHAMEDICA";
         BTFICHAMEDICA.Padding = new Padding(12, 8, 12, 10);
@@ -115,6 +118,7 @@ partial class FormVeterinarioPrincipal
         BTTRATAMIENTOS.FlatStyle = FlatStyle.Flat;
         BTTRATAMIENTOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTTRATAMIENTOS.ImageAlign = ContentAlignment.TopCenter;
+        BTTRATAMIENTOS.Image = (Image)resources.GetObject("BTTRATAMIENTOS.Image");
         BTTRATAMIENTOS.Location = new Point(568, 143);
         BTTRATAMIENTOS.Name = "BTTRATAMIENTOS";
         BTTRATAMIENTOS.Padding = new Padding(12, 8, 12, 10);
@@ -133,6 +137,7 @@ partial class FormVeterinarioPrincipal
         BTVACUNAS.FlatStyle = FlatStyle.Flat;
         BTVACUNAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTVACUNAS.ImageAlign = ContentAlignment.TopCenter;
+        BTVACUNAS.Image = (Image)resources.GetObject("BTVACUNAS.Image");
         BTVACUNAS.Location = new Point(811, 143);
         BTVACUNAS.Name = "BTVACUNAS";
         BTVACUNAS.Padding = new Padding(12, 8, 12, 10);

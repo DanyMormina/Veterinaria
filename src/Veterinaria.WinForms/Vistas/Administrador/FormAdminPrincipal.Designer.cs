@@ -20,6 +20,7 @@ partial class FormAdminPrincipal
 
     private void InitializeComponent()
     {
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormAdminPrincipal));
         pnlEncabezado = new Panel();
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
@@ -33,6 +34,14 @@ partial class FormAdminPrincipal
         pnlEncabezado.SuspendLayout();
         barraEstado.SuspendLayout();
         pnlContenido.SuspendLayout();
+        picReportes = new PictureBox();
+        ((System.ComponentModel.ISupportInitialize)picReportes).BeginInit();
+        picPropietarios = new PictureBox();
+        ((System.ComponentModel.ISupportInitialize)picPropietarios).BeginInit();
+        picUsuarios = new PictureBox();
+        ((System.ComponentModel.ISupportInitialize)picUsuarios).BeginInit();
+        picMascotas = new PictureBox();
+        ((System.ComponentModel.ISupportInitialize)picMascotas).BeginInit();
         SuspendLayout();
         // 
         // pnlEncabezado
@@ -160,6 +169,46 @@ partial class FormAdminPrincipal
         // 
         // FormAdminPrincipal
         // 
+        // picReportes
+        picReportes.BackColor = Color.Transparent;
+        picReportes.Image = (Image)resources.GetObject("picReportes.Image");
+        picReportes.Location = new Point(37, 10);
+        picReportes.Name = "picReportes";
+        picReportes.Size = new Size(140, 186);
+        picReportes.SizeMode = PictureBoxSizeMode.Zoom;
+        picReportes.TabStop = false;
+        picReportes.Click += BTREPORTES_Click;
+        BTREPORTES.Controls.Add(picReportes);
+        // picPropietarios
+        picPropietarios.BackColor = Color.Transparent;
+        picPropietarios.Image = (Image)resources.GetObject("picPropietarios.Image");
+        picPropietarios.Location = new Point(37, 10);
+        picPropietarios.Name = "picPropietarios";
+        picPropietarios.Size = new Size(140, 186);
+        picPropietarios.SizeMode = PictureBoxSizeMode.Zoom;
+        picPropietarios.TabStop = false;
+        picPropietarios.Click += button1_Click;
+        BTPROPIETARIOS.Controls.Add(picPropietarios);
+        // picUsuarios
+        picUsuarios.BackColor = Color.Transparent;
+        picUsuarios.Image = (Image)resources.GetObject("picUsuarios.Image");
+        picUsuarios.Location = new Point(37, 10);
+        picUsuarios.Name = "picUsuarios";
+        picUsuarios.Size = new Size(140, 186);
+        picUsuarios.SizeMode = PictureBoxSizeMode.Zoom;
+        picUsuarios.TabStop = false;
+        picUsuarios.Click += BTUSUARIOS_Click;
+        BTUSUARIOS.Controls.Add(picUsuarios);
+        // picMascotas
+        picMascotas.BackColor = Color.Transparent;
+        picMascotas.Image = (Image)resources.GetObject("picMascotas.Image");
+        picMascotas.Location = new Point(37, 10);
+        picMascotas.Name = "picMascotas";
+        picMascotas.Size = new Size(140, 186);
+        picMascotas.SizeMode = PictureBoxSizeMode.Zoom;
+        picMascotas.TabStop = false;
+        picMascotas.Click += BTMASCOTAS_Click;
+        BTMASCOTAS.Controls.Add(picMascotas);
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
@@ -178,6 +227,10 @@ partial class FormAdminPrincipal
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
         pnlContenido.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)picReportes).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picPropietarios).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picUsuarios).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picMascotas).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -186,5 +239,9 @@ partial class FormAdminPrincipal
     private Button BTPROPIETARIOS;
     private Button BTMASCOTAS;
     private Button BTREPORTES;
+    private PictureBox picReportes;
+    private PictureBox picPropietarios;
+    private PictureBox picUsuarios;
+    private PictureBox picMascotas;
     private Panel pnlContenido;
 }

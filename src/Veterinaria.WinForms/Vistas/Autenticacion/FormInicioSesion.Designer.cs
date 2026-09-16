@@ -220,6 +220,7 @@ partial class FormInicioSesion
         BTINGRESAR.TabIndex = 10;
         BTINGRESAR.Text = "INGRESAR";
         BTINGRESAR.UseVisualStyleBackColor = false;
+        BTINGRESAR.Click += btnIngresar_Click;
         // 
         // BTSALIR
         // 
@@ -233,12 +234,14 @@ partial class FormInicioSesion
         BTSALIR.TabIndex = 11;
         BTSALIR.Text = "SALIR";
         BTSALIR.UseVisualStyleBackColor = false;
+        BTSALIR.Click += btnSalir_Click;
         // 
         // picLogo
         // 
         picLogo.BackColor = Color.White;
         picLogo.BorderStyle = BorderStyle.FixedSingle;
         picLogo.ErrorImage = (Image)resources.GetObject("picLogo.ErrorImage");
+        picLogo.Image = (Image)resources.GetObject("picLogo.Image");
         picLogo.Location = new Point(35, 40);
         picLogo.Name = "picLogo";
         picLogo.Size = new Size(300, 360);

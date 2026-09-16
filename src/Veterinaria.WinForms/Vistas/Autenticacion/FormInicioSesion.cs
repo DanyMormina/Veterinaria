@@ -27,20 +27,7 @@ public partial class FormInicioSesion : Form
         _serviceProvider = serviceProvider;
 
         InitializeComponent();
-        CargarImagenLogo();
-    }
 
-    /// <summary>
-    /// Carga la ilustración representativa de la clínica veterinaria en el panel lateral de autenticación.
-    /// </summary>
-    private void CargarImagenLogo()
-    {
-        var ruta = Path.Combine(AppContext.BaseDirectory, "Resources", "vet-login.png");
-        if (File.Exists(ruta))
-        {
-            using var original = Image.FromFile(ruta);
-            picLogo.Image = new Bitmap(original);
-        }
     }
 
     private void btnSalir_Click(object? sender, EventArgs e)
@@ -126,8 +113,8 @@ public partial class FormInicioSesion : Form
             return;
         }
 
-        btnIngresar.Enabled = false;
-        btnIngresar.Text = "Validando...";
+        BTINGRESAR.Enabled = false;
+        BTINGRESAR.Text = "Validando...";
         lblError.Visible = false;
 
         try
@@ -162,8 +149,8 @@ public partial class FormInicioSesion : Form
         }
         finally
         {
-            btnIngresar.Enabled = true;
-            btnIngresar.Text = "🐾  Ingresar";
+            BTINGRESAR.Enabled = true;
+            BTINGRESAR.Text = "INGRESAR";
         }
     }
 
