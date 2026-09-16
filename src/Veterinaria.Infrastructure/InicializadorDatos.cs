@@ -58,18 +58,26 @@ public static class InicializadorDatos
         await SembrarUsuarioSiNoExisteAsync(context, "Secretario", "secretario", "sec123", "Martín", "Gómez", "34567890", "REC-001");
     }
 
-    private static async Task AsegurarColumnasUsuarioAsync(ContextoVeterinaria context)
+    public static async Task AsegurarColumnasUsuarioAsync(ContextoVeterinaria context)
     {
         // EnsureCreated no altera tablas existentes: se agregan columnas faltantes del ABM.
         await context.Database.ExecuteSqlRawAsync("""
             IF COL_LENGTH('dbo.Usuario', 'Direccion') IS NULL
                 ALTER TABLE dbo.Usuario ADD Direccion NVARCHAR(200) NULL;
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
             IF COL_LENGTH('dbo.Usuario', 'Telefono') IS NULL
                 ALTER TABLE dbo.Usuario ADD Telefono NVARCHAR(30) NULL;
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
             IF COL_LENGTH('dbo.Usuario', 'CorreoElectronico') IS NULL
                 ALTER TABLE dbo.Usuario ADD CorreoElectronico NVARCHAR(100) NULL;
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
             IF COL_LENGTH('dbo.Usuario', 'FechaNacimiento') IS NULL
                 ALTER TABLE dbo.Usuario ADD FechaNacimiento DATE NULL;
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
             IF COL_LENGTH('dbo.Usuario', 'Sexo') IS NULL
                 ALTER TABLE dbo.Usuario ADD Sexo NVARCHAR(10) NULL;
             """);

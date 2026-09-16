@@ -33,8 +33,9 @@ public partial class FormAdminPrincipal : Form
 
     private void BTUSUARIOS_Click(object sender, EventArgs e)
     {
-        var vistaUsuarios = _serviceProvider.GetRequiredService<FormUsuarios>();
-        vistaUsuarios.ShowDialog();
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaUsuarios = alcance.ServiceProvider.GetRequiredService<FormUsuarios>();
+        vistaUsuarios.ShowDialog(this);
     }
 
     private void BTMASCOTAS_Click(object sender, EventArgs e)

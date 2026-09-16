@@ -13,12 +13,13 @@ public class UsuarioControlador(ContextoVeterinaria context)
     {
         try
         {
-            var usuarios = await context.Usuarios
+            var entidades = await context.Usuarios
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Include(u => u.TipoUsuario)
-                .Select(u => Mapear(u))
                 .ToListAsync();
+
+            var usuarios = entidades.Select(Mapear).ToList();
 
             return Resultado<IEnumerable<UsuarioRespuestaDto>>.Exito(usuarios);
         }
@@ -36,6 +37,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 return Resultado<UsuarioRespuestaDto>.Falla("El identificador del usuario debe ser mayor a cero.");
 
             var usuario = await context.Usuarios
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Include(u => u.TipoUsuario)
                 .FirstOrDefaultAsync(u => u.Id == id);
@@ -109,6 +111,8 @@ public class UsuarioControlador(ContextoVeterinaria context)
     {
         try
         {
+            await InicializadorDatos.AsegurarColumnasUsuarioAsync(context);
+
             if (solicitud.IdTipoUsuario <= 0)
                 return Resultado<long>.Falla("El identificador del tipo de usuario debe ser mayor a cero.");
 
@@ -133,8 +137,10 @@ public class UsuarioControlador(ContextoVeterinaria context)
 
             var nombreUsuarioNormalizado = solicitud.NombreUsuario.Trim();
             var dniNormalizado = solicitud.DNI.Trim();
-            var telefonoNormalizado = NormalizarOpcional(solicitud.Telefono);
-            var correoNormalizado = NormalizarOpcional(solicitud.CorreoElectronico);
+            var telefonoNormalizado = NormalizarTexto(solicitud.Telefono);
+            var correoNormalizado = NormalizarTexto(solicitud.CorreoElectronico);
+            var direccionNormalizada = NormalizarTexto(solicitud.Direccion);
+            var sexoNormalizado = NormalizarTexto(solicitud.Sexo);
 
             var existeNombreUsuario = await context.Usuarios
                 .IgnoreQueryFilters()
@@ -160,12 +166,12 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 Nombre = solicitud.Nombre.Trim(),
                 Apellido = solicitud.Apellido.Trim(),
                 DNI = dniNormalizado,
-                Direccion = NormalizarOpcional(solicitud.Direccion),
+                Direccion = direccionNormalizada,
                 Telefono = telefonoNormalizado,
                 CorreoElectronico = correoNormalizado,
                 FechaNacimiento = solicitud.FechaNacimiento,
-                Sexo = NormalizarOpcional(solicitud.Sexo),
-                Matricula = NormalizarOpcional(solicitud.Matricula),
+                Sexo = sexoNormalizado,
+                Matricula = NormalizarTexto(solicitud.Matricula),
                 Activo = true
             };
 
@@ -184,6 +190,8 @@ public class UsuarioControlador(ContextoVeterinaria context)
     {
         try
         {
+            await InicializadorDatos.AsegurarColumnasUsuarioAsync(context);
+
             if (id <= 0)
                 return Resultado.Falla("El identificador del usuario debe ser mayor a cero.");
 
@@ -214,8 +222,10 @@ public class UsuarioControlador(ContextoVeterinaria context)
 
             var nombreUsuarioNormalizado = solicitud.NombreUsuario.Trim();
             var dniNormalizado = solicitud.DNI.Trim();
-            var telefonoNormalizado = NormalizarOpcional(solicitud.Telefono);
-            var correoNormalizado = NormalizarOpcional(solicitud.CorreoElectronico);
+            var telefonoNormalizado = NormalizarTexto(solicitud.Telefono);
+            var correoNormalizado = NormalizarTexto(solicitud.CorreoElectronico);
+            var direccionNormalizada = NormalizarTexto(solicitud.Direccion);
+            var sexoNormalizado = NormalizarTexto(solicitud.Sexo);
 
             var existeNombreUsuario = await context.Usuarios
                 .IgnoreQueryFilters()
@@ -238,15 +248,22 @@ public class UsuarioControlador(ContextoVeterinaria context)
             entidad.Nombre = solicitud.Nombre.Trim();
             entidad.Apellido = solicitud.Apellido.Trim();
             entidad.DNI = dniNormalizado;
-            entidad.Direccion = NormalizarOpcional(solicitud.Direccion);
+            entidad.Direccion = direccionNormalizada;
             entidad.Telefono = telefonoNormalizado;
             entidad.CorreoElectronico = correoNormalizado;
             entidad.FechaNacimiento = solicitud.FechaNacimiento;
-            entidad.Sexo = NormalizarOpcional(solicitud.Sexo);
-            entidad.Matricula = NormalizarOpcional(solicitud.Matricula);
+            entidad.Sexo = sexoNormalizado;
+            entidad.Matricula = NormalizarTexto(solicitud.Matricula);
 
             if (!string.IsNullOrWhiteSpace(solicitud.Contrasena))
                 entidad.HashContrasena = HasheadorContrasena.Hashear(solicitud.Contrasena);
+
+            // Fuerza UPDATE completo (incluye contacto) para evitar que EF omita columnas.
+            context.Entry(entidad).State = EntityState.Modified;
+            if (!string.IsNullOrWhiteSpace(solicitud.Contrasena))
+                context.Entry(entidad).Property(u => u.HashContrasena).IsModified = true;
+            else
+                context.Entry(entidad).Property(u => u.HashContrasena).IsModified = false;
 
             await context.SaveChangesAsync();
             return Resultado.Exito("Usuario actualizado exitosamente.");
@@ -338,6 +355,6 @@ public class UsuarioControlador(ContextoVeterinaria context)
         Activo = usuario.Activo
     };
 
-    private static string? NormalizarOpcional(string? valor) =>
+    private static string? NormalizarTexto(string? valor) =>
         string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
 }

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
@@ -14,7 +13,10 @@ public partial class FormUsuarios : Form
 {
     private static readonly Regex SoloDigitos = new(@"^\d+$", RegexOptions.Compiled);
     private static readonly Regex TelefonoValido = new(@"^[\d\s\+\-\(\)]+$", RegexOptions.Compiled);
+    private static readonly Color ColorEtiquetaNormal = Color.FromArgb(58, 53, 59);
+    private static readonly Color ColorError = Color.FromArgb(178, 34, 34);
 
+    private readonly ErrorProvider _errores = new();
     private readonly UsuarioControlador _usuarioControlador;
     private readonly TipoUsuarioControlador _tipoUsuarioControlador;
 
@@ -28,6 +30,39 @@ public partial class FormUsuarios : Form
         _usuarioControlador = usuarioControlador;
         _tipoUsuarioControlador = tipoUsuarioControlador;
         InitializeComponent();
+        ConfigurarValidacionVisual();
+    }
+
+    private void ConfigurarValidacionVisual()
+    {
+        _errores.ContainerControl = this;
+        _errores.BlinkStyle = ErrorBlinkStyle.NeverBlink;
+
+        lblErrorValidacion.ForeColor = ColorError;
+        lblErrorValidacion.Visible = false;
+
+        foreach (Control control in new Control[]
+                 {
+                     txtNombre, txtApellido, txtDni, txtDireccion, txtTelefono,
+                     txtCorreoElectronico, txtUsuario, txtContrasena,
+                     dtpFechaNacimiento, rbHombre, rbMujer, cboPerfil
+                 })
+        {
+            control.Enter += (_, _) => LimpiarErrorDe(control);
+            if (control is TextBox texto)
+                texto.TextChanged += (_, _) => LimpiarErrorDe(texto);
+            if (control is ComboBox combo)
+                combo.SelectedIndexChanged += (_, _) => LimpiarErrorDe(combo);
+            if (control is DateTimePicker fecha)
+                fecha.ValueChanged += (_, _) => LimpiarErrorDe(fecha);
+            if (control is RadioButton radio)
+                radio.CheckedChanged += (_, _) =>
+                {
+                    LimpiarErrorDe(rbHombre);
+                    LimpiarErrorDe(rbMujer);
+                    lblSexo.ForeColor = ColorEtiquetaNormal;
+                };
+        }
     }
 
     private async void FormUsuarios_Load(object? sender, EventArgs e)
@@ -90,6 +125,7 @@ public partial class FormUsuarios : Form
                 usuario.Nombre,
                 usuario.Apellido,
                 usuario.DNI,
+                usuario.Telefono ?? string.Empty,
                 usuario.CorreoElectronico ?? string.Empty,
                 usuario.Direccion ?? string.Empty,
                 usuario.Activo ? "Activo" : "Inactivo");
@@ -104,30 +140,14 @@ public partial class FormUsuarios : Form
 
     private async void btnGuardar_Click(object? sender, EventArgs e)
     {
-        if (!ValidarCampos(esAlta: true))
-            return;
-
-        var solicitud = ArmarSolicitud();
-        var resultado = await _usuarioControlador.CrearAsync(solicitud);
-
-        if (!resultado.EsExitoso)
+        // Si hay un usuario seleccionado, Guardar actualiza; si no, crea uno nuevo.
+        if (_idSeleccionado is not null)
         {
-            MessageBox.Show(
-                resultado.Mensaje,
-                "Alta de usuario",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
+            await GuardarCambiosUsuarioAsync(esAlta: false);
             return;
         }
 
-        MessageBox.Show(
-            "Usuario creado correctamente.",
-            "Alta de usuario",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
-
-        await CargarUsuariosAsync();
-        LimpiarFormulario();
+        await GuardarCambiosUsuarioAsync(esAlta: true);
     }
 
     private async void btnModificar_Click(object? sender, EventArgs e)
@@ -142,30 +162,86 @@ public partial class FormUsuarios : Form
             return;
         }
 
-        if (!ValidarCampos(esAlta: false))
+        await GuardarCambiosUsuarioAsync(esAlta: false);
+    }
+
+    private async Task GuardarCambiosUsuarioAsync(bool esAlta)
+    {
+        if (!ValidarCampos(esAlta))
             return;
 
         var solicitud = ArmarSolicitud();
-        var resultado = await _usuarioControlador.ActualizarAsync(_idSeleccionado.Value, solicitud);
+        var titulo = esAlta ? "Alta de usuario" : "Modificar usuario";
+        long idGuardado;
 
-        if (!resultado.EsExitoso)
+        if (esAlta)
         {
-            MessageBox.Show(
-                resultado.Mensaje,
-                "Modificar usuario",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
+            var resultadoAlta = await _usuarioControlador.CrearAsync(solicitud);
+            if (!resultadoAlta.EsExitoso || resultadoAlta.Valor <= 0)
+            {
+                MessageBox.Show(resultadoAlta.Mensaje, titulo, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            idGuardado = resultadoAlta.Valor;
+            MessageBox.Show("Usuario creado correctamente.", titulo, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        else
+        {
+            var resultadoMod = await _usuarioControlador.ActualizarAsync(_idSeleccionado!.Value, solicitud);
+            if (!resultadoMod.EsExitoso)
+            {
+                MessageBox.Show(resultadoMod.Mensaje, titulo, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            idGuardado = _idSeleccionado.Value;
+            MessageBox.Show("Usuario modificado correctamente.", titulo, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        await CargarUsuariosAsync();
+        CargarUsuarioEnFormulario(idGuardado);
+    }
+
+    private void CargarUsuarioEnFormulario(long id)
+    {
+        var usuario = _usuarios.FirstOrDefault(u => u.Id == id);
+        if (usuario is null)
+        {
+            LimpiarFormulario();
             return;
         }
 
-        MessageBox.Show(
-            "Usuario modificado correctamente.",
-            "Modificar usuario",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+        _idSeleccionado = usuario.Id;
+        txtNombre.Text = usuario.Nombre;
+        txtApellido.Text = usuario.Apellido;
+        txtDni.Text = usuario.DNI;
+        txtDireccion.Text = usuario.Direccion ?? string.Empty;
+        txtTelefono.Text = usuario.Telefono ?? string.Empty;
+        txtCorreoElectronico.Text = usuario.CorreoElectronico ?? string.Empty;
+        txtUsuario.Text = usuario.NombreUsuario;
+        txtContrasena.Text = string.Empty;
 
-        await CargarUsuariosAsync();
-        LimpiarFormulario();
+        if (usuario.FechaNacimiento.HasValue)
+            dtpFechaNacimiento.Value = usuario.FechaNacimiento.Value;
+        else
+            dtpFechaNacimiento.Value = DateTime.Today.AddYears(-18);
+
+        rbHombre.Checked = string.Equals(usuario.Sexo, "Hombre", StringComparison.OrdinalIgnoreCase);
+        rbMujer.Checked = string.Equals(usuario.Sexo, "Mujer", StringComparison.OrdinalIgnoreCase);
+
+        if (cboPerfil.DataSource is not null)
+            cboPerfil.SelectedValue = usuario.IdTipoUsuario;
+
+        foreach (DataGridViewRow fila in dgvUsuarios.Rows)
+        {
+            if (fila.Cells[0].Value is not null && Convert.ToInt64(fila.Cells[0].Value) == id)
+            {
+                fila.Selected = true;
+                dgvUsuarios.CurrentCell = fila.Cells[1];
+                break;
+            }
+        }
     }
 
     private async void btnDesactivar_Click(object? sender, EventArgs e)
@@ -270,25 +346,7 @@ public partial class FormUsuarios : Form
             return;
 
         _idSeleccionado = usuario.Id;
-        txtNombre.Text = usuario.Nombre;
-        txtApellido.Text = usuario.Apellido;
-        txtDni.Text = usuario.DNI;
-        txtDireccion.Text = usuario.Direccion ?? string.Empty;
-        txtTelefono.Text = usuario.Telefono ?? string.Empty;
-        txtCorreoElectronico.Text = usuario.CorreoElectronico ?? string.Empty;
-        txtUsuario.Text = usuario.NombreUsuario;
-        txtContrasena.Text = string.Empty;
-
-        if (usuario.FechaNacimiento.HasValue)
-            dtpFechaNacimiento.Value = usuario.FechaNacimiento.Value;
-        else
-            dtpFechaNacimiento.Value = DateTime.Today;
-
-        rbHombre.Checked = string.Equals(usuario.Sexo, "Hombre", StringComparison.OrdinalIgnoreCase);
-        rbMujer.Checked = string.Equals(usuario.Sexo, "Mujer", StringComparison.OrdinalIgnoreCase);
-
-        if (cboPerfil.DataSource is not null)
-            cboPerfil.SelectedValue = usuario.IdTipoUsuario;
+        CargarUsuarioEnFormulario(usuario.Id);
     }
 
     private UsuarioSolicitudDto ArmarSolicitud()
@@ -318,115 +376,133 @@ public partial class FormUsuarios : Form
 
     private bool ValidarCampos(bool esAlta)
     {
+        LimpiarErroresValidacion();
+
         if (string.IsNullOrWhiteSpace(txtNombre.Text))
-        {
-            MostrarValidacion("Ingrese el nombre.", txtNombre);
-            return false;
-        }
+            return MostrarValidacion("Ingrese el nombre.", txtNombre, lblNombre);
 
         if (string.IsNullOrWhiteSpace(txtApellido.Text))
-        {
-            MostrarValidacion("Ingrese el apellido.", txtApellido);
-            return false;
-        }
+            return MostrarValidacion("Ingrese el apellido.", txtApellido, lblApellido);
 
         var dni = txtDni.Text.Trim();
         if (string.IsNullOrWhiteSpace(dni))
-        {
-            MostrarValidacion("Ingrese el DNI.", txtDni);
-            return false;
-        }
+            return MostrarValidacion("Ingrese el DNI.", txtDni, lblDni);
 
         if (!SoloDigitos.IsMatch(dni) || dni.Length is < 7 or > 8)
-        {
-            MostrarValidacion("El DNI debe tener 7 u 8 dígitos numéricos.", txtDni);
-            return false;
-        }
+            return MostrarValidacion("El DNI debe tener 7 u 8 dígitos numéricos.", txtDni, lblDni);
 
         var direccion = txtDireccion.Text.Trim();
         if (string.IsNullOrWhiteSpace(direccion))
-        {
-            MostrarValidacion("Ingrese la dirección.", txtDireccion);
-            return false;
-        }
+            return MostrarValidacion("Ingrese la dirección.", txtDireccion, lblDireccion);
 
         var telefono = txtTelefono.Text.Trim();
         if (string.IsNullOrWhiteSpace(telefono))
-        {
-            MostrarValidacion("Ingrese el teléfono.", txtTelefono);
-            return false;
-        }
+            return MostrarValidacion("Ingrese el teléfono.", txtTelefono, lblTelefono);
 
         if (!TelefonoValido.IsMatch(telefono) || ContarDigitos(telefono) < 8)
-        {
-            MostrarValidacion("El teléfono debe tener al menos 8 dígitos.", txtTelefono);
-            return false;
-        }
+            return MostrarValidacion("El teléfono debe tener al menos 8 dígitos.", txtTelefono, lblTelefono);
 
         var correo = txtCorreoElectronico.Text.Trim();
         if (string.IsNullOrWhiteSpace(correo))
-        {
-            MostrarValidacion("Ingrese el correo electrónico.", txtCorreoElectronico);
-            return false;
-        }
+            return MostrarValidacion("Ingrese el correo electrónico.", txtCorreoElectronico, lblCorreoElectronico);
 
         if (!EsCorreoValido(correo))
-        {
-            MostrarValidacion("Ingrese un correo electrónico válido.", txtCorreoElectronico);
-            return false;
-        }
+            return MostrarValidacion("Ingrese un correo electrónico válido.", txtCorreoElectronico, lblCorreoElectronico);
 
         if (string.IsNullOrWhiteSpace(txtUsuario.Text))
-        {
-            MostrarValidacion("Ingrese el usuario.", txtUsuario);
-            return false;
-        }
+            return MostrarValidacion("Ingrese el usuario.", txtUsuario, lblUsuario);
 
         var contrasena = txtContrasena.Text;
         if (esAlta && string.IsNullOrWhiteSpace(contrasena))
-        {
-            MostrarValidacion("Ingrese la contraseña.", txtContrasena);
-            return false;
-        }
+            return MostrarValidacion("Ingrese la contraseña.", txtContrasena, lblContrasena);
 
         if (!string.IsNullOrWhiteSpace(contrasena) && contrasena.Trim().Length < 6)
-        {
-            MostrarValidacion("La contraseña debe tener al menos 6 caracteres.", txtContrasena);
-            return false;
-        }
+            return MostrarValidacion("La contraseña debe tener al menos 6 caracteres.", txtContrasena, lblContrasena);
 
         if (dtpFechaNacimiento.Value.Date > DateTime.Today)
-        {
-            MostrarValidacion("La fecha de nacimiento no puede ser futura.", dtpFechaNacimiento);
-            return false;
-        }
+            return MostrarValidacion("La fecha de nacimiento no puede ser futura.", dtpFechaNacimiento, lblFechaNacimiento);
 
         var edad = CalcularEdad(dtpFechaNacimiento.Value.Date);
         if (edad < 16)
-        {
-            MostrarValidacion("El usuario debe tener al menos 16 años.", dtpFechaNacimiento);
-            return false;
-        }
+            return MostrarValidacion("El usuario debe tener al menos 16 años.", dtpFechaNacimiento, lblFechaNacimiento);
 
         if (!rbHombre.Checked && !rbMujer.Checked)
-        {
-            MostrarValidacion("Seleccione el sexo.", rbHombre);
-            return false;
-        }
+            return MostrarValidacion("Seleccione el sexo.", rbHombre, lblSexo);
 
         if (cboPerfil.SelectedIndex < 0 || cboPerfil.SelectedValue is null)
-        {
-            MostrarValidacion("Seleccione un perfil.", cboPerfil);
-            return false;
-        }
+            return MostrarValidacion("Seleccione un perfil.", cboPerfil, lblPerfil);
 
         return true;
     }
 
-    private static void MostrarValidacion(string mensaje, Control control)
+    private bool MostrarValidacion(string mensaje, Control control, Label? etiqueta = null)
     {
-        MessageBox.Show(mensaje, "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        _errores.SetError(control, mensaje);
+        if (etiqueta is not null)
+            etiqueta.ForeColor = ColorError;
+
+        lblErrorValidacion.Text = mensaje;
+        lblErrorValidacion.Visible = true;
         control.Focus();
+        return false;
+    }
+
+    private void LimpiarErrorDe(Control control)
+    {
+        _errores.SetError(control, string.Empty);
+
+        Label? etiqueta = control switch
+        {
+            _ when ReferenceEquals(control, txtNombre) => lblNombre,
+            _ when ReferenceEquals(control, txtApellido) => lblApellido,
+            _ when ReferenceEquals(control, txtDni) => lblDni,
+            _ when ReferenceEquals(control, txtDireccion) => lblDireccion,
+            _ when ReferenceEquals(control, txtTelefono) => lblTelefono,
+            _ when ReferenceEquals(control, txtCorreoElectronico) => lblCorreoElectronico,
+            _ when ReferenceEquals(control, txtUsuario) => lblUsuario,
+            _ when ReferenceEquals(control, txtContrasena) => lblContrasena,
+            _ when ReferenceEquals(control, dtpFechaNacimiento) => lblFechaNacimiento,
+            _ when ReferenceEquals(control, rbHombre) || ReferenceEquals(control, rbMujer) => lblSexo,
+            _ when ReferenceEquals(control, cboPerfil) => lblPerfil,
+            _ => null
+        };
+
+        if (etiqueta is not null)
+            etiqueta.ForeColor = ColorEtiquetaNormal;
+
+        if (!HayErroresActivos())
+        {
+            lblErrorValidacion.Visible = false;
+            lblErrorValidacion.Text = string.Empty;
+        }
+    }
+
+    private bool HayErroresActivos()
+    {
+        foreach (Control control in grpDatos.Controls)
+        {
+            if (!string.IsNullOrEmpty(_errores.GetError(control)))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void LimpiarErroresValidacion()
+    {
+        _errores.Clear();
+        lblErrorValidacion.Visible = false;
+        lblErrorValidacion.Text = string.Empty;
+
+        foreach (var etiqueta in new[]
+                 {
+                     lblNombre, lblApellido, lblDni, lblDireccion, lblTelefono,
+                     lblCorreoElectronico, lblUsuario, lblContrasena,
+                     lblFechaNacimiento, lblSexo, lblPerfil
+                 })
+        {
+            etiqueta.ForeColor = ColorEtiquetaNormal;
+        }
     }
 
     private static bool EsCorreoValido(string correo)
@@ -462,6 +538,7 @@ public partial class FormUsuarios : Form
 
     private void LimpiarFormularioSinTocarGrilla()
     {
+        LimpiarErroresValidacion();
         _idSeleccionado = null;
         txtNombre.Clear();
         txtApellido.Clear();
