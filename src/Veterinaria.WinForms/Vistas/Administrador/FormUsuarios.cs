@@ -1,4 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
+using System.Net.Mail;
+using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
@@ -10,6 +12,9 @@ namespace Veterinaria.WinForms.Vistas.Administrador;
 /// </summary>
 public partial class FormUsuarios : Form
 {
+    private static readonly Regex SoloDigitos = new(@"^\d+$", RegexOptions.Compiled);
+    private static readonly Regex TelefonoValido = new(@"^[\d\s\+\-\(\)]+$", RegexOptions.Compiled);
+
     private readonly UsuarioControlador _usuarioControlador;
     private readonly TipoUsuarioControlador _tipoUsuarioControlador;
 
@@ -84,8 +89,9 @@ public partial class FormUsuarios : Form
                 usuario.Id,
                 usuario.Nombre,
                 usuario.Apellido,
-                usuario.NombreUsuario,
-                usuario.NombreTipoUsuario,
+                usuario.DNI,
+                usuario.CorreoElectronico ?? string.Empty,
+                usuario.Direccion ?? string.Empty,
                 usuario.Activo ? "Activo" : "Inactivo");
         }
     }
@@ -223,7 +229,10 @@ public partial class FormUsuarios : Form
             u.Apellido.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
             u.NombreUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
             u.NombreTipoUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-            u.DNI.Contains(texto, StringComparison.OrdinalIgnoreCase));
+            u.DNI.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+            (u.CorreoElectronico?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (u.Direccion?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (u.Telefono?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false));
 
         MostrarUsuariosEnGrilla(filtrados);
         LimpiarFormularioSinTocarGrilla();
@@ -264,8 +273,19 @@ public partial class FormUsuarios : Form
         txtNombre.Text = usuario.Nombre;
         txtApellido.Text = usuario.Apellido;
         txtDni.Text = usuario.DNI;
+        txtDireccion.Text = usuario.Direccion ?? string.Empty;
+        txtTelefono.Text = usuario.Telefono ?? string.Empty;
+        txtCorreoElectronico.Text = usuario.CorreoElectronico ?? string.Empty;
         txtUsuario.Text = usuario.NombreUsuario;
         txtContrasena.Text = string.Empty;
+
+        if (usuario.FechaNacimiento.HasValue)
+            dtpFechaNacimiento.Value = usuario.FechaNacimiento.Value;
+        else
+            dtpFechaNacimiento.Value = DateTime.Today;
+
+        rbHombre.Checked = string.Equals(usuario.Sexo, "Hombre", StringComparison.OrdinalIgnoreCase);
+        rbMujer.Checked = string.Equals(usuario.Sexo, "Mujer", StringComparison.OrdinalIgnoreCase);
 
         if (cboPerfil.DataSource is not null)
             cboPerfil.SelectedValue = usuario.IdTipoUsuario;
@@ -273,6 +293,12 @@ public partial class FormUsuarios : Form
 
     private UsuarioSolicitudDto ArmarSolicitud()
     {
+        string? sexo = null;
+        if (rbHombre.Checked)
+            sexo = "Hombre";
+        else if (rbMujer.Checked)
+            sexo = "Mujer";
+
         return new UsuarioSolicitudDto
         {
             IdTipoUsuario = Convert.ToInt64(cboPerfil.SelectedValue),
@@ -281,6 +307,11 @@ public partial class FormUsuarios : Form
             Nombre = txtNombre.Text.Trim(),
             Apellido = txtApellido.Text.Trim(),
             DNI = txtDni.Text.Trim(),
+            Direccion = txtDireccion.Text.Trim(),
+            Telefono = txtTelefono.Text.Trim(),
+            CorreoElectronico = txtCorreoElectronico.Text.Trim(),
+            FechaNacimiento = dtpFechaNacimiento.Value.Date,
+            Sexo = sexo,
             Matricula = null
         };
     }
@@ -289,47 +320,138 @@ public partial class FormUsuarios : Form
     {
         if (string.IsNullOrWhiteSpace(txtNombre.Text))
         {
-            MessageBox.Show("Ingrese el nombre.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            txtNombre.Focus();
+            MostrarValidacion("Ingrese el nombre.", txtNombre);
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(txtApellido.Text))
         {
-            MessageBox.Show("Ingrese el apellido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            txtApellido.Focus();
+            MostrarValidacion("Ingrese el apellido.", txtApellido);
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(txtDni.Text))
+        var dni = txtDni.Text.Trim();
+        if (string.IsNullOrWhiteSpace(dni))
         {
-            MessageBox.Show("Ingrese el DNI.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            txtDni.Focus();
+            MostrarValidacion("Ingrese el DNI.", txtDni);
+            return false;
+        }
+
+        if (!SoloDigitos.IsMatch(dni) || dni.Length is < 7 or > 8)
+        {
+            MostrarValidacion("El DNI debe tener 7 u 8 dígitos numéricos.", txtDni);
+            return false;
+        }
+
+        var direccion = txtDireccion.Text.Trim();
+        if (string.IsNullOrWhiteSpace(direccion))
+        {
+            MostrarValidacion("Ingrese la dirección.", txtDireccion);
+            return false;
+        }
+
+        var telefono = txtTelefono.Text.Trim();
+        if (string.IsNullOrWhiteSpace(telefono))
+        {
+            MostrarValidacion("Ingrese el teléfono.", txtTelefono);
+            return false;
+        }
+
+        if (!TelefonoValido.IsMatch(telefono) || ContarDigitos(telefono) < 8)
+        {
+            MostrarValidacion("El teléfono debe tener al menos 8 dígitos.", txtTelefono);
+            return false;
+        }
+
+        var correo = txtCorreoElectronico.Text.Trim();
+        if (string.IsNullOrWhiteSpace(correo))
+        {
+            MostrarValidacion("Ingrese el correo electrónico.", txtCorreoElectronico);
+            return false;
+        }
+
+        if (!EsCorreoValido(correo))
+        {
+            MostrarValidacion("Ingrese un correo electrónico válido.", txtCorreoElectronico);
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(txtUsuario.Text))
         {
-            MessageBox.Show("Ingrese el usuario.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            txtUsuario.Focus();
+            MostrarValidacion("Ingrese el usuario.", txtUsuario);
+            return false;
+        }
+
+        var contrasena = txtContrasena.Text;
+        if (esAlta && string.IsNullOrWhiteSpace(contrasena))
+        {
+            MostrarValidacion("Ingrese la contraseña.", txtContrasena);
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(contrasena) && contrasena.Trim().Length < 6)
+        {
+            MostrarValidacion("La contraseña debe tener al menos 6 caracteres.", txtContrasena);
+            return false;
+        }
+
+        if (dtpFechaNacimiento.Value.Date > DateTime.Today)
+        {
+            MostrarValidacion("La fecha de nacimiento no puede ser futura.", dtpFechaNacimiento);
+            return false;
+        }
+
+        var edad = CalcularEdad(dtpFechaNacimiento.Value.Date);
+        if (edad < 16)
+        {
+            MostrarValidacion("El usuario debe tener al menos 16 años.", dtpFechaNacimiento);
+            return false;
+        }
+
+        if (!rbHombre.Checked && !rbMujer.Checked)
+        {
+            MostrarValidacion("Seleccione el sexo.", rbHombre);
             return false;
         }
 
         if (cboPerfil.SelectedIndex < 0 || cboPerfil.SelectedValue is null)
         {
-            MessageBox.Show("Seleccione un perfil.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            cboPerfil.Focus();
-            return false;
-        }
-
-        if (esAlta && string.IsNullOrWhiteSpace(txtContrasena.Text))
-        {
-            MessageBox.Show("Ingrese la contraseña.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            txtContrasena.Focus();
+            MostrarValidacion("Seleccione un perfil.", cboPerfil);
             return false;
         }
 
         return true;
+    }
+
+    private static void MostrarValidacion(string mensaje, Control control)
+    {
+        MessageBox.Show(mensaje, "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        control.Focus();
+    }
+
+    private static bool EsCorreoValido(string correo)
+    {
+        try
+        {
+            var direccion = new MailAddress(correo);
+            return string.Equals(direccion.Address, correo, StringComparison.OrdinalIgnoreCase)
+                   && correo.Contains('.', StringComparison.Ordinal);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static int ContarDigitos(string valor) => valor.Count(char.IsDigit);
+
+    private static int CalcularEdad(DateTime fechaNacimiento)
+    {
+        var hoy = DateTime.Today;
+        var edad = hoy.Year - fechaNacimiento.Year;
+        if (fechaNacimiento.Date > hoy.AddYears(-edad))
+            edad--;
+        return edad;
     }
 
     private void LimpiarFormulario()
@@ -349,6 +471,7 @@ public partial class FormUsuarios : Form
         txtDireccion.Clear();
         txtTelefono.Clear();
         txtCorreoElectronico.Clear();
+        dtpFechaNacimiento.Value = DateTime.Today.AddYears(-18);
         rbHombre.Checked = false;
         rbMujer.Checked = false;
         cboPerfil.SelectedIndex = -1;

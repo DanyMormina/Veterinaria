@@ -60,10 +60,9 @@
             colId = new DataGridViewTextBoxColumn();
             colNombre = new DataGridViewTextBoxColumn();
             colApellido = new DataGridViewTextBoxColumn();
-            colUsuario = new DataGridViewTextBoxColumn();
-            colPerfil = new DataGridViewTextBoxColumn();
             colDni = new DataGridViewTextBoxColumn();
             colCorreoElectronico = new DataGridViewTextBoxColumn();
+            colDireccion = new DataGridViewTextBoxColumn();
             colEstado = new DataGridViewTextBoxColumn();
             pnlEncabezado.SuspendLayout();
             pnlContenido.SuspendLayout();
@@ -82,7 +81,7 @@
             pnlEncabezado.Location = new Point(0, 0);
             pnlEncabezado.Name = "pnlEncabezado";
             pnlEncabezado.Padding = new Padding(16, 0, 16, 0);
-            pnlEncabezado.Size = new Size(1100, 50);
+            pnlEncabezado.Size = new Size(1180, 50);
             pnlEncabezado.TabIndex = 0;
             // 
             // lblTitulo
@@ -119,7 +118,7 @@
             pnlContenido.Location = new Point(0, 50);
             pnlContenido.Name = "pnlContenido";
             pnlContenido.Padding = new Padding(16);
-            pnlContenido.Size = new Size(1100, 650);
+            pnlContenido.Size = new Size(1180, 630);
             pnlContenido.TabIndex = 1;
             // 
             // grpDatos
@@ -150,9 +149,9 @@
             grpDatos.Controls.Add(cboPerfil);
             grpDatos.Font = new Font("Segoe UI", 9F);
             grpDatos.ForeColor = Color.FromArgb(58, 53, 59);
-            grpDatos.Location = new Point(16, 16);
+            grpDatos.Location = new Point(16, 12);
             grpDatos.Name = "grpDatos";
-            grpDatos.Size = new Size(428, 528);
+            grpDatos.Size = new Size(380, 510);
             grpDatos.TabIndex = 0;
             grpDatos.TabStop = false;
             grpDatos.Text = "Datos del usuario";
@@ -169,9 +168,9 @@
             // 
             txtNombre.BackColor = Color.White;
             txtNombre.BorderStyle = BorderStyle.FixedSingle;
-            txtNombre.Location = new Point(140, 32);
+            txtNombre.Location = new Point(130, 32);
             txtNombre.Name = "txtNombre";
-            txtNombre.Size = new Size(266, 23);
+            txtNombre.Size = new Size(230, 23);
             // 
             // lblApellido
             // 
@@ -185,9 +184,9 @@
             // 
             txtApellido.BackColor = Color.White;
             txtApellido.BorderStyle = BorderStyle.FixedSingle;
-            txtApellido.Location = new Point(140, 68);
+            txtApellido.Location = new Point(130, 68);
             txtApellido.Name = "txtApellido";
-            txtApellido.Size = new Size(266, 23);
+            txtApellido.Size = new Size(230, 23);
             // 
             // lblDni
             // 
@@ -201,9 +200,9 @@
             // 
             txtDni.BackColor = Color.White;
             txtDni.BorderStyle = BorderStyle.FixedSingle;
-            txtDni.Location = new Point(140, 104);
+            txtDni.Location = new Point(130, 104);
             txtDni.Name = "txtDni";
-            txtDni.Size = new Size(266, 23);
+            txtDni.Size = new Size(230, 23);
             // 
             // lblDireccion
             // 
@@ -217,9 +216,9 @@
             // 
             txtDireccion.BackColor = Color.White;
             txtDireccion.BorderStyle = BorderStyle.FixedSingle;
-            txtDireccion.Location = new Point(140, 140);
+            txtDireccion.Location = new Point(130, 140);
             txtDireccion.Name = "txtDireccion";
-            txtDireccion.Size = new Size(266, 23);
+            txtDireccion.Size = new Size(230, 23);
             // 
             // lblTelefono
             // 
@@ -233,25 +232,25 @@
             // 
             txtTelefono.BackColor = Color.White;
             txtTelefono.BorderStyle = BorderStyle.FixedSingle;
-            txtTelefono.Location = new Point(140, 176);
+            txtTelefono.Location = new Point(130, 176);
             txtTelefono.Name = "txtTelefono";
-            txtTelefono.Size = new Size(266, 23);
+            txtTelefono.Size = new Size(230, 23);
             // 
             // lblCorreoElectronico
             // 
             lblCorreoElectronico.Location = new Point(16, 212);
             lblCorreoElectronico.Name = "lblCorreoElectronico";
             lblCorreoElectronico.Size = new Size(118, 23);
-            lblCorreoElectronico.Text = "CorreoElectronico";
+            lblCorreoElectronico.Text = "Correo";
             lblCorreoElectronico.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // txtCorreoElectronico
             // 
             txtCorreoElectronico.BackColor = Color.White;
             txtCorreoElectronico.BorderStyle = BorderStyle.FixedSingle;
-            txtCorreoElectronico.Location = new Point(140, 212);
+            txtCorreoElectronico.Location = new Point(130, 212);
             txtCorreoElectronico.Name = "txtCorreoElectronico";
-            txtCorreoElectronico.Size = new Size(266, 23);
+            txtCorreoElectronico.Size = new Size(230, 23);
             // 
             // lblUsuario
             // 
@@ -265,9 +264,9 @@
             // 
             txtUsuario.BackColor = Color.White;
             txtUsuario.BorderStyle = BorderStyle.FixedSingle;
-            txtUsuario.Location = new Point(140, 248);
+            txtUsuario.Location = new Point(130, 248);
             txtUsuario.Name = "txtUsuario";
-            txtUsuario.Size = new Size(266, 23);
+            txtUsuario.Size = new Size(230, 23);
             // 
             // lblContrasena
             // 
@@ -281,9 +280,9 @@
             // 
             txtContrasena.BackColor = Color.White;
             txtContrasena.BorderStyle = BorderStyle.FixedSingle;
-            txtContrasena.Location = new Point(140, 284);
+            txtContrasena.Location = new Point(130, 284);
             txtContrasena.Name = "txtContrasena";
-            txtContrasena.Size = new Size(266, 23);
+            txtContrasena.Size = new Size(230, 23);
             txtContrasena.UseSystemPasswordChar = true;
             // 
             // lblFechaNacimiento
@@ -298,9 +297,9 @@
             // 
             dtpFechaNacimiento.CalendarMonthBackground = Color.White;
             dtpFechaNacimiento.Format = DateTimePickerFormat.Short;
-            dtpFechaNacimiento.Location = new Point(140, 320);
+            dtpFechaNacimiento.Location = new Point(130, 320);
             dtpFechaNacimiento.Name = "dtpFechaNacimiento";
-            dtpFechaNacimiento.Size = new Size(266, 23);
+            dtpFechaNacimiento.Size = new Size(230, 23);
             // 
             // lblSexo
             // 
@@ -312,14 +311,14 @@
             // 
             // rbHombre
             // 
-            rbHombre.Location = new Point(140, 356);
+            rbHombre.Location = new Point(130, 356);
             rbHombre.Name = "rbHombre";
             rbHombre.Size = new Size(90, 23);
             rbHombre.Text = "Hombre";
             // 
             // rbMujer
             // 
-            rbMujer.Location = new Point(236, 356);
+            rbMujer.Location = new Point(226, 356);
             rbMujer.Name = "rbMujer";
             rbMujer.Size = new Size(90, 23);
             rbMujer.Text = "Mujer";
@@ -338,9 +337,9 @@
             cboPerfil.DropDownStyle = ComboBoxStyle.DropDownList;
             cboPerfil.FormattingEnabled = true;
             cboPerfil.Items.AddRange(new object[] { "Administrador", "Secretario", "Veterinario" });
-            cboPerfil.Location = new Point(140, 392);
+            cboPerfil.Location = new Point(130, 392);
             cboPerfil.Name = "cboPerfil";
-            cboPerfil.Size = new Size(266, 23);
+            cboPerfil.Size = new Size(230, 23);
             // 
             // pnlBotones
             // 
@@ -351,9 +350,9 @@
             pnlBotones.Controls.Add(btnCancelar);
             pnlBotones.Controls.Add(btnDesactivar);
             pnlBotones.Controls.Add(btnVolver);
-            pnlBotones.Location = new Point(16, 550);
+            pnlBotones.Location = new Point(16, 530);
             pnlBotones.Name = "pnlBotones";
-            pnlBotones.Size = new Size(428, 84);
+            pnlBotones.Size = new Size(380, 84);
             pnlBotones.TabIndex = 1;
             // 
             // btnNuevo
@@ -364,7 +363,7 @@
             btnNuevo.ForeColor = Color.FromArgb(58, 53, 59);
             btnNuevo.Location = new Point(0, 4);
             btnNuevo.Name = "btnNuevo";
-            btnNuevo.Size = new Size(100, 32);
+            btnNuevo.Size = new Size(88, 32);
             btnNuevo.Text = "Nuevo";
             btnNuevo.UseVisualStyleBackColor = false;
             btnNuevo.Click += btnNuevo_Click;
@@ -375,9 +374,9 @@
             btnGuardar.FlatAppearance.BorderColor = Color.FromArgb(48, 118, 74);
             btnGuardar.FlatStyle = FlatStyle.Flat;
             btnGuardar.ForeColor = Color.White;
-            btnGuardar.Location = new Point(108, 4);
+            btnGuardar.Location = new Point(96, 4);
             btnGuardar.Name = "btnGuardar";
-            btnGuardar.Size = new Size(100, 32);
+            btnGuardar.Size = new Size(88, 32);
             btnGuardar.Text = "Guardar";
             btnGuardar.UseVisualStyleBackColor = false;
             btnGuardar.Click += btnGuardar_Click;
@@ -388,9 +387,9 @@
             btnModificar.FlatAppearance.BorderColor = Color.FromArgb(44, 102, 158);
             btnModificar.FlatStyle = FlatStyle.Flat;
             btnModificar.ForeColor = Color.White;
-            btnModificar.Location = new Point(216, 4);
+            btnModificar.Location = new Point(192, 4);
             btnModificar.Name = "btnModificar";
-            btnModificar.Size = new Size(100, 32);
+            btnModificar.Size = new Size(88, 32);
             btnModificar.Text = "Modificar";
             btnModificar.UseVisualStyleBackColor = false;
             btnModificar.Click += btnModificar_Click;
@@ -401,9 +400,9 @@
             btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(164, 54, 62);
             btnCancelar.FlatStyle = FlatStyle.Flat;
             btnCancelar.ForeColor = Color.White;
-            btnCancelar.Location = new Point(324, 4);
+            btnCancelar.Location = new Point(288, 4);
             btnCancelar.Name = "btnCancelar";
-            btnCancelar.Size = new Size(100, 32);
+            btnCancelar.Size = new Size(88, 32);
             btnCancelar.Text = "Cancelar";
             btnCancelar.UseVisualStyleBackColor = false;
             btnCancelar.Click += btnCancelar_Click;
@@ -414,9 +413,9 @@
             btnDesactivar.FlatAppearance.BorderColor = Color.FromArgb(164, 54, 62);
             btnDesactivar.FlatStyle = FlatStyle.Flat;
             btnDesactivar.ForeColor = Color.White;
-            btnDesactivar.Location = new Point(216, 44);
+            btnDesactivar.Location = new Point(192, 44);
             btnDesactivar.Name = "btnDesactivar";
-            btnDesactivar.Size = new Size(208, 32);
+            btnDesactivar.Size = new Size(184, 32);
             btnDesactivar.Text = "Desactivar";
             btnDesactivar.UseVisualStyleBackColor = false;
             btnDesactivar.Click += btnDesactivar_Click;
@@ -429,7 +428,7 @@
             btnVolver.ForeColor = Color.FromArgb(58, 53, 59);
             btnVolver.Location = new Point(0, 44);
             btnVolver.Name = "btnVolver";
-            btnVolver.Size = new Size(208, 32);
+            btnVolver.Size = new Size(184, 32);
             btnVolver.Text = "Volver al panel";
             btnVolver.UseVisualStyleBackColor = false;
             btnVolver.Click += btnVolver_Click;
@@ -444,9 +443,9 @@
             pnlListado.Controls.Add(btnActivos);
             pnlListado.Controls.Add(btnInactivos);
             pnlListado.Controls.Add(dgvUsuarios);
-            pnlListado.Location = new Point(456, 16);
+            pnlListado.Location = new Point(412, 12);
             pnlListado.Name = "pnlListado";
-            pnlListado.Size = new Size(628, 618);
+            pnlListado.Size = new Size(752, 602);
             pnlListado.TabIndex = 2;
             // 
             // lblBuscar
@@ -464,7 +463,7 @@
             txtBuscar.BorderStyle = BorderStyle.FixedSingle;
             txtBuscar.Location = new Point(64, 12);
             txtBuscar.Name = "txtBuscar";
-            txtBuscar.Size = new Size(230, 23);
+            txtBuscar.Size = new Size(354, 23);
             // 
             // btnBuscar
             // 
@@ -473,7 +472,7 @@
             btnBuscar.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
             btnBuscar.FlatStyle = FlatStyle.Flat;
             btnBuscar.ForeColor = Color.FromArgb(58, 53, 59);
-            btnBuscar.Location = new Point(300, 10);
+            btnBuscar.Location = new Point(430, 10);
             btnBuscar.Name = "btnBuscar";
             btnBuscar.Size = new Size(90, 27);
             btnBuscar.Text = "Buscar";
@@ -487,9 +486,9 @@
             btnActivos.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
             btnActivos.FlatStyle = FlatStyle.Flat;
             btnActivos.ForeColor = Color.FromArgb(58, 53, 59);
-            btnActivos.Location = new Point(396, 10);
+            btnActivos.Location = new Point(526, 10);
             btnActivos.Name = "btnActivos";
-            btnActivos.Size = new Size(104, 27);
+            btnActivos.Size = new Size(100, 27);
             btnActivos.Text = "Activos";
             btnActivos.UseVisualStyleBackColor = false;
             btnActivos.Click += btnActivos_Click;
@@ -501,9 +500,9 @@
             btnInactivos.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
             btnInactivos.FlatStyle = FlatStyle.Flat;
             btnInactivos.ForeColor = Color.FromArgb(58, 53, 59);
-            btnInactivos.Location = new Point(506, 10);
+            btnInactivos.Location = new Point(632, 10);
             btnInactivos.Name = "btnInactivos";
-            btnInactivos.Size = new Size(110, 27);
+            btnInactivos.Size = new Size(106, 27);
             btnInactivos.Text = "Inactivos";
             btnInactivos.UseVisualStyleBackColor = false;
             btnInactivos.Click += btnInactivos_Click;
@@ -517,14 +516,14 @@
             dgvUsuarios.BackgroundColor = Color.White;
             dgvUsuarios.BorderStyle = BorderStyle.FixedSingle;
             dgvUsuarios.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvUsuarios.Columns.AddRange(new DataGridViewColumn[] { colId, colNombre, colApellido, colUsuario, colPerfil, colEstado });
+            dgvUsuarios.Columns.AddRange(new DataGridViewColumn[] { colId, colNombre, colApellido, colDni, colCorreoElectronico, colDireccion, colEstado });
             dgvUsuarios.Location = new Point(10, 48);
             dgvUsuarios.MultiSelect = false;
             dgvUsuarios.Name = "dgvUsuarios";
             dgvUsuarios.ReadOnly = true;
             dgvUsuarios.RowHeadersVisible = false;
             dgvUsuarios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvUsuarios.Size = new Size(606, 558);
+            dgvUsuarios.Size = new Size(730, 542);
             dgvUsuarios.CellClick += dgvUsuarios_CellClick;
             // 
             // columnas
@@ -532,14 +531,22 @@
             colId.HeaderText = "ID";
             colId.Name = "colId";
             colId.Visible = false;
+            colNombre.FillWeight = 90F;
             colNombre.HeaderText = "Nombre";
             colNombre.Name = "colNombre";
+            colApellido.FillWeight = 90F;
             colApellido.HeaderText = "Apellido";
             colApellido.Name = "colApellido";
-            colUsuario.HeaderText = "Usuario";
-            colUsuario.Name = "colUsuario";
-            colPerfil.HeaderText = "Perfil";
-            colPerfil.Name = "colPerfil";
+            colDni.FillWeight = 70F;
+            colDni.HeaderText = "DNI";
+            colDni.Name = "colDni";
+            colCorreoElectronico.FillWeight = 130F;
+            colCorreoElectronico.HeaderText = "Correo";
+            colCorreoElectronico.Name = "colCorreoElectronico";
+            colDireccion.FillWeight = 140F;
+            colDireccion.HeaderText = "Dirección";
+            colDireccion.Name = "colDireccion";
+            colEstado.FillWeight = 60F;
             colEstado.HeaderText = "Estado";
             colEstado.Name = "colEstado";
             // 
@@ -548,12 +555,12 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(250, 244, 244);
-            ClientSize = new Size(1100, 700);
+            ClientSize = new Size(1180, 680);
             Controls.Add(pnlContenido);
             Controls.Add(pnlEncabezado);
             Font = new Font("Segoe UI", 9F);
             ForeColor = Color.FromArgb(58, 53, 59);
-            MinimumSize = new Size(1100, 700);
+            MinimumSize = new Size(1100, 650);
             Name = "FormUsuarios";
             StartPosition = FormStartPosition.CenterParent;
             Text = "CLÍNICA VETERINARIA — ADMINISTRADOR — GESTIÓN DE USUARIOS";
@@ -614,10 +621,9 @@
         private DataGridViewTextBoxColumn colId;
         private DataGridViewTextBoxColumn colNombre;
         private DataGridViewTextBoxColumn colApellido;
-        private DataGridViewTextBoxColumn colUsuario;
-        private DataGridViewTextBoxColumn colPerfil;
         private DataGridViewTextBoxColumn colDni;
         private DataGridViewTextBoxColumn colCorreoElectronico;
+        private DataGridViewTextBoxColumn colDireccion;
         private DataGridViewTextBoxColumn colEstado;
     }
 }

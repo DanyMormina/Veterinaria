@@ -192,6 +192,18 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
                 .HasMaxLength(20)
                 .IsRequired();
 
+            b.Property(u => u.Direccion)
+                .HasMaxLength(200);
+
+            b.Property(u => u.Telefono)
+                .HasMaxLength(30);
+
+            b.Property(u => u.CorreoElectronico)
+                .HasMaxLength(100);
+
+            b.Property(u => u.Sexo)
+                .HasMaxLength(10);
+
             b.Property(u => u.Matricula)
                 .HasMaxLength(50);
 

@@ -12,6 +12,7 @@ public static class InicializadorDatos
     {
         // 1. Asegurar la creación del esquema de base de datos
         await context.Database.EnsureCreatedAsync();
+        await AsegurarColumnasUsuarioAsync(context);
 
         // 2. Sembrar Tipos de Usuario si la tabla está vacía
         if (!await context.TiposUsuario.AnyAsync())
@@ -55,6 +56,23 @@ public static class InicializadorDatos
         await SembrarUsuarioSiNoExisteAsync(context, "Administrador", "admin", "admin123", "Administrador", "Sistema", "12345678", "ADM-001");
         await SembrarUsuarioSiNoExisteAsync(context, "Veterinario", "vet", "vet123", "Lucía", "Pérez", "23456789", "MN-1024");
         await SembrarUsuarioSiNoExisteAsync(context, "Secretario", "secretario", "sec123", "Martín", "Gómez", "34567890", "REC-001");
+    }
+
+    private static async Task AsegurarColumnasUsuarioAsync(ContextoVeterinaria context)
+    {
+        // EnsureCreated no altera tablas existentes: se agregan columnas faltantes del ABM.
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Usuario', 'Direccion') IS NULL
+                ALTER TABLE dbo.Usuario ADD Direccion NVARCHAR(200) NULL;
+            IF COL_LENGTH('dbo.Usuario', 'Telefono') IS NULL
+                ALTER TABLE dbo.Usuario ADD Telefono NVARCHAR(30) NULL;
+            IF COL_LENGTH('dbo.Usuario', 'CorreoElectronico') IS NULL
+                ALTER TABLE dbo.Usuario ADD CorreoElectronico NVARCHAR(100) NULL;
+            IF COL_LENGTH('dbo.Usuario', 'FechaNacimiento') IS NULL
+                ALTER TABLE dbo.Usuario ADD FechaNacimiento DATE NULL;
+            IF COL_LENGTH('dbo.Usuario', 'Sexo') IS NULL
+                ALTER TABLE dbo.Usuario ADD Sexo NVARCHAR(10) NULL;
+            """);
     }
 
     private static async Task SembrarUsuarioSiNoExisteAsync(

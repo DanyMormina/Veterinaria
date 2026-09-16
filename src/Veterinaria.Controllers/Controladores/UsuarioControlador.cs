@@ -132,11 +132,25 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 return Resultado<long>.Falla($"No existe un tipo de usuario registrado con ID {solicitud.IdTipoUsuario}.");
 
             var nombreUsuarioNormalizado = solicitud.NombreUsuario.Trim();
+            var dniNormalizado = solicitud.DNI.Trim();
+            var telefonoNormalizado = NormalizarOpcional(solicitud.Telefono);
+            var correoNormalizado = NormalizarOpcional(solicitud.CorreoElectronico);
+
             var existeNombreUsuario = await context.Usuarios
+                .IgnoreQueryFilters()
                 .AnyAsync(u => u.NombreUsuario.ToLower() == nombreUsuarioNormalizado.ToLower());
 
             if (existeNombreUsuario)
                 return Resultado<long>.Falla($"El nombre de usuario '{nombreUsuarioNormalizado}' ya está en uso.");
+
+            var conflictoUnicidad = await ValidarUnicidadContactoAsync(
+                idExcluir: null,
+                dniNormalizado,
+                telefonoNormalizado,
+                correoNormalizado);
+
+            if (conflictoUnicidad is not null)
+                return Resultado<long>.Falla(conflictoUnicidad);
 
             var entidad = new Usuario
             {
@@ -145,8 +159,13 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 HashContrasena = HasheadorContrasena.Hashear(solicitud.Contrasena),
                 Nombre = solicitud.Nombre.Trim(),
                 Apellido = solicitud.Apellido.Trim(),
-                DNI = solicitud.DNI.Trim(),
-                Matricula = string.IsNullOrWhiteSpace(solicitud.Matricula) ? null : solicitud.Matricula.Trim(),
+                DNI = dniNormalizado,
+                Direccion = NormalizarOpcional(solicitud.Direccion),
+                Telefono = telefonoNormalizado,
+                CorreoElectronico = correoNormalizado,
+                FechaNacimiento = solicitud.FechaNacimiento,
+                Sexo = NormalizarOpcional(solicitud.Sexo),
+                Matricula = NormalizarOpcional(solicitud.Matricula),
                 Activo = true
             };
 
@@ -194,18 +213,37 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 return Resultado.Falla($"No existe un tipo de usuario registrado con ID {solicitud.IdTipoUsuario}.");
 
             var nombreUsuarioNormalizado = solicitud.NombreUsuario.Trim();
+            var dniNormalizado = solicitud.DNI.Trim();
+            var telefonoNormalizado = NormalizarOpcional(solicitud.Telefono);
+            var correoNormalizado = NormalizarOpcional(solicitud.CorreoElectronico);
+
             var existeNombreUsuario = await context.Usuarios
+                .IgnoreQueryFilters()
                 .AnyAsync(u => u.Id != id && u.NombreUsuario.ToLower() == nombreUsuarioNormalizado.ToLower());
 
             if (existeNombreUsuario)
                 return Resultado.Falla($"El nombre de usuario '{nombreUsuarioNormalizado}' ya está en uso por otro usuario.");
 
+            var conflictoUnicidad = await ValidarUnicidadContactoAsync(
+                id,
+                dniNormalizado,
+                telefonoNormalizado,
+                correoNormalizado);
+
+            if (conflictoUnicidad is not null)
+                return Resultado.Falla(conflictoUnicidad);
+
             entidad.IdTipoUsuario = solicitud.IdTipoUsuario;
             entidad.NombreUsuario = nombreUsuarioNormalizado;
             entidad.Nombre = solicitud.Nombre.Trim();
             entidad.Apellido = solicitud.Apellido.Trim();
-            entidad.DNI = solicitud.DNI.Trim();
-            entidad.Matricula = string.IsNullOrWhiteSpace(solicitud.Matricula) ? null : solicitud.Matricula.Trim();
+            entidad.DNI = dniNormalizado;
+            entidad.Direccion = NormalizarOpcional(solicitud.Direccion);
+            entidad.Telefono = telefonoNormalizado;
+            entidad.CorreoElectronico = correoNormalizado;
+            entidad.FechaNacimiento = solicitud.FechaNacimiento;
+            entidad.Sexo = NormalizarOpcional(solicitud.Sexo);
+            entidad.Matricula = NormalizarOpcional(solicitud.Matricula);
 
             if (!string.IsNullOrWhiteSpace(solicitud.Contrasena))
                 entidad.HashContrasena = HasheadorContrasena.Hashear(solicitud.Contrasena);
@@ -242,6 +280,46 @@ public class UsuarioControlador(ContextoVeterinaria context)
         }
     }
 
+    private async Task<string?> ValidarUnicidadContactoAsync(
+        long? idExcluir,
+        string dni,
+        string? telefono,
+        string? correoElectronico)
+    {
+        var usuarios = context.Usuarios.IgnoreQueryFilters().AsQueryable();
+
+        var existeDni = await usuarios.AnyAsync(u =>
+            (!idExcluir.HasValue || u.Id != idExcluir.Value) &&
+            u.DNI.ToLower() == dni.ToLower());
+
+        if (existeDni)
+            return $"Ya existe un usuario registrado con el DNI '{dni}'.";
+
+        if (!string.IsNullOrWhiteSpace(telefono))
+        {
+            var existeTelefono = await usuarios.AnyAsync(u =>
+                (!idExcluir.HasValue || u.Id != idExcluir.Value) &&
+                u.Telefono != null &&
+                u.Telefono.ToLower() == telefono.ToLower());
+
+            if (existeTelefono)
+                return $"Ya existe un usuario registrado con el teléfono '{telefono}'.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(correoElectronico))
+        {
+            var existeCorreo = await usuarios.AnyAsync(u =>
+                (!idExcluir.HasValue || u.Id != idExcluir.Value) &&
+                u.CorreoElectronico != null &&
+                u.CorreoElectronico.ToLower() == correoElectronico.ToLower());
+
+            if (existeCorreo)
+                return $"Ya existe un usuario registrado con el correo electrónico '{correoElectronico}'.";
+        }
+
+        return null;
+    }
+
     private static UsuarioRespuestaDto Mapear(Usuario usuario) => new()
     {
         Id = usuario.Id,
@@ -251,7 +329,15 @@ public class UsuarioControlador(ContextoVeterinaria context)
         Nombre = usuario.Nombre,
         Apellido = usuario.Apellido,
         DNI = usuario.DNI,
+        Direccion = usuario.Direccion,
+        Telefono = usuario.Telefono,
+        CorreoElectronico = usuario.CorreoElectronico,
+        FechaNacimiento = usuario.FechaNacimiento,
+        Sexo = usuario.Sexo,
         Matricula = usuario.Matricula,
         Activo = usuario.Activo
     };
+
+    private static string? NormalizarOpcional(string? valor) =>
+        string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
 }

@@ -55,6 +55,7 @@ partial class FormPropietarios
         btnGuardar = new Button();
         btnModificar = new Button();
         btnCancelar = new Button();
+        btnVolver = new Button();
         pnlEncabezado.SuspendLayout();
         pnlContenido.SuspendLayout();
         grpDatos.SuspendLayout();
@@ -428,6 +429,7 @@ partial class FormPropietarios
         pnlBotones.Controls.Add(btnGuardar);
         pnlBotones.Controls.Add(btnModificar);
         pnlBotones.Controls.Add(btnCancelar);
+        pnlBotones.Controls.Add(btnVolver);
         pnlBotones.Location = new Point(12, 199);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1076, 40);
@@ -471,6 +473,20 @@ partial class FormPropietarios
         btnCancelar.TabIndex = 3;
         btnCancelar.Text = "Cancelar";
         btnCancelar.UseVisualStyleBackColor = false;
+        // 
+        // btnVolver
+        // 
+        btnVolver.BackColor = Color.FromArgb(220, 200, 204);
+        btnVolver.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
+        btnVolver.FlatStyle = FlatStyle.Flat;
+        btnVolver.ForeColor = Color.FromArgb(58, 53, 59);
+        btnVolver.Location = new Point(331, 5);
+        btnVolver.Name = "btnVolver";
+        btnVolver.Size = new Size(140, 32);
+        btnVolver.TabIndex = 4;
+        btnVolver.Text = "Volver al panel";
+        btnVolver.UseVisualStyleBackColor = false;
+        btnVolver.Click += btnVolver_Click;
         // 
         // FormPropietarios
         // 
@@ -540,4 +556,5 @@ partial class FormPropietarios
     private Button btnGuardar;
     private Button btnModificar;
     private Button btnCancelar;
+    private Button btnVolver;
 }

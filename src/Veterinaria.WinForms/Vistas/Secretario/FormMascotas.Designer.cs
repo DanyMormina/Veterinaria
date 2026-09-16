@@ -62,6 +62,7 @@ partial class FormMascotas
         btnCancelar = new Button();
         btnModificar = new Button();
         btnGuardar = new Button();
+        btnVolver = new Button();
         pnlBotones = new Panel();
         pnlEncabezado.SuspendLayout();
         pnlContenido.SuspendLayout();
@@ -549,11 +550,26 @@ partial class FormMascotas
         btnGuardar.Text = "Guardar";
         btnGuardar.UseVisualStyleBackColor = false;
         // 
+        // btnVolver
+        // 
+        btnVolver.BackColor = Color.FromArgb(220, 200, 204);
+        btnVolver.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
+        btnVolver.FlatStyle = FlatStyle.Flat;
+        btnVolver.ForeColor = Color.FromArgb(58, 53, 59);
+        btnVolver.Location = new Point(331, 5);
+        btnVolver.Name = "btnVolver";
+        btnVolver.Size = new Size(140, 32);
+        btnVolver.TabIndex = 4;
+        btnVolver.Text = "Volver al panel";
+        btnVolver.UseVisualStyleBackColor = false;
+        btnVolver.Click += btnVolver_Click;
+        // 
         // pnlBotones
         // 
         pnlBotones.Controls.Add(btnGuardar);
         pnlBotones.Controls.Add(btnModificar);
         pnlBotones.Controls.Add(btnCancelar);
+        pnlBotones.Controls.Add(btnVolver);
         pnlBotones.Location = new Point(16, 211);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1068, 40);
@@ -635,4 +651,5 @@ partial class FormMascotas
     private Button btnGuardar;
     private Button btnModificar;
     private Button btnCancelar;
+    private Button btnVolver;
 }
