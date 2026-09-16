@@ -2,6 +2,8 @@ namespace Veterinaria.WinForms.Vistas.Secretario;
 
 partial class FormSecretarioPrincipal
 {
+    private PictureBox picPropietarios;
+    private PictureBox picMascotas;
     private System.ComponentModel.IContainer components = null;
     private System.Windows.Forms.Panel pnlEncabezado;
     private System.Windows.Forms.Label lblTitulo;
@@ -24,6 +26,7 @@ partial class FormSecretarioPrincipal
 
     private void InitializeComponent()
     {
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormSecretarioPrincipal));
         pnlEncabezado = new Panel();
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
@@ -35,6 +38,10 @@ partial class FormSecretarioPrincipal
         pnlEncabezado.SuspendLayout();
         pnlContenido.SuspendLayout();
         barraEstado.SuspendLayout();
+        picPropietarios = new PictureBox();
+        ((System.ComponentModel.ISupportInitialize)picPropietarios).BeginInit();
+        picMascotas = new PictureBox();
+        ((System.ComponentModel.ISupportInitialize)picMascotas).BeginInit();
         SuspendLayout();
         // 
         // pnlEncabezado
@@ -143,6 +150,26 @@ partial class FormSecretarioPrincipal
         // 
         // FormSecretarioPrincipal
         // 
+        // picPropietarios
+        picPropietarios.BackColor = Color.Transparent;
+        picPropietarios.Image = (Image)resources.GetObject("picPropietarios.Image");
+        picPropietarios.Location = new Point(37, 10);
+        picPropietarios.Name = "picPropietarios";
+        picPropietarios.Size = new Size(140, 186);
+        picPropietarios.SizeMode = PictureBoxSizeMode.Zoom;
+        picPropietarios.TabStop = false;
+        picPropietarios.Click += BTPROPIETARIOS_Click;
+        BTPROPIETARIOS.Controls.Add(picPropietarios);
+        // picMascotas
+        picMascotas.BackColor = Color.Transparent;
+        picMascotas.Image = (Image)resources.GetObject("picMascotas.Image");
+        picMascotas.Location = new Point(37, 10);
+        picMascotas.Name = "picMascotas";
+        picMascotas.Size = new Size(140, 186);
+        picMascotas.SizeMode = PictureBoxSizeMode.Zoom;
+        picMascotas.TabStop = false;
+        picMascotas.Click += BTMASCOTAS_Click;
+        BTMASCOTAS.Controls.Add(picMascotas);
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
@@ -161,6 +188,8 @@ partial class FormSecretarioPrincipal
         pnlContenido.ResumeLayout(false);
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)picPropietarios).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picMascotas).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }

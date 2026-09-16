@@ -2,6 +2,10 @@ namespace Veterinaria.WinForms.Vistas.Veterinario;
 
 partial class FormVeterinarioPrincipal
 {
+    private PictureBox picConsultas;
+    private PictureBox picFichaMedica;
+    private PictureBox picTratamientos;
+    private PictureBox picVacunas;
     private System.ComponentModel.IContainer components = null;
     private System.Windows.Forms.Panel pnlEncabezado;
     private System.Windows.Forms.Label lblTitulo;
@@ -26,15 +30,23 @@ partial class FormVeterinarioPrincipal
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
         pnlContenido = new Panel();
+        BTVACUNAS = new Button();
+        picVacunas = new PictureBox();
+        BTTRATAMIENTOS = new Button();
+        picTratamientos = new PictureBox();
+        BTFICHAMEDICA = new Button();
+        picFichaMedica = new PictureBox();
+        BTCONSULTAS = new Button();
+        picConsultas = new PictureBox();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
-        BTCONSULTAS = new Button();
-        BTFICHAMEDICA = new Button();
-        BTTRATAMIENTOS = new Button();
-        BTVACUNAS = new Button();
         pnlEncabezado.SuspendLayout();
-        barraEstado.SuspendLayout();
         pnlContenido.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)picVacunas).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)picTratamientos).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)picFichaMedica).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)picConsultas).BeginInit();
+        barraEstado.SuspendLayout();
         SuspendLayout();
         // 
         // pnlEncabezado
@@ -73,62 +85,22 @@ partial class FormVeterinarioPrincipal
         lblUsuarioSesion.Text = "Médico: Veterinario";
         lblUsuarioSesion.TextAlign = ContentAlignment.MiddleRight;
         // 
-        // BTCONSULTAS
+        // pnlContenido
         // 
-        BTCONSULTAS.BackColor = Color.White;
-        BTCONSULTAS.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
-        BTCONSULTAS.FlatStyle = FlatStyle.Flat;
-        BTCONSULTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        BTCONSULTAS.ImageAlign = ContentAlignment.TopCenter;
-        BTCONSULTAS.Image = (Image)resources.GetObject("BTCONSULTAS.Image");
-        BTCONSULTAS.Location = new Point(64, 143);
-        BTCONSULTAS.Name = "BTCONSULTAS";
-        BTCONSULTAS.Padding = new Padding(12, 8, 12, 10);
-        BTCONSULTAS.Size = new Size(214, 277);
-        BTCONSULTAS.TabIndex = 0;
-        BTCONSULTAS.Text = "CONSULTAS";
-        BTCONSULTAS.TextAlign = ContentAlignment.BottomCenter;
-        BTCONSULTAS.TextImageRelation = TextImageRelation.ImageAboveText;
-        BTCONSULTAS.UseVisualStyleBackColor = false;
-        BTCONSULTAS.Click += BTCONSULTAS_Click;
-        // 
-        // BTFICHAMEDICA
-        // 
-        BTFICHAMEDICA.BackColor = Color.White;
-        BTFICHAMEDICA.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
-        BTFICHAMEDICA.FlatStyle = FlatStyle.Flat;
-        BTFICHAMEDICA.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        BTFICHAMEDICA.ImageAlign = ContentAlignment.TopCenter;
-        BTFICHAMEDICA.Image = (Image)resources.GetObject("BTFICHAMEDICA.Image");
-        BTFICHAMEDICA.Location = new Point(319, 143);
-        BTFICHAMEDICA.Name = "BTFICHAMEDICA";
-        BTFICHAMEDICA.Padding = new Padding(12, 8, 12, 10);
-        BTFICHAMEDICA.Size = new Size(214, 277);
-        BTFICHAMEDICA.TabIndex = 1;
-        BTFICHAMEDICA.Text = "HISTORIAL CLÍNICO";
-        BTFICHAMEDICA.TextAlign = ContentAlignment.BottomCenter;
-        BTFICHAMEDICA.TextImageRelation = TextImageRelation.ImageAboveText;
-        BTFICHAMEDICA.UseVisualStyleBackColor = false;
-        BTFICHAMEDICA.Click += BTFICHAMEDICA_Click;
-        // 
-        // BTTRATAMIENTOS
-        // 
-        BTTRATAMIENTOS.BackColor = Color.White;
-        BTTRATAMIENTOS.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
-        BTTRATAMIENTOS.FlatStyle = FlatStyle.Flat;
-        BTTRATAMIENTOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        BTTRATAMIENTOS.ImageAlign = ContentAlignment.TopCenter;
-        BTTRATAMIENTOS.Image = (Image)resources.GetObject("BTTRATAMIENTOS.Image");
-        BTTRATAMIENTOS.Location = new Point(568, 143);
-        BTTRATAMIENTOS.Name = "BTTRATAMIENTOS";
-        BTTRATAMIENTOS.Padding = new Padding(12, 8, 12, 10);
-        BTTRATAMIENTOS.Size = new Size(214, 277);
-        BTTRATAMIENTOS.TabIndex = 2;
-        BTTRATAMIENTOS.Text = "TRATAMIENTOS";
-        BTTRATAMIENTOS.TextAlign = ContentAlignment.BottomCenter;
-        BTTRATAMIENTOS.TextImageRelation = TextImageRelation.ImageAboveText;
-        BTTRATAMIENTOS.UseVisualStyleBackColor = false;
-        BTTRATAMIENTOS.Click += BTTRATAMIENTOS_Click;
+        pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
+        pnlContenido.Controls.Add(picVacunas);
+        pnlContenido.Controls.Add(picTratamientos);
+        pnlContenido.Controls.Add(picConsultas);
+        pnlContenido.Controls.Add(picFichaMedica);
+        pnlContenido.Controls.Add(BTVACUNAS);
+        pnlContenido.Controls.Add(BTTRATAMIENTOS);
+        pnlContenido.Controls.Add(BTFICHAMEDICA);
+        pnlContenido.Controls.Add(BTCONSULTAS);
+        pnlContenido.Dock = DockStyle.Fill;
+        pnlContenido.Location = new Point(0, 50);
+        pnlContenido.Name = "pnlContenido";
+        pnlContenido.Size = new Size(1100, 628);
+        pnlContenido.TabIndex = 1;
         // 
         // BTVACUNAS
         // 
@@ -137,7 +109,6 @@ partial class FormVeterinarioPrincipal
         BTVACUNAS.FlatStyle = FlatStyle.Flat;
         BTVACUNAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTVACUNAS.ImageAlign = ContentAlignment.TopCenter;
-        BTVACUNAS.Image = (Image)resources.GetObject("BTVACUNAS.Image");
         BTVACUNAS.Location = new Point(811, 143);
         BTVACUNAS.Name = "BTVACUNAS";
         BTVACUNAS.Padding = new Padding(12, 8, 12, 10);
@@ -149,18 +120,107 @@ partial class FormVeterinarioPrincipal
         BTVACUNAS.UseVisualStyleBackColor = false;
         BTVACUNAS.Click += BTVACUNAS_Click;
         // 
-        // pnlContenido
+        // picVacunas
         // 
-        pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
-        pnlContenido.Controls.Add(BTVACUNAS);
-        pnlContenido.Controls.Add(BTTRATAMIENTOS);
-        pnlContenido.Controls.Add(BTFICHAMEDICA);
-        pnlContenido.Controls.Add(BTCONSULTAS);
-        pnlContenido.Dock = DockStyle.Fill;
-        pnlContenido.Location = new Point(0, 50);
-        pnlContenido.Name = "pnlContenido";
-        pnlContenido.Size = new Size(1100, 628);
-        pnlContenido.TabIndex = 1;
+        picVacunas.BackColor = Color.Transparent;
+        picVacunas.Image = (Image)resources.GetObject("picVacunas.Image");
+        picVacunas.Location = new Point(854, 162);
+        picVacunas.Name = "picVacunas";
+        picVacunas.Size = new Size(125, 186);
+        picVacunas.SizeMode = PictureBoxSizeMode.Zoom;
+        picVacunas.TabIndex = 0;
+        picVacunas.TabStop = false;
+        picVacunas.Click += BTVACUNAS_Click;
+        // 
+        // BTTRATAMIENTOS
+        // 
+        BTTRATAMIENTOS.BackColor = Color.White;
+        BTTRATAMIENTOS.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTTRATAMIENTOS.FlatStyle = FlatStyle.Flat;
+        BTTRATAMIENTOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTTRATAMIENTOS.ImageAlign = ContentAlignment.TopCenter;
+        BTTRATAMIENTOS.Location = new Point(568, 143);
+        BTTRATAMIENTOS.Name = "BTTRATAMIENTOS";
+        BTTRATAMIENTOS.Padding = new Padding(12, 8, 12, 10);
+        BTTRATAMIENTOS.Size = new Size(214, 277);
+        BTTRATAMIENTOS.TabIndex = 2;
+        BTTRATAMIENTOS.Text = "TRATAMIENTOS";
+        BTTRATAMIENTOS.TextAlign = ContentAlignment.BottomCenter;
+        BTTRATAMIENTOS.TextImageRelation = TextImageRelation.ImageAboveText;
+        BTTRATAMIENTOS.UseVisualStyleBackColor = false;
+        BTTRATAMIENTOS.Click += BTTRATAMIENTOS_Click;
+        // 
+        // picTratamientos
+        // 
+        picTratamientos.BackColor = Color.Transparent;
+        picTratamientos.Image = (Image)resources.GetObject("picTratamientos.Image");
+        picTratamientos.Location = new Point(615, 162);
+        picTratamientos.Name = "picTratamientos";
+        picTratamientos.Size = new Size(128, 186);
+        picTratamientos.SizeMode = PictureBoxSizeMode.Zoom;
+        picTratamientos.TabIndex = 0;
+        picTratamientos.TabStop = false;
+        picTratamientos.Click += BTTRATAMIENTOS_Click;
+        // 
+        // BTFICHAMEDICA
+        // 
+        BTFICHAMEDICA.BackColor = Color.White;
+        BTFICHAMEDICA.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTFICHAMEDICA.FlatStyle = FlatStyle.Flat;
+        BTFICHAMEDICA.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTFICHAMEDICA.ImageAlign = ContentAlignment.TopCenter;
+        BTFICHAMEDICA.Location = new Point(319, 143);
+        BTFICHAMEDICA.Name = "BTFICHAMEDICA";
+        BTFICHAMEDICA.Padding = new Padding(12, 8, 12, 10);
+        BTFICHAMEDICA.Size = new Size(214, 277);
+        BTFICHAMEDICA.TabIndex = 1;
+        BTFICHAMEDICA.Text = "HISTORIAL CLÍNICO";
+        BTFICHAMEDICA.TextAlign = ContentAlignment.BottomCenter;
+        BTFICHAMEDICA.TextImageRelation = TextImageRelation.ImageAboveText;
+        BTFICHAMEDICA.UseVisualStyleBackColor = false;
+        BTFICHAMEDICA.Click += BTFICHAMEDICA_Click;
+        // 
+        // picFichaMedica
+        // 
+        picFichaMedica.BackColor = Color.Transparent;
+        picFichaMedica.Image = (Image)resources.GetObject("picFichaMedica.Image");
+        picFichaMedica.Location = new Point(367, 162);
+        picFichaMedica.Name = "picFichaMedica";
+        picFichaMedica.Size = new Size(129, 186);
+        picFichaMedica.SizeMode = PictureBoxSizeMode.Zoom;
+        picFichaMedica.TabIndex = 0;
+        picFichaMedica.TabStop = false;
+        picFichaMedica.Click += BTFICHAMEDICA_Click;
+        // 
+        // BTCONSULTAS
+        // 
+        BTCONSULTAS.BackColor = Color.White;
+        BTCONSULTAS.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTCONSULTAS.FlatStyle = FlatStyle.Flat;
+        BTCONSULTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTCONSULTAS.ImageAlign = ContentAlignment.TopCenter;
+        BTCONSULTAS.Location = new Point(64, 143);
+        BTCONSULTAS.Name = "BTCONSULTAS";
+        BTCONSULTAS.Padding = new Padding(12, 8, 12, 10);
+        BTCONSULTAS.Size = new Size(214, 277);
+        BTCONSULTAS.TabIndex = 0;
+        BTCONSULTAS.Text = "CONSULTAS";
+        BTCONSULTAS.TextAlign = ContentAlignment.BottomCenter;
+        BTCONSULTAS.TextImageRelation = TextImageRelation.ImageAboveText;
+        BTCONSULTAS.UseVisualStyleBackColor = false;
+        BTCONSULTAS.Click += BTCONSULTAS_Click;
+        // 
+        // picConsultas
+        // 
+        picConsultas.BackColor = Color.Transparent;
+        picConsultas.Image = (Image)resources.GetObject("picConsultas.Image");
+        picConsultas.Location = new Point(107, 162);
+        picConsultas.Name = "picConsultas";
+        picConsultas.Size = new Size(125, 186);
+        picConsultas.SizeMode = PictureBoxSizeMode.Zoom;
+        picConsultas.TabIndex = 0;
+        picConsultas.TabStop = false;
+        picConsultas.Click += BTCONSULTAS_Click;
         // 
         // barraEstado
         // 
@@ -197,9 +257,13 @@ partial class FormVeterinarioPrincipal
         Text = "Veterinaria - Panel Veterinario";
         Load += FormVeterinarioPrincipal_Load;
         pnlEncabezado.ResumeLayout(false);
+        pnlContenido.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)picVacunas).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picTratamientos).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picFichaMedica).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picConsultas).EndInit();
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
-        pnlContenido.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
     }
