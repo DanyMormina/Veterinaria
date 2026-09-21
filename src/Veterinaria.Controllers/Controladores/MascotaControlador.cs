@@ -8,6 +8,7 @@ namespace Veterinaria.Controllers.Controladores;
 
 public class MascotaControlador(ContextoVeterinaria context)
 {
+    protected ContextoVeterinaria Context => context;
     public async Task<Resultado<IEnumerable<MascotaRespuestaDto>>> ObtenerTodosAsync()
     {
         try
@@ -156,14 +157,15 @@ public class MascotaControlador(ContextoVeterinaria context)
         }
     }
 
-    private IQueryable<MascotaRespuestaDto> ConsultaBase() =>
+    protected IQueryable<MascotaRespuestaDto> ConsultaBase() =>
         context.Mascotas
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Select(m => new MascotaRespuestaDto
             {
                 Id = m.Id,
                 IdPropietario = m.IdPropietario,
-                NombrePropietario = $"{m.Propietario.Nombre} {m.Propietario.Apellido}",
+                NombrePropietario = m.Propietario.Nombre + " " + m.Propietario.Apellido,
                 IdRaza = m.IdRaza,
                 NombreRaza = m.Raza.Nombre,
                 IdEspecie = m.Raza.IdEspecie,

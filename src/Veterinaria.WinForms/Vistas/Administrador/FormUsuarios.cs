@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
@@ -7,14 +6,20 @@ using Veterinaria.WinForms.Sesion;
 namespace Veterinaria.WinForms.Vistas.Administrador;
 
 /// <summary>
-/// ABM de usuarios: alta, baja lógica y modificación.
+/// Formulario de Administración de Usuarios: Alta, Baja Lógica, Modificación y Consulta con estilo Ejecutivo Romántico Pastel.
 /// </summary>
 public partial class FormUsuarios : Form
 {
+    private static readonly Regex RegexNombreApellido = new(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]{2,100}$", RegexOptions.Compiled);
     private static readonly Regex SoloDigitos = new(@"^\d+$", RegexOptions.Compiled);
-    private static readonly Regex TelefonoValido = new(@"^[\d\s\+\-\(\)]+$", RegexOptions.Compiled);
-    private static readonly Color ColorEtiquetaNormal = Color.FromArgb(58, 53, 59);
-    private static readonly Color ColorError = Color.FromArgb(178, 34, 34);
+    private static readonly Regex RegexCorreo = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$", RegexOptions.Compiled);
+
+    private static readonly Color ColorBordeError = ColorTranslator.FromHtml("#B85D69");
+    private static readonly Color ColorBordeNeutro = ColorTranslator.FromHtml("#E2D9DC");
+    private static readonly Color ColorFondoError = ColorTranslator.FromHtml("#FDECEF");
+    private static readonly Color ColorFondoNormal = Color.White;
+    private static readonly Color ColorEtiquetaNormal = ColorTranslator.FromHtml("#3A353B");
+    private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
 
     private readonly ErrorProvider _errores = new();
     private readonly UsuarioControlador _usuarioControlador;
@@ -22,6 +27,7 @@ public partial class FormUsuarios : Form
 
     private long? _idSeleccionado;
     private List<UsuarioRespuestaDto> _usuarios = [];
+    private Control[] _controlesEntrada = [];
 
     public FormUsuarios(
         UsuarioControlador usuarioControlador,
@@ -31,6 +37,48 @@ public partial class FormUsuarios : Form
         _tipoUsuarioControlador = tipoUsuarioControlador;
         InitializeComponent();
         ConfigurarValidacionVisual();
+        ConfigurarEventosEntrada();
+    }
+
+    private void ConfigurarEventosEntrada()
+    {
+        // Restricción de entrada solo para dígitos en DNI
+        txtDni.KeyPress += (_, e) =>
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        };
+
+        // Restricción de entrada solo para dígitos en Teléfono (máximo 13 dígitos numéricos)
+        txtTelefono.KeyPress += (_, e) =>
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        };
+
+        // Restricción de caracteres especiales en Nombre y Apellido
+        var validarLetras = new KeyPressEventHandler((_, e) =>
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsLetter(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        });
+
+        txtNombre.KeyPress += validarLetras;
+        txtApellido.KeyPress += validarLetras;
+
+        // Validación de unicidad de usuario en tiempo real (instantánea mientras se escribe)
+        txtUsuario.TextChanged += ValidarUnicidadUsuarioEnTiempoReal;
+
+        // Filtros reactivos instantáneos
+        txtBuscar.TextChanged += (_, _) => AplicarFiltros();
+        cboFiltroRol.SelectedIndexChanged += (_, _) => AplicarFiltros();
+        cboFiltroEstado.SelectedIndexChanged += (_, _) => AplicarFiltros();
     }
 
     private void ConfigurarValidacionVisual()
@@ -38,31 +86,36 @@ public partial class FormUsuarios : Form
         _errores.ContainerControl = this;
         _errores.BlinkStyle = ErrorBlinkStyle.NeverBlink;
 
-        lblErrorValidacion.ForeColor = ColorError;
+        lblErrorValidacion.ForeColor = ColorBordeError;
         lblErrorValidacion.Visible = false;
+
+        _controlesEntrada =
+        [
+            txtNombre, txtApellido, txtDni, txtDireccion, txtTelefono,
+            txtCorreoElectronico, txtUsuario, txtContrasena,
+            dtpFechaNacimiento, rbHombre, rbMujer, cboPerfil, cboEstado
+        ];
 
         foreach (Control control in new Control[]
                  {
                      txtNombre, txtApellido, txtDni, txtDireccion, txtTelefono,
-                     txtCorreoElectronico, txtUsuario, txtContrasena,
-                     dtpFechaNacimiento, rbHombre, rbMujer, cboPerfil
+                     txtCorreoElectronico, txtContrasena,
+                     dtpFechaNacimiento, rbHombre, rbMujer, cboPerfil, cboEstado
                  })
         {
-            control.Enter += (_, _) => LimpiarErrorDe(control);
+            control.Enter += Control_LimpiarError;
             if (control is TextBox texto)
-                texto.TextChanged += (_, _) => LimpiarErrorDe(texto);
+                texto.TextChanged += Control_LimpiarError;
             if (control is ComboBox combo)
-                combo.SelectedIndexChanged += (_, _) => LimpiarErrorDe(combo);
+                combo.SelectedIndexChanged += Control_LimpiarError;
             if (control is DateTimePicker fecha)
-                fecha.ValueChanged += (_, _) => LimpiarErrorDe(fecha);
+                fecha.ValueChanged += Control_LimpiarError;
             if (control is RadioButton radio)
-                radio.CheckedChanged += (_, _) =>
-                {
-                    LimpiarErrorDe(rbHombre);
-                    LimpiarErrorDe(rbMujer);
-                    lblSexo.ForeColor = ColorEtiquetaNormal;
-                };
+                radio.CheckedChanged += Control_LimpiarError;
         }
+
+        // txtUsuario maneja su propio foco
+        txtUsuario.Enter += Control_LimpiarError;
     }
 
     private async void FormUsuarios_Load(object? sender, EventArgs e)
@@ -71,9 +124,17 @@ public partial class FormUsuarios : Form
             ? $"Usuario: {SesionActual.NombreCompleto} | Rol: {SesionActual.Rol}"
             : "Usuario: Administrador";
 
+        cboFiltroEstado.Items.Clear();
+        cboFiltroEstado.Items.AddRange(["(Todos)", "Solo Activos", "Solo Inactivos"]);
+        cboFiltroEstado.SelectedIndex = 0;
+
+        cboEstado.Items.Clear();
+        cboEstado.Items.AddRange(["Activo", "Inactivo"]);
+        cboEstado.SelectedIndex = 0;
+
         await CargarPerfilesAsync();
         await CargarUsuariosAsync();
-        LimpiarFormulario();
+        EstablecerEstadoInicial();
     }
 
     private async Task CargarPerfilesAsync()
@@ -89,12 +150,25 @@ public partial class FormUsuarios : Form
             return;
         }
 
+        var listaPerfiles = resultado.Valor.ToList();
+
+        // Combo del formulario (solo activos)
         cboPerfil.DisplayMember = "Nombre";
         cboPerfil.ValueMember = "Id";
-        cboPerfil.DataSource = resultado.Valor
-            .Where(t => t.Activo)
-            .ToList();
+        cboPerfil.DataSource = listaPerfiles.Where(t => t.Activo).ToList();
         cboPerfil.SelectedIndex = -1;
+
+        // Combo de filtro (incluye opción "(Todos los roles)" con Id 0)
+        var opcionesFiltroRol = new List<TipoUsuarioRespuestaDto>
+        {
+            new TipoUsuarioRespuestaDto { Id = 0, Nombre = "(Todos los roles)", Activo = true }
+        };
+        opcionesFiltroRol.AddRange(listaPerfiles);
+
+        cboFiltroRol.DisplayMember = "Nombre";
+        cboFiltroRol.ValueMember = "Id";
+        cboFiltroRol.DataSource = opcionesFiltroRol;
+        cboFiltroRol.SelectedIndex = 0;
     }
 
     private async Task CargarUsuariosAsync()
@@ -124,6 +198,7 @@ public partial class FormUsuarios : Form
                 usuario.Id,
                 usuario.Nombre,
                 usuario.Apellido,
+                usuario.NombreTipoUsuario,
                 usuario.DNI,
                 usuario.Telefono ?? string.Empty,
                 usuario.CorreoElectronico ?? string.Empty,
@@ -132,22 +207,152 @@ public partial class FormUsuarios : Form
         }
     }
 
-    private void btnNuevo_Click(object? sender, EventArgs e)
+    // =========================================================================
+    // Gestor de Ciclo de Vida y Estados del Formulario (Lifecycle Management)
+    // =========================================================================
+
+    private void EstablecerEstadoInicial()
     {
-        LimpiarFormulario();
-        txtNombre.Focus();
+        _idSeleccionado = null;
+        LimpiarCamposFormulario();
+        HabilitarControlesEntrada(true);
+        txtUsuario.Enabled = true;
+
+        lblEstado.Visible = false;
+        cboEstado.Visible = false;
+        cboEstado.SelectedIndex = 0; // "Activo"
+        cboEstado.Enabled = false;
+
+        btnGuardar.Enabled = true;
+        btnModificar.Enabled = false;
+        btnLimpiar.Enabled = true;
+
+        dgvUsuarios.ClearSelection();
     }
+
+    private void ActivarModoEdicion(UsuarioRespuestaDto usuario)
+    {
+        _idSeleccionado = usuario.Id;
+        LimpiarErroresValidacion();
+        HabilitarControlesEntrada(true);
+
+        // En modo edición no se permite cambiar el username por consistencia de auditoría
+        txtUsuario.Enabled = false;
+
+        txtNombre.Text = usuario.Nombre;
+        txtApellido.Text = usuario.Apellido;
+        txtDni.Text = usuario.DNI;
+        txtDireccion.Text = usuario.Direccion ?? string.Empty;
+        txtTelefono.Text = usuario.Telefono ?? string.Empty;
+        txtCorreoElectronico.Text = usuario.CorreoElectronico ?? string.Empty;
+        txtUsuario.Text = usuario.NombreUsuario;
+        txtContrasena.Text = string.Empty; // Dejar vacía para indicar "sin cambios"
+
+        if (usuario.FechaNacimiento.HasValue)
+        {
+            var fechaMax = DateTime.Today.AddYears(-18);
+            dtpFechaNacimiento.Value = usuario.FechaNacimiento.Value <= fechaMax
+                ? usuario.FechaNacimiento.Value
+                : fechaMax;
+        }
+        else
+        {
+            dtpFechaNacimiento.Value = DateTime.Today.AddYears(-18);
+        }
+
+        rbHombre.Checked = string.Equals(usuario.Sexo, "Hombre", StringComparison.OrdinalIgnoreCase);
+        rbMujer.Checked = string.Equals(usuario.Sexo, "Mujer", StringComparison.OrdinalIgnoreCase);
+
+        if (cboPerfil.DataSource is not null)
+            cboPerfil.SelectedValue = usuario.IdTipoUsuario;
+
+        lblEstado.Visible = true;
+        cboEstado.Visible = true;
+        cboEstado.SelectedItem = usuario.Activo ? "Activo" : "Inactivo";
+        cboEstado.Enabled = true; // Se habilita y muestra únicamente al seleccionar un usuario para modificar
+
+        btnGuardar.Enabled = false;
+        btnModificar.Enabled = true;
+        btnLimpiar.Enabled = true;
+    }
+
+    private void HabilitarControlesEntrada(bool habilitar)
+    {
+        txtNombre.Enabled = habilitar;
+        txtApellido.Enabled = habilitar;
+        txtDni.Enabled = habilitar;
+        txtDireccion.Enabled = habilitar;
+        txtTelefono.Enabled = habilitar;
+        txtCorreoElectronico.Enabled = habilitar;
+        txtUsuario.Enabled = habilitar;
+        txtContrasena.Enabled = habilitar;
+        dtpFechaNacimiento.Enabled = habilitar;
+        rbHombre.Enabled = habilitar;
+        rbMujer.Enabled = habilitar;
+        cboPerfil.Enabled = habilitar;
+    }
+
+    private void LimpiarCamposFormulario()
+    {
+        LimpiarErroresValidacion();
+        txtNombre.Clear();
+        txtApellido.Clear();
+        txtDni.Clear();
+        txtUsuario.Clear();
+        txtContrasena.Clear();
+        txtDireccion.Clear();
+        txtTelefono.Clear();
+        txtCorreoElectronico.Clear();
+        dtpFechaNacimiento.Value = DateTime.Today.AddYears(-18);
+        rbHombre.Checked = false;
+        rbMujer.Checked = false;
+        cboPerfil.SelectedIndex = -1;
+        lblEstado.Visible = false;
+        cboEstado.Visible = false;
+        cboEstado.SelectedIndex = 0;
+        cboEstado.Enabled = false;
+    }
+
+    // =========================================================================
+    // Manejo de Acciones (Botones)
+    // =========================================================================
 
     private async void btnGuardar_Click(object? sender, EventArgs e)
     {
-        // Si hay un usuario seleccionado, Guardar actualiza; si no, crea uno nuevo.
-        if (_idSeleccionado is not null)
+        if (!ValidarCampos(esAlta: true, out var mensajeError, out var controlConFoco))
         {
-            await GuardarCambiosUsuarioAsync(esAlta: false);
+            MarcarError(controlConFoco, mensajeError);
+            MessageBox.Show(
+                mensajeError,
+                "Alta de Usuario",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
             return;
         }
 
-        await GuardarCambiosUsuarioAsync(esAlta: true);
+        var solicitud = ArmarSolicitud();
+        var resultado = await _usuarioControlador.CrearAsync(solicitud);
+
+        if (!resultado.EsExitoso)
+        {
+            var controlError = IdentificarControlDesdeMensaje(resultado.Mensaje);
+            MarcarError(controlError, resultado.Mensaje);
+            MessageBox.Show(
+                resultado.Mensaje,
+                "Alta de Usuario",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        MessageBox.Show(
+            "Usuario registrado exitosamente.",
+            "Alta de Usuario",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+
+        await CargarUsuariosAsync();
+        EstablecerEstadoInicial();
     }
 
     private async void btnModificar_Click(object? sender, EventArgs e)
@@ -156,180 +361,129 @@ public partial class FormUsuarios : Form
         {
             MessageBox.Show(
                 "Seleccione un usuario de la lista.",
-                "Modificar usuario",
+                "Modificar Usuario",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
         }
 
-        await GuardarCambiosUsuarioAsync(esAlta: false);
-    }
-
-    private async Task GuardarCambiosUsuarioAsync(bool esAlta)
-    {
-        if (!ValidarCampos(esAlta))
+        if (!ValidarCampos(esAlta: false, out var mensajeError, out var controlConFoco))
+        {
+            MarcarError(controlConFoco, mensajeError);
+            MessageBox.Show(
+                mensajeError,
+                "Modificar Usuario",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
             return;
+        }
 
         var solicitud = ArmarSolicitud();
-        var titulo = esAlta ? "Alta de usuario" : "Modificar usuario";
-        long idGuardado;
+        var resultado = await _usuarioControlador.ActualizarAsync(_idSeleccionado.Value, solicitud);
 
-        if (esAlta)
-        {
-            var resultadoAlta = await _usuarioControlador.CrearAsync(solicitud);
-            if (!resultadoAlta.EsExitoso || resultadoAlta.Valor <= 0)
-            {
-                MessageBox.Show(resultadoAlta.Mensaje, titulo, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            idGuardado = resultadoAlta.Valor;
-            MessageBox.Show("Usuario creado correctamente.", titulo, MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        else
-        {
-            var resultadoMod = await _usuarioControlador.ActualizarAsync(_idSeleccionado!.Value, solicitud);
-            if (!resultadoMod.EsExitoso)
-            {
-                MessageBox.Show(resultadoMod.Mensaje, titulo, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            idGuardado = _idSeleccionado.Value;
-            MessageBox.Show("Usuario modificado correctamente.", titulo, MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        await CargarUsuariosAsync();
-        CargarUsuarioEnFormulario(idGuardado);
-    }
-
-    private void CargarUsuarioEnFormulario(long id)
-    {
-        var usuario = _usuarios.FirstOrDefault(u => u.Id == id);
-        if (usuario is null)
-        {
-            LimpiarFormulario();
-            return;
-        }
-
-        _idSeleccionado = usuario.Id;
-        txtNombre.Text = usuario.Nombre;
-        txtApellido.Text = usuario.Apellido;
-        txtDni.Text = usuario.DNI;
-        txtDireccion.Text = usuario.Direccion ?? string.Empty;
-        txtTelefono.Text = usuario.Telefono ?? string.Empty;
-        txtCorreoElectronico.Text = usuario.CorreoElectronico ?? string.Empty;
-        txtUsuario.Text = usuario.NombreUsuario;
-        txtContrasena.Text = string.Empty;
-
-        if (usuario.FechaNacimiento.HasValue)
-            dtpFechaNacimiento.Value = usuario.FechaNacimiento.Value;
-        else
-            dtpFechaNacimiento.Value = DateTime.Today.AddYears(-18);
-
-        rbHombre.Checked = string.Equals(usuario.Sexo, "Hombre", StringComparison.OrdinalIgnoreCase);
-        rbMujer.Checked = string.Equals(usuario.Sexo, "Mujer", StringComparison.OrdinalIgnoreCase);
-
-        if (cboPerfil.DataSource is not null)
-            cboPerfil.SelectedValue = usuario.IdTipoUsuario;
-
-        foreach (DataGridViewRow fila in dgvUsuarios.Rows)
-        {
-            if (fila.Cells[0].Value is not null && Convert.ToInt64(fila.Cells[0].Value) == id)
-            {
-                fila.Selected = true;
-                dgvUsuarios.CurrentCell = fila.Cells[1];
-                break;
-            }
-        }
-    }
-
-    private async void btnDesactivar_Click(object? sender, EventArgs e)
-    {
-        if (_idSeleccionado is null)
-        {
-            MessageBox.Show(
-                "Seleccione un usuario de la lista.",
-                "Baja de usuario",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-            return;
-        }
-
-        var confirmar = MessageBox.Show(
-            "¿Desea desactivar el usuario seleccionado?",
-            "Baja de usuario",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        if (confirmar != DialogResult.Yes)
-            return;
-
-        var resultado = await _usuarioControlador.EliminarAsync(_idSeleccionado.Value);
         if (!resultado.EsExitoso)
         {
+            var controlError = IdentificarControlDesdeMensaje(resultado.Mensaje);
+            MarcarError(controlError, resultado.Mensaje);
             MessageBox.Show(
                 resultado.Mensaje,
-                "Baja de usuario",
+                "Modificar Usuario",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
             return;
         }
 
         MessageBox.Show(
-            "Usuario desactivado correctamente.",
-            "Baja de usuario",
+            "Usuario actualizado exitosamente.",
+            "Modificar Usuario",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
 
+        var idActualizado = _idSeleccionado.Value;
         await CargarUsuariosAsync();
-        LimpiarFormulario();
+
+        var usuarioActualizado = _usuarios.FirstOrDefault(u => u.Id == idActualizado);
+        if (usuarioActualizado is not null)
+            ActivarModoEdicion(usuarioActualizado);
+        else
+            EstablecerEstadoInicial();
+    }
+
+    private void btnLimpiar_Click(object? sender, EventArgs e)
+    {
+        EstablecerEstadoInicial();
+        txtNombre.Focus();
     }
 
     private void btnCancelar_Click(object? sender, EventArgs e)
     {
-        LimpiarFormulario();
-    }
-
-    private void btnBuscar_Click(object? sender, EventArgs e)
-    {
-        var texto = txtBuscar.Text.Trim();
-        if (string.IsNullOrWhiteSpace(texto))
-        {
-            MostrarUsuariosEnGrilla(_usuarios);
-            return;
-        }
-
-        var filtrados = _usuarios.Where(u =>
-            u.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-            u.Apellido.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-            u.NombreUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-            u.NombreTipoUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-            u.DNI.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
-            (u.CorreoElectronico?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (u.Direccion?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (u.Telefono?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false));
-
-        MostrarUsuariosEnGrilla(filtrados);
-        LimpiarFormularioSinTocarGrilla();
-    }
-
-    private void btnActivos_Click(object? sender, EventArgs e)
-    {
-        MostrarUsuariosEnGrilla(_usuarios.Where(u => u.Activo));
-        LimpiarFormularioSinTocarGrilla();
-    }
-
-    private void btnInactivos_Click(object? sender, EventArgs e)
-    {
-        MostrarUsuariosEnGrilla(_usuarios.Where(u => !u.Activo));
-        LimpiarFormularioSinTocarGrilla();
+        btnLimpiar_Click(sender, e);
     }
 
     private void btnVolver_Click(object? sender, EventArgs e)
     {
         Close();
     }
+
+    private void btnBuscar_Click(object? sender, EventArgs e)
+    {
+        AplicarFiltros();
+    }
+
+    private void btnLimpiarFiltros_Click(object? sender, EventArgs e)
+    {
+        txtBuscar.Clear();
+        if (cboFiltroRol.Items.Count > 0)
+            cboFiltroRol.SelectedIndex = 0;
+        if (cboFiltroEstado.Items.Count > 0)
+            cboFiltroEstado.SelectedIndex = 0;
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        var texto = txtBuscar.Text.Trim();
+        long rolSeleccionado = 0;
+        if (cboFiltroRol.SelectedValue is not null && long.TryParse(cboFiltroRol.SelectedValue.ToString(), out var rId))
+        {
+            rolSeleccionado = rId;
+        }
+
+        var estadoSeleccionado = cboFiltroEstado.SelectedIndex; // 0 = Todos, 1 = Activos, 2 = Inactivos
+
+        var consulta = _usuarios.AsEnumerable();
+
+        if (rolSeleccionado > 0)
+        {
+            consulta = consulta.Where(u => u.IdTipoUsuario == rolSeleccionado);
+        }
+
+        if (estadoSeleccionado == 1)
+        {
+            consulta = consulta.Where(u => u.Activo);
+        }
+        else if (estadoSeleccionado == 2)
+        {
+            consulta = consulta.Where(u => !u.Activo);
+        }
+
+        if (!string.IsNullOrWhiteSpace(texto))
+        {
+            consulta = consulta.Where(u =>
+                u.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                u.Apellido.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                u.NombreUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                u.NombreTipoUsuario.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                u.DNI.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                (u.CorreoElectronico?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.Direccion?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.Telefono?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        MostrarUsuariosEnGrilla(consulta.ToList());
+    }
+
+
 
     private void dgvUsuarios_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
@@ -345,9 +499,12 @@ public partial class FormUsuarios : Form
         if (usuario is null)
             return;
 
-        _idSeleccionado = usuario.Id;
-        CargarUsuarioEnFormulario(usuario.Id);
+        ActivarModoEdicion(usuario);
     }
+
+    // =========================================================================
+    // Construcción de Solicitud y Pipeline Unificado de Validación
+    // =========================================================================
 
     private UsuarioSolicitudDto ArmarSolicitud()
     {
@@ -359,7 +516,7 @@ public partial class FormUsuarios : Form
 
         return new UsuarioSolicitudDto
         {
-            IdTipoUsuario = Convert.ToInt64(cboPerfil.SelectedValue),
+            IdTipoUsuario = cboPerfil.SelectedValue is not null ? Convert.ToInt64(cboPerfil.SelectedValue) : 0,
             NombreUsuario = txtUsuario.Text.Trim(),
             Contrasena = txtContrasena.Text,
             Nombre = txtNombre.Text.Trim(),
@@ -370,105 +527,255 @@ public partial class FormUsuarios : Form
             CorreoElectronico = txtCorreoElectronico.Text.Trim(),
             FechaNacimiento = dtpFechaNacimiento.Value.Date,
             Sexo = sexo,
-            Matricula = null
+            Matricula = null,
+            Activo = cboEstado.Visible ? string.Equals(cboEstado.SelectedItem?.ToString(), "Activo", StringComparison.OrdinalIgnoreCase) : true
         };
     }
 
-    private bool ValidarCampos(bool esAlta)
+    private void ValidarUnicidadUsuarioEnTiempoReal(object? sender, EventArgs e)
+    {
+        var usuario = txtUsuario.Text.Trim();
+        if (string.IsNullOrWhiteSpace(usuario))
+        {
+            LimpiarErrorDeControl(txtUsuario);
+            return;
+        }
+
+        // Comprobar si el nombre de usuario ya existe en memoria entre los usuarios registrados
+        var existe = _usuarios.Any(u =>
+            (!_idSeleccionado.HasValue || u.Id != _idSeleccionado.Value) &&
+            string.Equals(u.NombreUsuario, usuario, StringComparison.OrdinalIgnoreCase));
+
+        if (existe)
+        {
+            MarcarError(txtUsuario, $"El nombre de usuario '{usuario}' ya está en uso.", enfocar: false);
+        }
+        else
+        {
+            LimpiarErrorDeControl(txtUsuario);
+        }
+    }
+
+    private bool ValidarCampos(bool esAlta, out string mensajeError, out Control? controlConFoco)
     {
         LimpiarErroresValidacion();
 
-        if (string.IsNullOrWhiteSpace(txtNombre.Text))
-            return MostrarValidacion("Ingrese el nombre.", txtNombre, lblNombre);
+        // 1. Nombre
+        var nombre = txtNombre.Text.Trim();
+        if (string.IsNullOrWhiteSpace(nombre) || nombre.Length < 2)
+        {
+            mensajeError = "El nombre es obligatorio y debe tener al menos 2 caracteres.";
+            controlConFoco = txtNombre;
+            return false;
+        }
 
-        if (string.IsNullOrWhiteSpace(txtApellido.Text))
-            return MostrarValidacion("Ingrese el apellido.", txtApellido, lblApellido);
+        if (!RegexNombreApellido.IsMatch(nombre))
+        {
+            mensajeError = "El nombre solo debe contener letras, tildes y espacios.";
+            controlConFoco = txtNombre;
+            return false;
+        }
 
+        // 2. Apellido
+        var apellido = txtApellido.Text.Trim();
+        if (string.IsNullOrWhiteSpace(apellido) || apellido.Length < 2)
+        {
+            mensajeError = "El apellido es obligatorio y debe tener al menos 2 caracteres.";
+            controlConFoco = txtApellido;
+            return false;
+        }
+
+        if (!RegexNombreApellido.IsMatch(apellido))
+        {
+            mensajeError = "El apellido solo debe contener letras, tildes y espacios.";
+            controlConFoco = txtApellido;
+            return false;
+        }
+
+        // 3. DNI
         var dni = txtDni.Text.Trim();
         if (string.IsNullOrWhiteSpace(dni))
-            return MostrarValidacion("Ingrese el DNI.", txtDni, lblDni);
+        {
+            mensajeError = "El DNI es obligatorio.";
+            controlConFoco = txtDni;
+            return false;
+        }
 
         if (!SoloDigitos.IsMatch(dni) || dni.Length is < 7 or > 8)
-            return MostrarValidacion("El DNI debe tener 7 u 8 dígitos numéricos.", txtDni, lblDni);
+        {
+            mensajeError = "El DNI debe tener entre 7 y 8 dígitos numéricos.";
+            controlConFoco = txtDni;
+            return false;
+        }
 
+        // 4. Dirección
         var direccion = txtDireccion.Text.Trim();
-        if (string.IsNullOrWhiteSpace(direccion))
-            return MostrarValidacion("Ingrese la dirección.", txtDireccion, lblDireccion);
+        if (string.IsNullOrWhiteSpace(direccion) || direccion.Length < 3)
+        {
+            mensajeError = "La dirección es obligatoria y debe tener al menos 3 caracteres.";
+            controlConFoco = txtDireccion;
+            return false;
+        }
 
+        // 5. Teléfono (obligatorio, puramente numérico, máximo 13 dígitos)
         var telefono = txtTelefono.Text.Trim();
         if (string.IsNullOrWhiteSpace(telefono))
-            return MostrarValidacion("Ingrese el teléfono.", txtTelefono, lblTelefono);
+        {
+            mensajeError = "El número de teléfono es obligatorio.";
+            controlConFoco = txtTelefono;
+            return false;
+        }
 
-        if (!TelefonoValido.IsMatch(telefono) || ContarDigitos(telefono) < 8)
-            return MostrarValidacion("El teléfono debe tener al menos 8 dígitos.", txtTelefono, lblTelefono);
+        if (!SoloDigitos.IsMatch(telefono) || telefono.Length is < 6 or > 13)
+        {
+            mensajeError = "El número de teléfono debe contener entre 6 y 13 dígitos numéricos.";
+            controlConFoco = txtTelefono;
+            return false;
+        }
 
+        // 6. Correo Electrónico
         var correo = txtCorreoElectronico.Text.Trim();
-        if (string.IsNullOrWhiteSpace(correo))
-            return MostrarValidacion("Ingrese el correo electrónico.", txtCorreoElectronico, lblCorreoElectronico);
+        var errorCorreo = UsuarioControlador.ValidarFormatoCorreo(correo);
+        if (errorCorreo is not null)
+        {
+            mensajeError = errorCorreo;
+            controlConFoco = txtCorreoElectronico;
+            return false;
+        }
 
-        if (!EsCorreoValido(correo))
-            return MostrarValidacion("Ingrese un correo electrónico válido.", txtCorreoElectronico, lblCorreoElectronico);
+        // 7. Nombre de Usuario
+        var usuario = txtUsuario.Text.Trim();
+        if (string.IsNullOrWhiteSpace(usuario) || usuario.Length < 4)
+        {
+            mensajeError = "El nombre de usuario es obligatorio y debe tener al menos 4 caracteres.";
+            controlConFoco = txtUsuario;
+            return false;
+        }
 
-        if (string.IsNullOrWhiteSpace(txtUsuario.Text))
-            return MostrarValidacion("Ingrese el usuario.", txtUsuario, lblUsuario);
+        if (usuario.Any(char.IsWhiteSpace))
+        {
+            mensajeError = "El nombre de usuario no puede contener espacios en blanco.";
+            controlConFoco = txtUsuario;
+            return false;
+        }
 
+        var existeUsuario = _usuarios.Any(u =>
+            (!_idSeleccionado.HasValue || u.Id != _idSeleccionado.Value) &&
+            string.Equals(u.NombreUsuario, usuario, StringComparison.OrdinalIgnoreCase));
+
+        if (existeUsuario)
+        {
+            mensajeError = $"El nombre de usuario '{usuario}' ya está en uso.";
+            controlConFoco = txtUsuario;
+            return false;
+        }
+
+        // 8. Contraseña
         var contrasena = txtContrasena.Text;
         if (esAlta && string.IsNullOrWhiteSpace(contrasena))
-            return MostrarValidacion("Ingrese la contraseña.", txtContrasena, lblContrasena);
+        {
+            mensajeError = "La contraseña es obligatoria para el alta de usuario.";
+            controlConFoco = txtContrasena;
+            return false;
+        }
 
-        if (!string.IsNullOrWhiteSpace(contrasena) && contrasena.Trim().Length < 6)
-            return MostrarValidacion("La contraseña debe tener al menos 6 caracteres.", txtContrasena, lblContrasena);
+        if (esAlta && contrasena.Length < 6)
+        {
+            mensajeError = "La contraseña debe tener al menos 6 caracteres.";
+            controlConFoco = txtContrasena;
+            return false;
+        }
 
-        if (dtpFechaNacimiento.Value.Date > DateTime.Today)
-            return MostrarValidacion("La fecha de nacimiento no puede ser futura.", dtpFechaNacimiento, lblFechaNacimiento);
+        if (!esAlta && !string.IsNullOrWhiteSpace(contrasena) && contrasena.Length < 6)
+        {
+            mensajeError = "La nueva contraseña debe tener al menos 6 caracteres.";
+            controlConFoco = txtContrasena;
+            return false;
+        }
 
-        var edad = CalcularEdad(dtpFechaNacimiento.Value.Date);
-        if (edad < 16)
-            return MostrarValidacion("El usuario debe tener al menos 16 años.", dtpFechaNacimiento, lblFechaNacimiento);
+        // 9. Fecha de Nacimiento
+        var fechaMax = DateTime.Today.AddYears(-18);
+        if (dtpFechaNacimiento.Value.Date > fechaMax)
+        {
+            mensajeError = "El usuario debe tener al menos 18 años para trabajar legalmente.";
+            controlConFoco = dtpFechaNacimiento;
+            return false;
+        }
 
+        // 10. Sexo
         if (!rbHombre.Checked && !rbMujer.Checked)
-            return MostrarValidacion("Seleccione el sexo.", rbHombre, lblSexo);
+        {
+            mensajeError = "Debe seleccionar el sexo del usuario.";
+            controlConFoco = rbHombre;
+            return false;
+        }
 
-        if (cboPerfil.SelectedIndex < 0 || cboPerfil.SelectedValue is null)
-            return MostrarValidacion("Seleccione un perfil.", cboPerfil, lblPerfil);
+        // 11. Perfil
+        if (cboPerfil.SelectedIndex < 0 || cboPerfil.SelectedValue is null || Convert.ToInt64(cboPerfil.SelectedValue) <= 0)
+        {
+            mensajeError = "Seleccione un perfil o rol válido.";
+            controlConFoco = cboPerfil;
+            return false;
+        }
 
+        mensajeError = string.Empty;
+        controlConFoco = null;
         return true;
     }
 
-    private bool MostrarValidacion(string mensaje, Control control, Label? etiqueta = null)
+    private void MarcarError(Control? control, string mensaje, bool enfocar = true)
     {
-        _errores.SetError(control, mensaje);
-        if (etiqueta is not null)
-            etiqueta.ForeColor = ColorError;
+        if (control is null) return;
 
+        if (control is TextBox txt)
+        {
+            txt.BackColor = ColorFondoError;
+        }
+
+        var etiqueta = ObtenerEtiquetaDeControl(control);
+        if (etiqueta is not null)
+        {
+            etiqueta.ForeColor = ColorEtiquetaError;
+        }
+
+        _errores.SetError(control, mensaje);
         lblErrorValidacion.Text = mensaje;
         lblErrorValidacion.Visible = true;
-        control.Focus();
-        return false;
+        if (enfocar)
+        {
+            control.Focus();
+        }
     }
 
-    private void LimpiarErrorDe(Control control)
+    private void Control_LimpiarError(object? sender, EventArgs e)
     {
-        _errores.SetError(control, string.Empty);
-
-        Label? etiqueta = control switch
+        if (sender is Control control)
         {
-            _ when ReferenceEquals(control, txtNombre) => lblNombre,
-            _ when ReferenceEquals(control, txtApellido) => lblApellido,
-            _ when ReferenceEquals(control, txtDni) => lblDni,
-            _ when ReferenceEquals(control, txtDireccion) => lblDireccion,
-            _ when ReferenceEquals(control, txtTelefono) => lblTelefono,
-            _ when ReferenceEquals(control, txtCorreoElectronico) => lblCorreoElectronico,
-            _ when ReferenceEquals(control, txtUsuario) => lblUsuario,
-            _ when ReferenceEquals(control, txtContrasena) => lblContrasena,
-            _ when ReferenceEquals(control, dtpFechaNacimiento) => lblFechaNacimiento,
-            _ when ReferenceEquals(control, rbHombre) || ReferenceEquals(control, rbMujer) => lblSexo,
-            _ when ReferenceEquals(control, cboPerfil) => lblPerfil,
-            _ => null
-        };
+            LimpiarErrorDeControl(control);
+        }
+    }
 
+    private void LimpiarErrorDeControl(Control control)
+    {
+        if (control is TextBox txt)
+        {
+            txt.BackColor = ColorFondoNormal;
+        }
+
+        if (control is RadioButton)
+        {
+            _errores.SetError(rbHombre, string.Empty);
+            _errores.SetError(rbMujer, string.Empty);
+            lblSexo.ForeColor = ColorEtiquetaNormal;
+        }
+
+        var etiqueta = ObtenerEtiquetaDeControl(control);
         if (etiqueta is not null)
+        {
             etiqueta.ForeColor = ColorEtiquetaNormal;
+        }
+
+        _errores.SetError(control, string.Empty);
 
         if (!HayErroresActivos())
         {
@@ -477,9 +784,53 @@ public partial class FormUsuarios : Form
         }
     }
 
+    private Control IdentificarControlDesdeMensaje(string mensaje)
+    {
+        var msg = mensaje.ToLowerInvariant();
+        if (msg.Contains("dni"))
+            return txtDni;
+        if (msg.Contains("nombre de usuario") || msg.Contains("nombreusuario") || msg.Contains("usuario '") || msg.Contains("usuario ya"))
+            return txtUsuario;
+        if (msg.Contains("correo") || msg.Contains("email"))
+            return txtCorreoElectronico;
+        if (msg.Contains("teléfono") || msg.Contains("telefono"))
+            return txtTelefono;
+        if (msg.Contains("rol") || msg.Contains("perfil") || msg.Contains("tipo"))
+            return cboPerfil;
+        if (msg.Contains("contraseña") || msg.Contains("contrasena"))
+            return txtContrasena;
+        if (msg.Contains("apellido"))
+            return txtApellido;
+        if (msg.Contains("nombre"))
+            return txtNombre;
+        if (msg.Contains("fecha") || msg.Contains("nacimiento") || msg.Contains("edad"))
+            return dtpFechaNacimiento;
+        if (msg.Contains("sexo"))
+            return rbHombre;
+
+        return txtNombre;
+    }
+
+    private Label? ObtenerEtiquetaDeControl(Control control) => control switch
+    {
+        _ when ReferenceEquals(control, txtNombre) => lblNombre,
+        _ when ReferenceEquals(control, txtApellido) => lblApellido,
+        _ when ReferenceEquals(control, txtDni) => lblDni,
+        _ when ReferenceEquals(control, txtDireccion) => lblDireccion,
+        _ when ReferenceEquals(control, txtTelefono) => lblTelefono,
+        _ when ReferenceEquals(control, txtCorreoElectronico) => lblCorreoElectronico,
+        _ when ReferenceEquals(control, txtUsuario) => lblUsuario,
+        _ when ReferenceEquals(control, txtContrasena) => lblContrasena,
+        _ when ReferenceEquals(control, dtpFechaNacimiento) => lblFechaNacimiento,
+        _ when ReferenceEquals(control, rbHombre) || ReferenceEquals(control, rbMujer) => lblSexo,
+        _ when ReferenceEquals(control, cboPerfil) => lblPerfil,
+        _ when ReferenceEquals(control, cboEstado) => lblEstado,
+        _ => null
+    };
+
     private bool HayErroresActivos()
     {
-        foreach (Control control in grpDatos.Controls)
+        foreach (var control in _controlesEntrada)
         {
             if (!string.IsNullOrEmpty(_errores.GetError(control)))
                 return true;
@@ -494,63 +845,24 @@ public partial class FormUsuarios : Form
         lblErrorValidacion.Visible = false;
         lblErrorValidacion.Text = string.Empty;
 
+        txtNombre.BackColor = ColorFondoNormal;
+        txtApellido.BackColor = ColorFondoNormal;
+        txtDni.BackColor = ColorFondoNormal;
+        txtDireccion.BackColor = ColorFondoNormal;
+        txtTelefono.BackColor = ColorFondoNormal;
+        txtCorreoElectronico.BackColor = ColorFondoNormal;
+        txtUsuario.BackColor = ColorFondoNormal;
+        txtContrasena.BackColor = ColorFondoNormal;
+
         foreach (var etiqueta in new[]
                  {
                      lblNombre, lblApellido, lblDni, lblDireccion, lblTelefono,
                      lblCorreoElectronico, lblUsuario, lblContrasena,
-                     lblFechaNacimiento, lblSexo, lblPerfil
+                     lblFechaNacimiento, lblSexo, lblPerfil, lblEstado
                  })
         {
             etiqueta.ForeColor = ColorEtiquetaNormal;
         }
     }
-
-    private static bool EsCorreoValido(string correo)
-    {
-        try
-        {
-            var direccion = new MailAddress(correo);
-            return string.Equals(direccion.Address, correo, StringComparison.OrdinalIgnoreCase)
-                   && correo.Contains('.', StringComparison.Ordinal);
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
-
-    private static int ContarDigitos(string valor) => valor.Count(char.IsDigit);
-
-    private static int CalcularEdad(DateTime fechaNacimiento)
-    {
-        var hoy = DateTime.Today;
-        var edad = hoy.Year - fechaNacimiento.Year;
-        if (fechaNacimiento.Date > hoy.AddYears(-edad))
-            edad--;
-        return edad;
-    }
-
-    private void LimpiarFormulario()
-    {
-        LimpiarFormularioSinTocarGrilla();
-        dgvUsuarios.ClearSelection();
-    }
-
-    private void LimpiarFormularioSinTocarGrilla()
-    {
-        LimpiarErroresValidacion();
-        _idSeleccionado = null;
-        txtNombre.Clear();
-        txtApellido.Clear();
-        txtDni.Clear();
-        txtUsuario.Clear();
-        txtContrasena.Clear();
-        txtDireccion.Clear();
-        txtTelefono.Clear();
-        txtCorreoElectronico.Clear();
-        dtpFechaNacimiento.Value = DateTime.Today.AddYears(-18);
-        rbHombre.Checked = false;
-        rbMujer.Checked = false;
-        cboPerfil.SelectedIndex = -1;
-    }
 }
+

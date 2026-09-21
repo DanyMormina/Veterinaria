@@ -14,4 +14,5 @@ public class UsuarioSolicitudDto
     public DateTime? FechaNacimiento { get; set; }
     public string? Sexo { get; set; }
     public string? Matricula { get; set; }
+    public bool? Activo { get; set; }
 }

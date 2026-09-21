@@ -27,8 +27,9 @@ public partial class FormAdminPrincipal : Form
 
     private void button1_Click(object sender, EventArgs e)
     {
-        FormPropietarios vistaPropietarios = new FormPropietarios();
-        vistaPropietarios.ShowDialog();
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaPropietarios = alcance.ServiceProvider.GetRequiredService<FormPropietarios>();
+        vistaPropietarios.ShowDialog(this);
     }
 
     private void BTUSUARIOS_Click(object sender, EventArgs e)
@@ -40,14 +41,16 @@ public partial class FormAdminPrincipal : Form
 
     private void BTMASCOTAS_Click(object sender, EventArgs e)
     {
-        FormMascotas vistaMascotas = new FormMascotas();
-        vistaMascotas.ShowDialog();
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaMascotas = alcance.ServiceProvider.GetRequiredService<FormMascotas>();
+        vistaMascotas.ShowDialog(this);
     }
 
     private void BTREPORTES_Click(object sender, EventArgs e)
     {
-        FormReportes vistaReportes = new FormReportes();
-        vistaReportes.ShowDialog();
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaReportes = alcance.ServiceProvider.GetRequiredService<FormReportes>();
+        vistaReportes.ShowDialog(this);
     }
 
     private void btnCerrarSesion_Click(object? sender, EventArgs e)

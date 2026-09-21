@@ -14,4 +14,6 @@ public class PropietarioRespuestaDto
     public string? Direccion { get; set; }
     public bool Activo { get; set; }
     public int CantidadMascotas { get; set; }
+    public string? Correo => CorreoElectronico;
+    public string NombreCompleto => $"{Nombre} {Apellido}".Trim();
 }

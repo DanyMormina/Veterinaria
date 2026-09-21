@@ -15,4 +15,8 @@ public class MascotaRespuestaDto
     public string? Color { get; set; }
     public bool Activo { get; set; }
     public int CantidadConsultas { get; set; }
+
+    // Propiedades de conveniencia y compatibilidad con vistas clínicas
+    public string EspecieNombre => NombreEspecie;
+    public string RazaNombre => NombreRaza;
 }

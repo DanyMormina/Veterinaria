@@ -21,6 +21,70 @@ public class ConsultaControlador(ContextoVeterinaria context)
         }
     }
 
+    /// <summary>
+    /// Obtiene las consultas activas asociadas a una mascota, ordenadas cronológicamente de la más reciente a la más antigua.
+    /// </summary>
+    public async Task<Resultado<IEnumerable<ConsultaRespuestaDto>>> ObtenerPorMascotaAsync(long idMascota)
+    {
+        return await ObtenerHistorialPorMascotaIdAsync(idMascota);
+    }
+
+    /// <summary>
+    /// Obtiene el historial clínico completo de una mascota incluyendo tratamientos aplicados,
+    /// ordenado cronológicamente de la consulta más reciente a la más antigua.
+    /// </summary>
+    public async Task<Resultado<IEnumerable<ConsultaRespuestaDto>>> ObtenerHistorialPorMascotaIdAsync(long idMascota)
+    {
+        try
+        {
+            if (idMascota <= 0)
+                return Resultado<IEnumerable<ConsultaRespuestaDto>>.Falla("El identificador de la mascota debe ser mayor a cero.");
+
+            var consultas = await context.Consultas
+                .AsNoTracking()
+                .Include(c => c.Mascota).ThenInclude(m => m.Propietario)
+                .Include(c => c.Usuario)
+                .Include(c => c.DetallesConsulta).ThenInclude(d => d.Tratamiento)
+                .Where(c => c.IdMascota == idMascota && c.Activo)
+                .OrderByDescending(c => c.FechaHora)
+                .ToListAsync();
+
+            var dtos = consultas.Select(c => new ConsultaRespuestaDto
+            {
+                Id = c.Id,
+                IdMascota = c.IdMascota,
+                NombreMascota = c.Mascota != null ? c.Mascota.Nombre : string.Empty,
+                NombrePropietario = c.Mascota != null && c.Mascota.Propietario != null
+                    ? $"{c.Mascota.Propietario.Nombre} {c.Mascota.Propietario.Apellido}".Trim()
+                    : string.Empty,
+                IdUsuario = c.IdUsuario,
+                NombreUsuario = c.Usuario != null
+                    ? $"{c.Usuario.Nombre} {c.Usuario.Apellido}".Trim()
+                    : string.Empty,
+                FechaHora = c.FechaHora,
+                Motivo = c.Motivo,
+                PesoKg = c.PesoKg,
+                Temperatura = c.Temperatura,
+                Diagnostico = c.Diagnostico,
+                Observaciones = c.Observaciones,
+                Activo = c.Activo,
+                CantidadTratamientos = c.DetallesConsulta.Count,
+                CantidadVacunas = c.AplicacionesVacuna.Count,
+                CantidadPagos = c.Pagos.Count,
+                Tratamiento = c.DetallesConsulta.Any()
+                    ? string.Join(", ", c.DetallesConsulta.Where(d => d.Tratamiento != null).Select(d => d.Tratamiento.Descripcion))
+                    : (c.Observaciones ?? "-"),
+                ProximoControl = null
+            }).ToList();
+
+            return Resultado<IEnumerable<ConsultaRespuestaDto>>.Exito(dtos);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<ConsultaRespuestaDto>>.Falla($"Error interno al obtener consultas de la mascota: {ex.Message}");
+        }
+    }
+
     public async Task<Resultado<ConsultaRespuestaDto>> ObtenerPorIdAsync(long id)
     {
         try
@@ -182,3 +246,9 @@ public class ConsultaControlador(ContextoVeterinaria context)
         return null;
     }
 }
+
+/// <summary>
+/// Alias de compatibilidad para ConsultaControlador.
+/// </summary>
+public class ConsultaController(ContextoVeterinaria context) : ConsultaControlador(context);
+

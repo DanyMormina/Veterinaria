@@ -19,7 +19,9 @@ public class ConsultaRespuestaDto
     public int CantidadVacunas { get; set; }
     public int CantidadPagos { get; set; }
 
-    // Compatibilidad con vistas previas
+    // Compatibilidad con vistas previas y ficha médica
     public long IdVeterinario => IdUsuario;
     public string NombreVeterinario => NombreUsuario;
+    public string? Tratamiento { get; set; }
+    public DateTime? ProximoControl { get; set; }
 }

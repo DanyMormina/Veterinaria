@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
@@ -32,25 +33,29 @@ public partial class FormVeterinarioPrincipal : Form
 
     private void BTCONSULTAS_Click(object sender, EventArgs e)
     {
-        using var vista = new FormConsultas();
+        using var alcance = _serviceProvider.CreateScope();
+        var vista = alcance.ServiceProvider.GetRequiredService<FormConsultas>();
         vista.ShowDialog(this);
     }
 
     private void BTFICHAMEDICA_Click(object sender, EventArgs e)
     {
-        using var vista = new FormFichaMedica();
+        using var alcance = _serviceProvider.CreateScope();
+        var vista = alcance.ServiceProvider.GetRequiredService<FormFichaMedica>();
         vista.ShowDialog(this);
     }
 
     private void BTTRATAMIENTOS_Click(object sender, EventArgs e)
     {
-        using var vista = new FormTratamientos();
+        using var alcance = _serviceProvider.CreateScope();
+        var vista = alcance.ServiceProvider.GetRequiredService<FormTratamientos>();
         vista.ShowDialog(this);
     }
 
     private void BTVACUNAS_Click(object sender, EventArgs e)
     {
-        using var vista = new FormVacunasControles();
+        using var alcance = _serviceProvider.CreateScope();
+        var vista = alcance.ServiceProvider.GetRequiredService<FormVacunasControles>();
         vista.ShowDialog(this);
     }
 

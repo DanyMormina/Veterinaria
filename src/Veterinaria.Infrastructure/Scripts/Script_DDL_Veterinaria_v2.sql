@@ -187,6 +187,7 @@ CREATE TABLE dbo.AplicacionVacuna (
     IdVacuna BIGINT NOT NULL,
     FechaAplicacion DATE NOT NULL,
     ProximaDosis DATE NULL,
+    PrecioUnitario DECIMAL(18,2) NULL,
     Observaciones NVARCHAR(250) NULL,
     CONSTRAINT PK_AplicacionVacuna PRIMARY KEY CLUSTERED (Id ASC),
     CONSTRAINT FK_AplicacionVacuna_Consulta FOREIGN KEY (IdConsulta) REFERENCES dbo.Consulta (Id) ON DELETE CASCADE,

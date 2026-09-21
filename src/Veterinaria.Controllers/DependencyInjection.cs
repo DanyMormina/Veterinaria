@@ -19,19 +19,24 @@ public static class ExtensionesInyeccionControladores
         services.AddTransient<EspecieControlador>();
         services.AddTransient<RazaControlador>();
         services.AddTransient<VacunaControlador>();
+        services.AddTransient<VacunaController>();
         services.AddTransient<MetodoPagoControlador>();
 
         services.AddTransient<UsuarioControlador>();
 
         services.AddTransient<PropietarioControlador>();
+        services.AddTransient<PropietarioService>();
         services.AddTransient<MascotaControlador>();
+        services.AddTransient<MascotaService>();
 
         services.AddTransient<ConsultaControlador>();
+        services.AddTransient<ConsultaController>();
         services.AddTransient<TratamientoControlador>();
         services.AddTransient<DetalleConsultaControlador>();
         services.AddTransient<AplicacionVacunaControlador>();
 
         services.AddTransient<PagoControlador>();
+        services.AddTransient<ReporteControlador>();
 
         return services;
     }

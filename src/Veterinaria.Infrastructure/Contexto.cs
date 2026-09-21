@@ -359,6 +359,10 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
             b.ToTable("AplicacionVacuna");
             b.HasKey(a => a.Id);
 
+            b.Property(a => a.PrecioUnitario)
+                .HasColumnType("decimal(18,2)")
+                .IsRequired(false);
+
             b.Property(a => a.Observaciones)
                 .HasMaxLength(250);
 

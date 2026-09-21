@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Controllers.Seguridad;
 using Veterinaria.Domain.Comunes;
@@ -9,6 +10,11 @@ namespace Veterinaria.Controllers.Controladores;
 
 public class UsuarioControlador(ContextoVeterinaria context)
 {
+    private static readonly Regex RegexNombreApellido = new(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]{2,100}$", RegexOptions.Compiled);
+    private static readonly Regex RegexDni = new(@"^\d{7,8}$", RegexOptions.Compiled);
+    private static readonly Regex RegexTelefono = new(@"^\d{6,13}$", RegexOptions.Compiled);
+    private static readonly Regex RegexCorreo = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$", RegexOptions.Compiled);
+
     public async Task<Resultado<IEnumerable<UsuarioRespuestaDto>>> ObtenerTodosAsync()
     {
         try
@@ -111,29 +117,18 @@ public class UsuarioControlador(ContextoVeterinaria context)
     {
         try
         {
+            // 1. Asegurar la consistencia de columnas en la base de datos
             await InicializadorDatos.AsegurarColumnasUsuarioAsync(context);
 
-            if (solicitud.IdTipoUsuario <= 0)
-                return Resultado<long>.Falla("El identificador del tipo de usuario debe ser mayor a cero.");
+            // 2. Validación de campos obligatorios y formato
+            var errorValidacion = ValidarDatosSolicitud(solicitud, esAlta: true);
+            if (errorValidacion is not null)
+                return Resultado<long>.Falla(errorValidacion);
 
-            if (string.IsNullOrWhiteSpace(solicitud.NombreUsuario))
-                return Resultado<long>.Falla("El nombre de usuario es obligatorio.");
-
-            if (string.IsNullOrWhiteSpace(solicitud.Contrasena))
-                return Resultado<long>.Falla("La contraseña es obligatoria.");
-
-            if (string.IsNullOrWhiteSpace(solicitud.Nombre))
-                return Resultado<long>.Falla("El nombre del usuario es obligatorio.");
-
-            if (string.IsNullOrWhiteSpace(solicitud.Apellido))
-                return Resultado<long>.Falla("El apellido del usuario es obligatorio.");
-
-            if (string.IsNullOrWhiteSpace(solicitud.DNI))
-                return Resultado<long>.Falla("El DNI del usuario es obligatorio.");
-
-            var tipoExiste = await context.TiposUsuario.AnyAsync(r => r.Id == solicitud.IdTipoUsuario);
+            // 3. Validar existencia del rol/tipo de usuario
+            var tipoExiste = await context.TiposUsuario.AnyAsync(r => r.Id == solicitud.IdTipoUsuario && r.Activo);
             if (!tipoExiste)
-                return Resultado<long>.Falla($"No existe un tipo de usuario registrado con ID {solicitud.IdTipoUsuario}.");
+                return Resultado<long>.Falla($"No existe un rol activo registrado con ID {solicitud.IdTipoUsuario}.");
 
             var nombreUsuarioNormalizado = solicitud.NombreUsuario.Trim();
             var dniNormalizado = solicitud.DNI.Trim();
@@ -142,6 +137,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
             var direccionNormalizada = NormalizarTexto(solicitud.Direccion);
             var sexoNormalizado = NormalizarTexto(solicitud.Sexo);
 
+            // 4. Validar unicidad del nombre de usuario en la base de datos
             var existeNombreUsuario = await context.Usuarios
                 .IgnoreQueryFilters()
                 .AnyAsync(u => u.NombreUsuario.ToLower() == nombreUsuarioNormalizado.ToLower());
@@ -149,6 +145,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
             if (existeNombreUsuario)
                 return Resultado<long>.Falla($"El nombre de usuario '{nombreUsuarioNormalizado}' ya está en uso.");
 
+            // 5. Validar unicidad de DNI y Correo Electrónico
             var conflictoUnicidad = await ValidarUnicidadContactoAsync(
                 idExcluir: null,
                 dniNormalizado,
@@ -158,6 +155,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
             if (conflictoUnicidad is not null)
                 return Resultado<long>.Falla(conflictoUnicidad);
 
+            // 6. Instanciar y persistir nueva entidad de usuario con contraseña hasheada
             var entidad = new Usuario
             {
                 IdTipoUsuario = solicitud.IdTipoUsuario,
@@ -190,35 +188,44 @@ public class UsuarioControlador(ContextoVeterinaria context)
     {
         try
         {
+            // 1. Asegurar consistencia de base de datos
             await InicializadorDatos.AsegurarColumnasUsuarioAsync(context);
 
             if (id <= 0)
                 return Resultado.Falla("El identificador del usuario debe ser mayor a cero.");
 
-            if (solicitud.IdTipoUsuario <= 0)
-                return Resultado.Falla("El identificador del tipo de usuario debe ser mayor a cero.");
+            // 2. Validación de campos de la solicitud
+            var errorValidacion = ValidarDatosSolicitud(solicitud, esAlta: false);
+            if (errorValidacion is not null)
+                return Resultado.Falla(errorValidacion);
 
-            if (string.IsNullOrWhiteSpace(solicitud.NombreUsuario))
-                return Resultado.Falla("El nombre de usuario es obligatorio.");
-
-            if (string.IsNullOrWhiteSpace(solicitud.Nombre))
-                return Resultado.Falla("El nombre del usuario es obligatorio.");
-
-            if (string.IsNullOrWhiteSpace(solicitud.Apellido))
-                return Resultado.Falla("El apellido del usuario es obligatorio.");
-
-            if (string.IsNullOrWhiteSpace(solicitud.DNI))
-                return Resultado.Falla("El DNI del usuario es obligatorio.");
-
+            // 3. Buscar entidad existente
             var entidad = await context.Usuarios
                 .IgnoreQueryFilters()
+                .Include(u => u.TipoUsuario)
                 .FirstOrDefaultAsync(u => u.Id == id);
+
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el usuario con ID {id}.");
 
-            var tipoExiste = await context.TiposUsuario.AnyAsync(r => r.Id == solicitud.IdTipoUsuario);
-            if (!tipoExiste)
-                return Resultado.Falla($"No existe un tipo de usuario registrado con ID {solicitud.IdTipoUsuario}.");
+            // 4. Validar existencia del rol seleccionado
+            var nuevoTipo = await context.TiposUsuario.FirstOrDefaultAsync(r => r.Id == solicitud.IdTipoUsuario && r.Activo);
+            if (nuevoTipo is null)
+                return Resultado.Falla($"No existe un rol activo registrado con ID {solicitud.IdTipoUsuario}.");
+
+            // 5. Protección del Último Administrador: Impedir cambiar el rol si es el único Administrador activo
+            var esAdminActual = entidad.TipoUsuario != null &&
+                                entidad.TipoUsuario.Nombre.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var seraAdmin = nuevoTipo.Nombre.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+
+            if (entidad.Activo && esAdminActual && !seraAdmin)
+            {
+                var otrosAdmins = await context.Usuarios
+                    .CountAsync(u => u.Activo && u.Id != id && u.TipoUsuario.Nombre.ToLower() == "administrador");
+
+                if (otrosAdmins < 1)
+                    return Resultado.Falla("No es posible cambiar el rol del único Administrador activo del sistema.");
+            }
 
             var nombreUsuarioNormalizado = solicitud.NombreUsuario.Trim();
             var dniNormalizado = solicitud.DNI.Trim();
@@ -227,6 +234,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
             var direccionNormalizada = NormalizarTexto(solicitud.Direccion);
             var sexoNormalizado = NormalizarTexto(solicitud.Sexo);
 
+            // 6. Validar unicidad de nombre de usuario excluyendo el actual
             var existeNombreUsuario = await context.Usuarios
                 .IgnoreQueryFilters()
                 .AnyAsync(u => u.Id != id && u.NombreUsuario.ToLower() == nombreUsuarioNormalizado.ToLower());
@@ -234,6 +242,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
             if (existeNombreUsuario)
                 return Resultado.Falla($"El nombre de usuario '{nombreUsuarioNormalizado}' ya está en uso por otro usuario.");
 
+            // 7. Validar unicidad de DNI y correo
             var conflictoUnicidad = await ValidarUnicidadContactoAsync(
                 id,
                 dniNormalizado,
@@ -243,6 +252,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
             if (conflictoUnicidad is not null)
                 return Resultado.Falla(conflictoUnicidad);
 
+            // 8. Actualizar propiedades
             entidad.IdTipoUsuario = solicitud.IdTipoUsuario;
             entidad.NombreUsuario = nombreUsuarioNormalizado;
             entidad.Nombre = solicitud.Nombre.Trim();
@@ -255,15 +265,35 @@ public class UsuarioControlador(ContextoVeterinaria context)
             entidad.Sexo = sexoNormalizado;
             entidad.Matricula = NormalizarTexto(solicitud.Matricula);
 
-            if (!string.IsNullOrWhiteSpace(solicitud.Contrasena))
-                entidad.HashContrasena = HasheadorContrasena.Hashear(solicitud.Contrasena);
+            if (solicitud.Activo.HasValue)
+            {
+                if (!solicitud.Activo.Value && entidad.Activo)
+                {
+                    var esAdmin = entidad.TipoUsuario != null &&
+                                  entidad.TipoUsuario.Nombre.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
 
-            // Fuerza UPDATE completo (incluye contacto) para evitar que EF omita columnas.
+                    if (esAdmin)
+                    {
+                        var adminsActivos = await context.Usuarios
+                            .CountAsync(u => u.Activo && u.TipoUsuario.Nombre.ToLower() == "administrador");
+
+                        if (adminsActivos <= 1)
+                            return Resultado.Falla("No es posible desactivar al único Administrador activo del sistema.");
+                    }
+                }
+
+                entidad.Activo = solicitud.Activo.Value;
+            }
+
+            var cambioContrasena = !string.IsNullOrWhiteSpace(solicitud.Contrasena);
+            if (cambioContrasena)
+            {
+                entidad.HashContrasena = HasheadorContrasena.Hashear(solicitud.Contrasena);
+            }
+
+            // 9. Marcar modificaciones explícitas en EF Core
             context.Entry(entidad).State = EntityState.Modified;
-            if (!string.IsNullOrWhiteSpace(solicitud.Contrasena))
-                context.Entry(entidad).Property(u => u.HashContrasena).IsModified = true;
-            else
-                context.Entry(entidad).Property(u => u.HashContrasena).IsModified = false;
+            context.Entry(entidad).Property(u => u.HashContrasena).IsModified = cambioContrasena;
 
             await context.SaveChangesAsync();
             return Resultado.Exito("Usuario actualizado exitosamente.");
@@ -274,7 +304,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
         }
     }
 
-    public async Task<Resultado> EliminarAsync(long id)
+    public async Task<Resultado> CambiarEstadoAsync(long id, bool activo, long? idUsuarioSesion = null)
     {
         try
         {
@@ -283,18 +313,144 @@ public class UsuarioControlador(ContextoVeterinaria context)
 
             var entidad = await context.Usuarios
                 .IgnoreQueryFilters()
+                .Include(u => u.TipoUsuario)
                 .FirstOrDefaultAsync(u => u.Id == id);
+
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el usuario con ID {id}.");
 
-            entidad.Activo = false;
+            if (entidad.Activo == activo)
+                return Resultado.Falla(activo ? "El usuario ya se encuentra activo." : "El usuario ya se encuentra inactivo.");
+
+            // Si se va a desactivar, aplicar protecciones defensivas
+            if (!activo)
+            {
+                if (idUsuarioSesion.HasValue && id == idUsuarioSesion.Value)
+                    return Resultado.Falla("No puede desactivar su propia cuenta de usuario en sesión actual.");
+
+                var esAdmin = entidad.TipoUsuario != null &&
+                              entidad.TipoUsuario.Nombre.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+
+                if (esAdmin)
+                {
+                    var adminsActivos = await context.Usuarios
+                        .CountAsync(u => u.Activo && u.TipoUsuario.Nombre.ToLower() == "administrador");
+
+                    if (adminsActivos <= 1)
+                        return Resultado.Falla("No es posible desactivar al único Administrador activo del sistema.");
+                }
+            }
+
+            entidad.Activo = activo;
             await context.SaveChangesAsync();
-            return Resultado.Exito("Usuario eliminado exitosamente.");
+
+            return Resultado.Exito(activo ? "Usuario reactivado exitosamente." : "Usuario desactivado exitosamente.");
         }
         catch (Exception ex)
         {
-            return Resultado.Falla($"Error interno al eliminar el usuario: {ex.Message}");
+            return Resultado.Falla($"Error interno al cambiar el estado del usuario: {ex.Message}");
         }
+    }
+
+    public async Task<Resultado> EliminarAsync(long id, long? idUsuarioSesion = null)
+    {
+        return await CambiarEstadoAsync(id, activo: false, idUsuarioSesion);
+    }
+
+    private static string? ValidarDatosSolicitud(UsuarioSolicitudDto solicitud, bool esAlta)
+    {
+        if (solicitud.IdTipoUsuario <= 0)
+            return "Debe seleccionar un rol / perfil válido.";
+
+        if (string.IsNullOrWhiteSpace(solicitud.Nombre) || solicitud.Nombre.Trim().Length < 2)
+            return "El nombre es obligatorio y debe tener al menos 2 caracteres.";
+
+        if (!RegexNombreApellido.IsMatch(solicitud.Nombre.Trim()))
+            return "El nombre solo debe contener letras, tildes y espacios.";
+
+        if (string.IsNullOrWhiteSpace(solicitud.Apellido) || solicitud.Apellido.Trim().Length < 2)
+            return "El apellido es obligatorio y debe tener al menos 2 caracteres.";
+
+        if (!RegexNombreApellido.IsMatch(solicitud.Apellido.Trim()))
+            return "El apellido solo debe contener letras, tildes y espacios.";
+
+        var dni = solicitud.DNI?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(dni) || !RegexDni.IsMatch(dni))
+            return "El DNI es obligatorio y debe contener entre 7 y 8 dígitos numéricos.";
+
+        var direccion = solicitud.Direccion?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(direccion) || direccion.Length < 3)
+            return "La dirección es obligatoria y debe tener al menos 3 caracteres.";
+
+        var telefono = solicitud.Telefono?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(telefono) || !RegexTelefono.IsMatch(telefono))
+            return "El teléfono es obligatorio y debe contener entre 6 y 13 dígitos numéricos.";
+
+        var errorCorreo = ValidarFormatoCorreo(solicitud.CorreoElectronico);
+        if (errorCorreo is not null)
+            return errorCorreo;
+
+        var usuario = solicitud.NombreUsuario?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(usuario) || usuario.Length < 4 || usuario.Any(char.IsWhiteSpace))
+            return "El nombre de usuario es obligatorio, debe tener al menos 4 caracteres y no contener espacios.";
+
+        if (esAlta)
+        {
+            if (string.IsNullOrWhiteSpace(solicitud.Contrasena) || solicitud.Contrasena.Trim().Length < 6)
+                return "La contraseña es obligatoria y debe tener al menos 6 caracteres.";
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(solicitud.Contrasena) && solicitud.Contrasena.Trim().Length < 6)
+                return "La nueva contraseña debe tener al menos 6 caracteres.";
+        }
+
+        if (solicitud.FechaNacimiento.HasValue)
+        {
+            var fechaMax = DateTime.Today.AddYears(-18);
+            if (solicitud.FechaNacimiento.Value.Date > fechaMax)
+                return "El usuario debe tener al menos 18 años de edad para trabajar legalmente.";
+        }
+        else
+        {
+            return "La fecha de nacimiento es obligatoria.";
+        }
+
+        var sexo = solicitud.Sexo?.Trim();
+        if (string.IsNullOrWhiteSpace(sexo) || (!sexo.Equals("Hombre", StringComparison.OrdinalIgnoreCase) && !sexo.Equals("Mujer", StringComparison.OrdinalIgnoreCase)))
+            return "Debe seleccionar el sexo del usuario (Hombre o Mujer).";
+
+        return null;
+    }
+
+    public static string? ValidarFormatoCorreo(string? correo)
+    {
+        if (string.IsNullOrWhiteSpace(correo))
+            return "El correo electrónico es obligatorio.";
+
+        var correoNormalizado = correo.Trim();
+        if (!RegexCorreo.IsMatch(correoNormalizado))
+            return "Ingrese un correo electrónico válido (ejemplo: usuario@dominio.com).";
+
+        var partes = correoNormalizado.Split('@');
+        if (partes.Length != 2)
+            return "El formato del correo electrónico es inválido.";
+
+        var dominio = partes[1].ToLowerInvariant();
+
+        if (dominio.StartsWith("gmail.") && dominio != "gmail.com")
+            return "El correo de Gmail debe finalizar en '@gmail.com'.";
+
+        if (dominio.StartsWith("hotmail.") && dominio != "hotmail.com" && dominio != "hotmail.es" && dominio != "hotmail.com.ar")
+            return "El correo de Hotmail debe finalizar en '@hotmail.com', '@hotmail.es' o '@hotmail.com.ar'.";
+
+        if (dominio.StartsWith("outlook.") && dominio != "outlook.com" && dominio != "outlook.es" && dominio != "outlook.com.ar")
+            return "El correo de Outlook debe finalizar en '@outlook.com', '@outlook.es' o '@outlook.com.ar'.";
+
+        if (dominio.StartsWith("yahoo.") && dominio != "yahoo.com" && dominio != "yahoo.es" && dominio != "yahoo.com.ar")
+            return "El correo de Yahoo debe finalizar en '@yahoo.com', '@yahoo.es' o '@yahoo.com.ar'.";
+
+        return null;
     }
 
     private async Task<string?> ValidarUnicidadContactoAsync(

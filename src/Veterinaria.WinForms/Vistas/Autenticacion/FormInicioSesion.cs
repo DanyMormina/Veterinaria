@@ -27,7 +27,68 @@ public partial class FormInicioSesion : Form
         _serviceProvider = serviceProvider;
 
         InitializeComponent();
+        txtUsuario.TextChanged += txtUsuario_TextChanged;
+        CargarCredencialesRecordadas();
+    }
 
+    private void ConfigurarAutocompletado()
+    {
+        var nombres = GestorCredencialesLocales.ObtenerNombresUsuarios();
+        var coleccion = new AutoCompleteStringCollection();
+        if (nombres.Length > 0)
+        {
+            coleccion.AddRange(nombres);
+        }
+
+        txtUsuario.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        txtUsuario.AutoCompleteSource = AutoCompleteSource.CustomSource;
+        txtUsuario.AutoCompleteCustomSource = coleccion;
+    }
+
+    private void CargarCredencialesRecordadas()
+    {
+        ConfigurarAutocompletado();
+
+        var ultimo = GestorCredencialesLocales.ObtenerUltimo();
+        if (ultimo is not null && !string.IsNullOrWhiteSpace(ultimo.Usuario))
+        {
+            chkRecordarUsuario.Checked = true;
+            txtUsuario.Text = ultimo.Usuario;
+            txtUsuario.ForeColor = Color.FromArgb(45, 40, 46);
+
+            if (!string.IsNullOrEmpty(ultimo.Contrasena))
+            {
+                txtContrasena.UseSystemPasswordChar = true;
+                txtContrasena.Text = ultimo.Contrasena;
+                txtContrasena.ForeColor = Color.FromArgb(45, 40, 46);
+            }
+        }
+        else
+        {
+            chkRecordarUsuario.Checked = false;
+            LimpiarCamposLogin();
+        }
+    }
+
+    private void txtUsuario_TextChanged(object? sender, EventArgs e)
+    {
+        var usuario = txtUsuario.Text.Trim();
+        if (usuario == PlaceholderUsuario || string.IsNullOrWhiteSpace(usuario))
+        {
+            return;
+        }
+
+        var credencial = GestorCredencialesLocales.ObtenerPorUsuario(usuario);
+        if (credencial is not null)
+        {
+            chkRecordarUsuario.Checked = true;
+            if (!string.IsNullOrEmpty(credencial.Contrasena))
+            {
+                txtContrasena.UseSystemPasswordChar = true;
+                txtContrasena.Text = credencial.Contrasena;
+                txtContrasena.ForeColor = Color.FromArgb(45, 40, 46);
+            }
+        }
     }
 
     private void btnSalir_Click(object? sender, EventArgs e)
@@ -132,6 +193,17 @@ public partial class FormInicioSesion : Form
 
             var usuario = resultadoAuth.Valor;
             SesionActual.IniciarSesion(usuario);
+
+            // Persistencia de credenciales según la opción del usuario
+            if (chkRecordarUsuario.Checked)
+            {
+                GestorCredencialesLocales.Guardar(nombreUsuario, contrasena);
+            }
+            else
+            {
+                GestorCredencialesLocales.Eliminar(nombreUsuario);
+            }
+
             DespacharSegunRol(usuario.NombreTipoUsuario);
         }
         catch (Exception)
@@ -174,7 +246,7 @@ public partial class FormInicioSesion : Form
         formularioDestino.FormClosed += (_, _) =>
         {
             SesionActual.CerrarSesion();
-            LimpiarCamposLogin();
+            CargarCredencialesRecordadas();
             lblError.Visible = false;
             Show();
         };

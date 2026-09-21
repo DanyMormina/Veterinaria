@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
@@ -26,13 +27,15 @@ public partial class FormSecretarioPrincipal : Form
 
     private void BTPROPIETARIOS_Click(object? sender, EventArgs e)
     {
-        using var vistaPropietarios = new FormPropietarios();
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaPropietarios = alcance.ServiceProvider.GetService<FormPropietarios>() ?? new FormPropietarios();
         vistaPropietarios.ShowDialog(this);
     }
 
     private void BTMASCOTAS_Click(object? sender, EventArgs e)
     {
-        using var vistaMascotas = new FormMascotas();
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaMascotas = alcance.ServiceProvider.GetService<FormMascotas>() ?? new FormMascotas();
         vistaMascotas.ShowDialog(this);
     }
 

@@ -21,6 +21,11 @@ partial class FormPropietarios
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
         pnlContenido = new Panel();
+        pnlBotones = new Panel();
+        btnGuardar = new Button();
+        btnModificar = new Button();
+        btnLimpiar = new Button();
+        btnVolver = new Button();
         grpDatos = new GroupBox();
         lblDni = new Label();
         txtDni = new TextBox();
@@ -38,8 +43,6 @@ partial class FormPropietarios
         lblBuscar = new Label();
         txtBuscar = new TextBox();
         btnBuscar = new Button();
-        btnActivos = new Button();
-        btnInactivos = new Button();
         dgvPropietarios = new DataGridView();
         colId = new DataGridViewTextBoxColumn();
         colDni = new DataGridViewTextBoxColumn();
@@ -51,18 +54,13 @@ partial class FormPropietarios
         colEstado = new DataGridViewTextBoxColumn();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
-        pnlBotones = new Panel();
-        btnGuardar = new Button();
-        btnModificar = new Button();
-        btnCancelar = new Button();
-        btnVolver = new Button();
         pnlEncabezado.SuspendLayout();
         pnlContenido.SuspendLayout();
+        pnlBotones.SuspendLayout();
         grpDatos.SuspendLayout();
         pnlListado.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvPropietarios).BeginInit();
         barraEstado.SuspendLayout();
-        pnlBotones.SuspendLayout();
         SuspendLayout();
         // 
         // pnlEncabezado
@@ -113,6 +111,75 @@ partial class FormPropietarios
         pnlContenido.Size = new Size(1100, 628);
         pnlContenido.TabIndex = 1;
         // 
+        // pnlBotones
+        // 
+        pnlBotones.Controls.Add(btnGuardar);
+        pnlBotones.Controls.Add(btnModificar);
+        pnlBotones.Controls.Add(btnLimpiar);
+        pnlBotones.Controls.Add(btnVolver);
+        pnlBotones.Location = new Point(12, 199);
+        pnlBotones.Name = "pnlBotones";
+        pnlBotones.Size = new Size(1076, 40);
+        pnlBotones.TabIndex = 4;
+        // 
+        // btnGuardar
+        // 
+        btnGuardar.BackColor = Color.FromArgb(152, 196, 164);
+        btnGuardar.FlatAppearance.BorderColor = Color.FromArgb(112, 158, 124);
+        btnGuardar.FlatStyle = FlatStyle.Flat;
+        btnGuardar.Font = new Font("Segoe UI", 9F);
+        btnGuardar.ForeColor = Color.Black;
+        btnGuardar.Location = new Point(11, 5);
+        btnGuardar.Name = "btnGuardar";
+        btnGuardar.Size = new Size(100, 32);
+        btnGuardar.TabIndex = 1;
+        btnGuardar.Text = "Guardar";
+        btnGuardar.UseVisualStyleBackColor = false;
+        // 
+        // btnModificar
+        // 
+        btnModificar.BackColor = Color.FromArgb(148, 176, 214);
+        btnModificar.FlatAppearance.BorderColor = Color.FromArgb(112, 142, 182);
+        btnModificar.FlatStyle = FlatStyle.Flat;
+        btnModificar.Font = new Font("Segoe UI", 9F);
+        btnModificar.ForeColor = Color.Black;
+        btnModificar.Location = new Point(119, 5);
+        btnModificar.Name = "btnModificar";
+        btnModificar.Size = new Size(100, 32);
+        btnModificar.TabIndex = 2;
+        btnModificar.Text = "Modificar";
+        btnModificar.UseVisualStyleBackColor = false;
+        // 
+        // btnLimpiar
+        // 
+        btnLimpiar.BackColor = Color.FromArgb(226, 217, 220);
+        btnLimpiar.Cursor = Cursors.Hand;
+        btnLimpiar.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
+        btnLimpiar.FlatStyle = FlatStyle.Flat;
+        btnLimpiar.Font = new Font("Segoe UI", 9F);
+        btnLimpiar.ForeColor = Color.FromArgb(58, 53, 59);
+        btnLimpiar.Location = new Point(227, 5);
+        btnLimpiar.Name = "btnLimpiar";
+        btnLimpiar.Size = new Size(100, 32);
+        btnLimpiar.TabIndex = 3;
+        btnLimpiar.Text = "Limpiar";
+        btnLimpiar.UseVisualStyleBackColor = false;
+        // 
+        // btnVolver
+        // 
+        btnVolver.BackColor = Color.FromArgb(220, 200, 204);
+        btnVolver.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
+        btnVolver.FlatStyle = FlatStyle.Flat;
+        btnVolver.Font = new Font("Segoe UI", 9F);
+        btnVolver.ForeColor = Color.Black;
+        btnVolver.Location = new Point(335, 5);
+        btnVolver.Name = "btnVolver";
+        btnVolver.Size = new Size(140, 32);
+        btnVolver.TabIndex = 4;
+        btnVolver.Text = "Volver al panel";
+        btnVolver.UseVisualStyleBackColor = false;
+        btnVolver.Click += btnVolver_Click;
+        // 
         // grpDatos
         // 
         grpDatos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
@@ -139,7 +206,7 @@ partial class FormPropietarios
         // 
         // lblDni
         // 
-        lblDni.Location = new Point(16, 40);
+        lblDni.Location = new Point(28, 127);
         lblDni.Name = "lblDni";
         lblDni.Size = new Size(118, 23);
         lblDni.TabIndex = 0;
@@ -150,14 +217,14 @@ partial class FormPropietarios
         // 
         txtDni.BackColor = Color.White;
         txtDni.BorderStyle = BorderStyle.FixedSingle;
-        txtDni.Location = new Point(140, 42);
+        txtDni.Location = new Point(152, 129);
         txtDni.Name = "txtDni";
         txtDni.Size = new Size(356, 23);
         txtDni.TabIndex = 1;
         // 
         // lblNombre
         // 
-        lblNombre.Location = new Point(16, 84);
+        lblNombre.Location = new Point(28, 39);
         lblNombre.Name = "lblNombre";
         lblNombre.Size = new Size(118, 23);
         lblNombre.TabIndex = 2;
@@ -168,14 +235,14 @@ partial class FormPropietarios
         // 
         txtNombre.BackColor = Color.White;
         txtNombre.BorderStyle = BorderStyle.FixedSingle;
-        txtNombre.Location = new Point(140, 84);
+        txtNombre.Location = new Point(152, 39);
         txtNombre.Name = "txtNombre";
         txtNombre.Size = new Size(356, 23);
         txtNombre.TabIndex = 3;
         // 
         // lblApellido
         // 
-        lblApellido.Location = new Point(16, 128);
+        lblApellido.Location = new Point(28, 83);
         lblApellido.Name = "lblApellido";
         lblApellido.Size = new Size(118, 23);
         lblApellido.TabIndex = 4;
@@ -186,14 +253,14 @@ partial class FormPropietarios
         // 
         txtApellido.BackColor = Color.White;
         txtApellido.BorderStyle = BorderStyle.FixedSingle;
-        txtApellido.Location = new Point(140, 128);
+        txtApellido.Location = new Point(152, 83);
         txtApellido.Name = "txtApellido";
         txtApellido.Size = new Size(356, 23);
         txtApellido.TabIndex = 5;
         // 
         // lblTelefono
         // 
-        lblTelefono.Location = new Point(547, 40);
+        lblTelefono.Location = new Point(572, 39);
         lblTelefono.Name = "lblTelefono";
         lblTelefono.Size = new Size(118, 23);
         lblTelefono.TabIndex = 6;
@@ -204,14 +271,14 @@ partial class FormPropietarios
         // 
         txtTelefono.BackColor = Color.White;
         txtTelefono.BorderStyle = BorderStyle.FixedSingle;
-        txtTelefono.Location = new Point(671, 40);
+        txtTelefono.Location = new Point(696, 37);
         txtTelefono.Name = "txtTelefono";
-        txtTelefono.Size = new Size(371, 23);
+        txtTelefono.Size = new Size(356, 23);
         txtTelefono.TabIndex = 7;
         // 
         // lblCorreoElectronico
         // 
-        lblCorreoElectronico.Location = new Point(547, 84);
+        lblCorreoElectronico.Location = new Point(572, 83);
         lblCorreoElectronico.Name = "lblCorreoElectronico";
         lblCorreoElectronico.Size = new Size(118, 23);
         lblCorreoElectronico.TabIndex = 8;
@@ -222,14 +289,14 @@ partial class FormPropietarios
         // 
         txtCorreoElectronico.BackColor = Color.White;
         txtCorreoElectronico.BorderStyle = BorderStyle.FixedSingle;
-        txtCorreoElectronico.Location = new Point(671, 84);
+        txtCorreoElectronico.Location = new Point(696, 83);
         txtCorreoElectronico.Name = "txtCorreoElectronico";
-        txtCorreoElectronico.Size = new Size(371, 23);
+        txtCorreoElectronico.Size = new Size(356, 23);
         txtCorreoElectronico.TabIndex = 9;
         // 
         // lblDireccion
         // 
-        lblDireccion.Location = new Point(547, 128);
+        lblDireccion.Location = new Point(572, 127);
         lblDireccion.Name = "lblDireccion";
         lblDireccion.Size = new Size(118, 23);
         lblDireccion.TabIndex = 10;
@@ -240,9 +307,9 @@ partial class FormPropietarios
         // 
         txtDireccion.BackColor = Color.White;
         txtDireccion.BorderStyle = BorderStyle.FixedSingle;
-        txtDireccion.Location = new Point(671, 128);
+        txtDireccion.Location = new Point(696, 127);
         txtDireccion.Name = "txtDireccion";
-        txtDireccion.Size = new Size(371, 23);
+        txtDireccion.Size = new Size(356, 23);
         txtDireccion.TabIndex = 11;
         // 
         // pnlListado
@@ -253,8 +320,6 @@ partial class FormPropietarios
         pnlListado.Controls.Add(lblBuscar);
         pnlListado.Controls.Add(txtBuscar);
         pnlListado.Controls.Add(btnBuscar);
-        pnlListado.Controls.Add(btnActivos);
-        pnlListado.Controls.Add(btnInactivos);
         pnlListado.Controls.Add(dgvPropietarios);
         pnlListado.Location = new Point(12, 245);
         pnlListado.Name = "pnlListado";
@@ -277,7 +342,7 @@ partial class FormPropietarios
         txtBuscar.BorderStyle = BorderStyle.FixedSingle;
         txtBuscar.Location = new Point(64, 12);
         txtBuscar.Name = "txtBuscar";
-        txtBuscar.Size = new Size(678, 23);
+        txtBuscar.Size = new Size(900, 23);
         txtBuscar.TabIndex = 1;
         // 
         // btnBuscar
@@ -288,42 +353,12 @@ partial class FormPropietarios
         btnBuscar.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
         btnBuscar.FlatStyle = FlatStyle.Flat;
         btnBuscar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnBuscar.Location = new Point(748, 10);
+        btnBuscar.Location = new Point(974, 10);
         btnBuscar.Name = "btnBuscar";
         btnBuscar.Size = new Size(90, 27);
         btnBuscar.TabIndex = 2;
         btnBuscar.Text = "Buscar";
         btnBuscar.UseVisualStyleBackColor = false;
-        // 
-        // btnActivos
-        // 
-        btnActivos.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnActivos.BackColor = Color.FromArgb(226, 217, 220);
-        btnActivos.Cursor = Cursors.Hand;
-        btnActivos.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
-        btnActivos.FlatStyle = FlatStyle.Flat;
-        btnActivos.ForeColor = Color.FromArgb(58, 53, 59);
-        btnActivos.Location = new Point(844, 10);
-        btnActivos.Name = "btnActivos";
-        btnActivos.Size = new Size(104, 27);
-        btnActivos.TabIndex = 3;
-        btnActivos.Text = "Activos";
-        btnActivos.UseVisualStyleBackColor = false;
-        // 
-        // btnInactivos
-        // 
-        btnInactivos.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        btnInactivos.BackColor = Color.FromArgb(226, 217, 220);
-        btnInactivos.Cursor = Cursors.Hand;
-        btnInactivos.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
-        btnInactivos.FlatStyle = FlatStyle.Flat;
-        btnInactivos.ForeColor = Color.FromArgb(58, 53, 59);
-        btnInactivos.Location = new Point(954, 10);
-        btnInactivos.Name = "btnInactivos";
-        btnInactivos.Size = new Size(110, 27);
-        btnInactivos.TabIndex = 4;
-        btnInactivos.Text = "Inactivos";
-        btnInactivos.UseVisualStyleBackColor = false;
         // 
         // dgvPropietarios
         // 
@@ -424,70 +459,6 @@ partial class FormPropietarios
         lblInfoEstado.Size = new Size(213, 17);
         lblInfoEstado.Text = "Módulo de gestión de propietarios listo";
         // 
-        // pnlBotones
-        // 
-        pnlBotones.Controls.Add(btnGuardar);
-        pnlBotones.Controls.Add(btnModificar);
-        pnlBotones.Controls.Add(btnCancelar);
-        pnlBotones.Controls.Add(btnVolver);
-        pnlBotones.Location = new Point(12, 199);
-        pnlBotones.Name = "pnlBotones";
-        pnlBotones.Size = new Size(1076, 40);
-        pnlBotones.TabIndex = 4;
-        // 
-        // btnGuardar
-        // 
-        btnGuardar.BackColor = Color.FromArgb(152, 196, 164);
-        btnGuardar.FlatAppearance.BorderColor = Color.FromArgb(112, 158, 124);
-        btnGuardar.FlatStyle = FlatStyle.Flat;
-        btnGuardar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnGuardar.Location = new Point(7, 5);
-        btnGuardar.Name = "btnGuardar";
-        btnGuardar.Size = new Size(100, 32);
-        btnGuardar.TabIndex = 1;
-        btnGuardar.Text = "Guardar";
-        btnGuardar.UseVisualStyleBackColor = false;
-        // 
-        // btnModificar
-        // 
-        btnModificar.BackColor = Color.FromArgb(148, 176, 214);
-        btnModificar.FlatAppearance.BorderColor = Color.FromArgb(112, 142, 182);
-        btnModificar.FlatStyle = FlatStyle.Flat;
-        btnModificar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnModificar.Location = new Point(115, 5);
-        btnModificar.Name = "btnModificar";
-        btnModificar.Size = new Size(100, 32);
-        btnModificar.TabIndex = 2;
-        btnModificar.Text = "Modificar";
-        btnModificar.UseVisualStyleBackColor = false;
-        // 
-        // btnCancelar
-        // 
-        btnCancelar.BackColor = Color.FromArgb(220, 150, 154);
-        btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(186, 118, 122);
-        btnCancelar.FlatStyle = FlatStyle.Flat;
-        btnCancelar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnCancelar.Location = new Point(223, 5);
-        btnCancelar.Name = "btnCancelar";
-        btnCancelar.Size = new Size(100, 32);
-        btnCancelar.TabIndex = 3;
-        btnCancelar.Text = "Cancelar";
-        btnCancelar.UseVisualStyleBackColor = false;
-        // 
-        // btnVolver
-        // 
-        btnVolver.BackColor = Color.FromArgb(220, 200, 204);
-        btnVolver.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
-        btnVolver.FlatStyle = FlatStyle.Flat;
-        btnVolver.ForeColor = Color.FromArgb(58, 53, 59);
-        btnVolver.Location = new Point(331, 5);
-        btnVolver.Name = "btnVolver";
-        btnVolver.Size = new Size(140, 32);
-        btnVolver.TabIndex = 4;
-        btnVolver.Text = "Volver al panel";
-        btnVolver.UseVisualStyleBackColor = false;
-        btnVolver.Click += btnVolver_Click;
-        // 
         // FormPropietarios
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -506,6 +477,7 @@ partial class FormPropietarios
         Load += FormPropietarios_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);
+        pnlBotones.ResumeLayout(false);
         grpDatos.ResumeLayout(false);
         grpDatos.PerformLayout();
         pnlListado.ResumeLayout(false);
@@ -513,7 +485,6 @@ partial class FormPropietarios
         ((System.ComponentModel.ISupportInitialize)dgvPropietarios).EndInit();
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
-        pnlBotones.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
     }
@@ -522,25 +493,14 @@ partial class FormPropietarios
     private Label lblTitulo;
     private Label lblUsuarioSesion;
     private Panel pnlContenido;
-    private GroupBox grpDatos;
-    private Label lblDni;
-    private TextBox txtDni;
     private Label lblNombre;
     private TextBox txtNombre;
     private Label lblApellido;
     private TextBox txtApellido;
-    private Label lblTelefono;
-    private TextBox txtTelefono;
-    private Label lblCorreoElectronico;
-    private TextBox txtCorreoElectronico;
-    private Label lblDireccion;
-    private TextBox txtDireccion;
     private Panel pnlListado;
     private Label lblBuscar;
     private TextBox txtBuscar;
     private Button btnBuscar;
-    private Button btnActivos;
-    private Button btnInactivos;
     private DataGridView dgvPropietarios;
     private DataGridViewTextBoxColumn colId;
     private DataGridViewTextBoxColumn colDni;
@@ -555,6 +515,15 @@ partial class FormPropietarios
     private Panel pnlBotones;
     private Button btnGuardar;
     private Button btnModificar;
-    private Button btnCancelar;
+    private Button btnLimpiar;
     private Button btnVolver;
+    private GroupBox grpDatos;
+    private Label lblDni;
+    private TextBox txtDni;
+    private Label lblTelefono;
+    private TextBox txtTelefono;
+    private Label lblCorreoElectronico;
+    private TextBox txtCorreoElectronico;
+    private Label lblDireccion;
+    private TextBox txtDireccion;
 }

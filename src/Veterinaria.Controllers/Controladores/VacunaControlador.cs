@@ -192,3 +192,8 @@ public class VacunaControlador(ContextoVeterinaria context)
         return null;
     }
 }
+
+/// <summary>
+/// Alias de compatibilidad para VacunaControlador.
+/// </summary>
+public class VacunaController(ContextoVeterinaria context) : VacunaControlador(context);

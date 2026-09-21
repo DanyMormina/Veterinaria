@@ -24,10 +24,6 @@ partial class FormConsultas
         cboMascota = new ComboBox();
         lblPropietario = new Label();
         cboPropietario = new ComboBox();
-        lblFecha = new Label();
-        dtpFecha = new DateTimePicker();
-        lblHora = new Label();
-        dtpHora = new DateTimePicker();
         lblMotivo = new Label();
         txtMotivo = new TextBox();
         lblPeso = new Label();
@@ -41,13 +37,13 @@ partial class FormConsultas
         lblObservaciones = new Label();
         txtObservaciones = new TextBox();
         pnlBotones = new Panel();
-        btnNuevo = new Button();
         btnGuardar = new Button();
         btnModificar = new Button();
-        btnCancelar = new Button();
+        btnLimpiar = new Button();
         btnVolver = new Button();
         grpHistorial = new GroupBox();
         dgvConsultas = new DataGridView();
+        colId = new DataGridViewTextBoxColumn();
         colFecha = new DataGridViewTextBoxColumn();
         colMascota = new DataGridViewTextBoxColumn();
         colPropietario = new DataGridViewTextBoxColumn();
@@ -120,10 +116,6 @@ partial class FormConsultas
         grpDatos.Controls.Add(cboMascota);
         grpDatos.Controls.Add(lblPropietario);
         grpDatos.Controls.Add(cboPropietario);
-        grpDatos.Controls.Add(lblFecha);
-        grpDatos.Controls.Add(dtpFecha);
-        grpDatos.Controls.Add(lblHora);
-        grpDatos.Controls.Add(dtpHora);
         grpDatos.Controls.Add(lblMotivo);
         grpDatos.Controls.Add(txtMotivo);
         grpDatos.Controls.Add(lblPeso);
@@ -155,8 +147,10 @@ partial class FormConsultas
         // 
         // cboMascota
         // 
+        cboMascota.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cboMascota.AutoCompleteSource = AutoCompleteSource.ListItems;
         cboMascota.BackColor = Color.White;
-        cboMascota.DropDownStyle = ComboBoxStyle.DropDownList;
+        cboMascota.DropDownStyle = ComboBoxStyle.DropDown;
         cboMascota.FormattingEnabled = true;
         cboMascota.Location = new Point(132, 32);
         cboMascota.Name = "cboMascota";
@@ -172,47 +166,18 @@ partial class FormConsultas
         // 
         // cboPropietario
         // 
+        cboPropietario.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cboPropietario.AutoCompleteSource = AutoCompleteSource.ListItems;
         cboPropietario.BackColor = Color.White;
-        cboPropietario.DropDownStyle = ComboBoxStyle.DropDownList;
+        cboPropietario.DropDownStyle = ComboBoxStyle.DropDown;
         cboPropietario.FormattingEnabled = true;
         cboPropietario.Location = new Point(644, 32);
         cboPropietario.Name = "cboPropietario";
         cboPropietario.Size = new Size(400, 23);
         // 
-        // lblFecha
-        // 
-        lblFecha.Location = new Point(16, 68);
-        lblFecha.Name = "lblFecha";
-        lblFecha.Size = new Size(110, 23);
-        lblFecha.Text = "Fecha";
-        lblFecha.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // dtpFecha
-        // 
-        dtpFecha.Format = DateTimePickerFormat.Short;
-        dtpFecha.Location = new Point(132, 68);
-        dtpFecha.Name = "dtpFecha";
-        dtpFecha.Size = new Size(160, 23);
-        // 
-        // lblHora
-        // 
-        lblHora.Location = new Point(312, 68);
-        lblHora.Name = "lblHora";
-        lblHora.Size = new Size(50, 23);
-        lblHora.Text = "Hora";
-        lblHora.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // dtpHora
-        // 
-        dtpHora.Format = DateTimePickerFormat.Time;
-        dtpHora.Location = new Point(368, 68);
-        dtpHora.Name = "dtpHora";
-        dtpHora.ShowUpDown = true;
-        dtpHora.Size = new Size(124, 23);
-        // 
         // lblMotivo
         // 
-        lblMotivo.Location = new Point(528, 68);
+        lblMotivo.Location = new Point(16, 68);
         lblMotivo.Name = "lblMotivo";
         lblMotivo.Size = new Size(110, 23);
         lblMotivo.Text = "Motivo";
@@ -222,9 +187,9 @@ partial class FormConsultas
         // 
         txtMotivo.BackColor = Color.White;
         txtMotivo.BorderStyle = BorderStyle.FixedSingle;
-        txtMotivo.Location = new Point(644, 68);
+        txtMotivo.Location = new Point(132, 68);
         txtMotivo.Name = "txtMotivo";
-        txtMotivo.Size = new Size(400, 23);
+        txtMotivo.Size = new Size(912, 23);
         // 
         // lblPeso
         // 
@@ -306,76 +271,81 @@ partial class FormConsultas
         txtObservaciones.Name = "txtObservaciones";
         txtObservaciones.Size = new Size(912, 56);
         // 
+        // 
+        // pnlBotones
+        // 
         // pnlBotones
         // 
         pnlBotones.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        pnlBotones.Controls.Add(btnNuevo);
         pnlBotones.Controls.Add(btnGuardar);
         pnlBotones.Controls.Add(btnModificar);
-        pnlBotones.Controls.Add(btnCancelar);
+        pnlBotones.Controls.Add(btnLimpiar);
         pnlBotones.Controls.Add(btnVolver);
         pnlBotones.Location = new Point(16, 268);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1068, 40);
         pnlBotones.TabIndex = 1;
         // 
-        // btnNuevo
-        // 
-        btnNuevo.BackColor = Color.FromArgb(230, 196, 202);
-        btnNuevo.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
-        btnNuevo.FlatStyle = FlatStyle.Flat;
-        btnNuevo.ForeColor = Color.FromArgb(58, 53, 59);
-        btnNuevo.Location = new Point(0, 4);
-        btnNuevo.Name = "btnNuevo";
-        btnNuevo.Size = new Size(100, 32);
-        btnNuevo.Text = "Nuevo";
-        btnNuevo.UseVisualStyleBackColor = false;
-        // 
         // btnGuardar
         // 
         btnGuardar.BackColor = Color.FromArgb(152, 196, 164);
-        btnGuardar.FlatAppearance.BorderColor = Color.FromArgb(112, 158, 124);
+        btnGuardar.Cursor = Cursors.Hand;
+        btnGuardar.FlatAppearance.BorderSize = 0;
         btnGuardar.FlatStyle = FlatStyle.Flat;
-        btnGuardar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnGuardar.Location = new Point(108, 4);
+        btnGuardar.Font = new Font("Segoe UI", 9F);
+        btnGuardar.ForeColor = Color.Black;
+        btnGuardar.Location = new Point(0, 4);
         btnGuardar.Name = "btnGuardar";
         btnGuardar.Size = new Size(100, 32);
+        btnGuardar.TabIndex = 0;
         btnGuardar.Text = "Guardar";
         btnGuardar.UseVisualStyleBackColor = false;
+        btnGuardar.Click += btnGuardar_Click;
         // 
         // btnModificar
         // 
         btnModificar.BackColor = Color.FromArgb(148, 176, 214);
-        btnModificar.FlatAppearance.BorderColor = Color.FromArgb(112, 142, 182);
+        btnModificar.Cursor = Cursors.Hand;
+        btnModificar.FlatAppearance.BorderSize = 0;
         btnModificar.FlatStyle = FlatStyle.Flat;
-        btnModificar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnModificar.Location = new Point(216, 4);
+        btnModificar.Font = new Font("Segoe UI", 9F);
+        btnModificar.ForeColor = Color.Black;
+        btnModificar.Location = new Point(108, 4);
         btnModificar.Name = "btnModificar";
         btnModificar.Size = new Size(100, 32);
+        btnModificar.TabIndex = 1;
         btnModificar.Text = "Modificar";
         btnModificar.UseVisualStyleBackColor = false;
+        btnModificar.Click += btnModificar_Click;
         // 
-        // btnCancelar
+        // btnLimpiar
         // 
-        btnCancelar.BackColor = Color.FromArgb(220, 150, 154);
-        btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(186, 118, 122);
-        btnCancelar.FlatStyle = FlatStyle.Flat;
-        btnCancelar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnCancelar.Location = new Point(324, 4);
-        btnCancelar.Name = "btnCancelar";
-        btnCancelar.Size = new Size(100, 32);
-        btnCancelar.Text = "Cancelar";
-        btnCancelar.UseVisualStyleBackColor = false;
+        btnLimpiar.BackColor = Color.FromArgb(226, 217, 220);
+        btnLimpiar.Cursor = Cursors.Hand;
+        btnLimpiar.FlatAppearance.BorderSize = 0;
+        btnLimpiar.FlatStyle = FlatStyle.Flat;
+        btnLimpiar.Font = new Font("Segoe UI", 9F);
+        btnLimpiar.ForeColor = Color.FromArgb(58, 53, 59);
+        btnLimpiar.Location = new Point(216, 4);
+        btnLimpiar.Name = "btnLimpiar";
+        btnLimpiar.Size = new Size(100, 32);
+        btnLimpiar.TabIndex = 2;
+        btnLimpiar.Text = "Limpiar";
+        btnLimpiar.UseVisualStyleBackColor = false;
+        btnLimpiar.Click += btnLimpiar_Click;
         // 
         // btnVolver
         // 
-        btnVolver.BackColor = Color.FromArgb(230, 196, 202);
-        btnVolver.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
+        btnVolver.BackColor = Color.FromArgb(220, 200, 204);
+        btnVolver.Cursor = Cursors.Hand;
+        btnVolver.FlatAppearance.BorderSize = 0;
         btnVolver.FlatStyle = FlatStyle.Flat;
-        btnVolver.ForeColor = Color.FromArgb(58, 53, 59);
-        btnVolver.Location = new Point(432, 4);
+        btnVolver.Font = new Font("Segoe UI", 9F);
+        btnVolver.ForeColor = Color.Black;
+        btnVolver.Location = new Point(324, 4);
         btnVolver.Name = "btnVolver";
         btnVolver.Size = new Size(140, 32);
+        btnVolver.TabIndex = 3;
         btnVolver.Text = "Volver al panel";
         btnVolver.UseVisualStyleBackColor = false;
         btnVolver.Click += btnVolver_Click;
@@ -402,7 +372,14 @@ partial class FormConsultas
         dgvConsultas.BackgroundColor = Color.White;
         dgvConsultas.BorderStyle = BorderStyle.FixedSingle;
         dgvConsultas.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dgvConsultas.Columns.AddRange(new DataGridViewColumn[] { colFecha, colMascota, colPropietario, colMotivo, colDiagnostico, colProximoControl });
+        dgvConsultas.Columns.AddRange(new DataGridViewColumn[] { colId, colFecha, colMascota, colPropietario, colMotivo, colDiagnostico, colProximoControl });
+        dgvConsultas.EnableHeadersVisualStyles = false;
+        dgvConsultas.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
+        dgvConsultas.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+        dgvConsultas.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        dgvConsultas.DefaultCellStyle.SelectionBackColor = Color.FromArgb(226, 217, 220);
+        dgvConsultas.DefaultCellStyle.SelectionForeColor = Color.FromArgb(58, 53, 59);
+        dgvConsultas.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(250, 244, 244);
         dgvConsultas.Location = new Point(16, 28);
         dgvConsultas.MultiSelect = false;
         dgvConsultas.Name = "dgvConsultas";
@@ -410,8 +387,16 @@ partial class FormConsultas
         dgvConsultas.RowHeadersVisible = false;
         dgvConsultas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         dgvConsultas.Size = new Size(1036, 252);
+        dgvConsultas.TabIndex = 0;
+        dgvConsultas.CellClick += dgvConsultas_CellClick;
         // 
-        // columnas
+        // colId
+        // 
+        colId.HeaderText = "ID";
+        colId.Name = "colId";
+        colId.Visible = false;
+        // 
+        // colFecha
         // 
         colFecha.HeaderText = "Fecha";
         colFecha.Name = "colFecha";
@@ -481,10 +466,6 @@ partial class FormConsultas
     private ComboBox cboMascota;
     private Label lblPropietario;
     private ComboBox cboPropietario;
-    private Label lblFecha;
-    private DateTimePicker dtpFecha;
-    private Label lblHora;
-    private DateTimePicker dtpHora;
     private Label lblMotivo;
     private TextBox txtMotivo;
     private Label lblPeso;
@@ -498,13 +479,13 @@ partial class FormConsultas
     private Label lblObservaciones;
     private TextBox txtObservaciones;
     private Panel pnlBotones;
-    private Button btnNuevo;
     private Button btnGuardar;
     private Button btnModificar;
-    private Button btnCancelar;
+    private Button btnLimpiar;
     private Button btnVolver;
     private GroupBox grpHistorial;
     private DataGridView dgvConsultas;
+    private DataGridViewTextBoxColumn colId;
     private DataGridViewTextBoxColumn colFecha;
     private DataGridViewTextBoxColumn colMascota;
     private DataGridViewTextBoxColumn colPropietario;

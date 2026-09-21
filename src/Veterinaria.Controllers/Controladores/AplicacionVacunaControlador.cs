@@ -8,6 +8,42 @@ namespace Veterinaria.Controllers.Controladores;
 
 public class AplicacionVacunaControlador(ContextoVeterinaria context)
 {
+    public async Task<Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>> ObtenerTodosAsync()
+    {
+        try
+        {
+            var items = await ConsultaBase()
+                .OrderByDescending(a => a.FechaAplicacion)
+                .ToListAsync();
+
+            return Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>.Exito(items);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>.Falla($"Error al obtener aplicaciones de vacunas: {ex.Message}");
+        }
+    }
+
+    public async Task<Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>> ObtenerPorMascotaAsync(long idMascota)
+    {
+        try
+        {
+            if (idMascota <= 0)
+                return Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>.Falla("El identificador de la mascota debe ser mayor a cero.");
+
+            var items = await ConsultaBase()
+                .Where(a => a.IdMascota == idMascota)
+                .OrderByDescending(a => a.FechaAplicacion)
+                .ToListAsync();
+
+            return Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>.Exito(items);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>.Falla($"Error al obtener aplicaciones de la mascota: {ex.Message}");
+        }
+    }
+
     public async Task<Resultado<IEnumerable<AplicacionVacunaRespuestaDto>>> ObtenerPorConsultaAsync(long idConsulta)
     {
         try
@@ -77,12 +113,16 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
                 ? fechaAplicacion.AddMonths(vacuna.PeriodoMesesRecomendado)
                 : null);
 
+            // Si PrecioUnitario es null (vacuna previa/externa), se preserva null; si tiene valor, se persiste dicho valor.
+            var precioUnitario = solicitud.PrecioUnitario;
+
             var entidad = new AplicacionVacuna
             {
                 IdConsulta = solicitud.IdConsulta,
                 IdVacuna = solicitud.IdVacuna,
                 FechaAplicacion = fechaAplicacion,
                 ProximaDosis = proximaDosis,
+                PrecioUnitario = precioUnitario,
                 Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim()
             };
 
@@ -123,6 +163,8 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
 
                 entidad.IdVacuna = solicitud.IdVacuna;
             }
+
+            entidad.PrecioUnitario = solicitud.PrecioUnitario;
 
             entidad.FechaAplicacion = solicitud.FechaAplicacion == default ? entidad.FechaAplicacion : solicitud.FechaAplicacion;
             entidad.ProximaDosis = solicitud.ProximaDosis ?? entidad.ProximaDosis;
@@ -167,9 +209,12 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
                 IdConsulta = a.IdConsulta,
                 IdVacuna = a.IdVacuna,
                 NombreVacuna = a.Vacuna != null ? a.Vacuna.Nombre : string.Empty,
+                IdMascota = a.Consulta != null ? a.Consulta.IdMascota : 0,
+                NombreMascota = a.Consulta != null && a.Consulta.Mascota != null ? a.Consulta.Mascota.Nombre : string.Empty,
                 FechaAplicacion = a.FechaAplicacion,
                 ProximaDosis = a.ProximaDosis,
                 Observaciones = a.Observaciones,
-                Precio = a.Vacuna != null ? a.Vacuna.Precio : 0
+                PrecioUnitario = a.PrecioUnitario,
+                Precio = a.PrecioUnitario
             });
 }

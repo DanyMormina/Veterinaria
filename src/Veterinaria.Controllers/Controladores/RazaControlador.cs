@@ -21,6 +21,26 @@ public class RazaControlador(ContextoVeterinaria context)
         }
     }
 
+    public async Task<Resultado<IEnumerable<RazaRespuestaDto>>> ObtenerPorEspecieAsync(long idEspecie)
+    {
+        try
+        {
+            if (idEspecie <= 0)
+                return Resultado<IEnumerable<RazaRespuestaDto>>.Falla("El identificador de la especie debe ser mayor a cero.");
+
+            var razas = await ConsultaBase()
+                .Where(r => r.IdEspecie == idEspecie && r.Activo)
+                .OrderBy(r => r.Nombre)
+                .ToListAsync();
+
+            return Resultado<IEnumerable<RazaRespuestaDto>>.Exito(razas);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<RazaRespuestaDto>>.Falla($"Error interno al obtener razas de la especie: {ex.Message}");
+        }
+    }
+
     public async Task<Resultado<RazaRespuestaDto>> ObtenerPorIdAsync(long id)
     {
         try

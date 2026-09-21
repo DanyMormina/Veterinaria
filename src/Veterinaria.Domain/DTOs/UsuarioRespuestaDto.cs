@@ -17,4 +17,5 @@ public class UsuarioRespuestaDto
     public string? Matricula { get; set; }
     public bool Activo { get; set; }
     public string NombreRol => NombreTipoUsuario; // Alias para compatibilidad de vistas
+    public string NombreCompleto => $"{Nombre} {Apellido}".Trim();
 }

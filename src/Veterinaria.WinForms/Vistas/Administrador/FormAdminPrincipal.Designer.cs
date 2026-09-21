@@ -55,7 +55,7 @@ partial class FormAdminPrincipal
         pnlEncabezado.Location = new Point(0, 0);
         pnlEncabezado.Name = "pnlEncabezado";
         pnlEncabezado.Padding = new Padding(16, 0, 16, 0);
-        pnlEncabezado.Size = new Size(1100, 50);
+        pnlEncabezado.Size = new Size(1220, 50);
         pnlEncabezado.TabIndex = 0;
         // 
         // lblTitulo
@@ -75,7 +75,7 @@ partial class FormAdminPrincipal
         lblUsuarioSesion.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         lblUsuarioSesion.Font = new Font("Segoe UI", 9.75F);
         lblUsuarioSesion.ForeColor = Color.FromArgb(250, 244, 244);
-        lblUsuarioSesion.Location = new Point(520, 0);
+        lblUsuarioSesion.Location = new Point(640, 0);
         lblUsuarioSesion.Name = "lblUsuarioSesion";
         lblUsuarioSesion.Size = new Size(420, 50);
         lblUsuarioSesion.TabIndex = 1;
@@ -91,7 +91,7 @@ partial class FormAdminPrincipal
         btnCerrarSesion.FlatStyle = FlatStyle.Flat;
         btnCerrarSesion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         btnCerrarSesion.ForeColor = Color.White;
-        btnCerrarSesion.Location = new Point(952, 10);
+        btnCerrarSesion.Location = new Point(1072, 10);
         btnCerrarSesion.Name = "btnCerrarSesion";
         btnCerrarSesion.Size = new Size(124, 30);
         btnCerrarSesion.TabIndex = 2;
@@ -103,9 +103,9 @@ partial class FormAdminPrincipal
         // 
         barraEstado.BackColor = Color.FromArgb(249, 240, 242);
         barraEstado.Items.AddRange(new ToolStripItem[] { lblInfoEstado });
-        barraEstado.Location = new Point(0, 678);
+        barraEstado.Location = new Point(0, 698);
         barraEstado.Name = "barraEstado";
-        barraEstado.Size = new Size(1100, 22);
+        barraEstado.Size = new Size(1220, 22);
         barraEstado.TabIndex = 2;
         // 
         // lblInfoEstado
@@ -120,10 +120,10 @@ partial class FormAdminPrincipal
         // 
         BTUSUARIOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTUSUARIOS.ImageAlign = ContentAlignment.TopCenter;
-        BTUSUARIOS.Location = new Point(64, 143);
+        BTUSUARIOS.Location = new Point(60, 160);
         BTUSUARIOS.Name = "BTUSUARIOS";
         BTUSUARIOS.Padding = new Padding(8, 8, 8, 12);
-        BTUSUARIOS.Size = new Size(214, 277);
+        BTUSUARIOS.Size = new Size(230, 290);
         BTUSUARIOS.TabIndex = 0;
         BTUSUARIOS.Text = "USUARIOS Y PERFILES";
         BTUSUARIOS.TextAlign = ContentAlignment.BottomCenter;
@@ -134,10 +134,10 @@ partial class FormAdminPrincipal
         // 
         BTPROPIETARIOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTPROPIETARIOS.ImageAlign = ContentAlignment.TopCenter;
-        BTPROPIETARIOS.Location = new Point(319, 143);
+        BTPROPIETARIOS.Location = new Point(350, 160);
         BTPROPIETARIOS.Name = "BTPROPIETARIOS";
         BTPROPIETARIOS.Padding = new Padding(8, 8, 8, 12);
-        BTPROPIETARIOS.Size = new Size(214, 277);
+        BTPROPIETARIOS.Size = new Size(230, 290);
         BTPROPIETARIOS.TabIndex = 0;
         BTPROPIETARIOS.Text = "CONSULTAR PROPIETARIOS";
         BTPROPIETARIOS.TextAlign = ContentAlignment.BottomCenter;
@@ -148,10 +148,10 @@ partial class FormAdminPrincipal
         // 
         BTMASCOTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTMASCOTAS.ImageAlign = ContentAlignment.TopCenter;
-        BTMASCOTAS.Location = new Point(568, 143);
+        BTMASCOTAS.Location = new Point(640, 160);
         BTMASCOTAS.Name = "BTMASCOTAS";
         BTMASCOTAS.Padding = new Padding(8, 8, 8, 12);
-        BTMASCOTAS.Size = new Size(214, 277);
+        BTMASCOTAS.Size = new Size(230, 290);
         BTMASCOTAS.TabIndex = 1;
         BTMASCOTAS.Text = "CONSULTAR MASCOTAS";
         BTMASCOTAS.TextAlign = ContentAlignment.BottomCenter;
@@ -162,10 +162,10 @@ partial class FormAdminPrincipal
         // 
         BTREPORTES.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTREPORTES.ImageAlign = ContentAlignment.TopCenter;
-        BTREPORTES.Location = new Point(811, 143);
+        BTREPORTES.Location = new Point(930, 160);
         BTREPORTES.Name = "BTREPORTES";
         BTREPORTES.Padding = new Padding(8, 8, 8, 12);
-        BTREPORTES.Size = new Size(214, 277);
+        BTREPORTES.Size = new Size(230, 290);
         BTREPORTES.TabIndex = 2;
         BTREPORTES.Text = "REPORTES";
         BTREPORTES.TextAlign = ContentAlignment.BottomCenter;
@@ -182,7 +182,7 @@ partial class FormAdminPrincipal
         pnlContenido.Dock = DockStyle.Fill;
         pnlContenido.Location = new Point(0, 50);
         pnlContenido.Name = "pnlContenido";
-        pnlContenido.Size = new Size(1100, 628);
+        pnlContenido.Size = new Size(1220, 648);
         pnlContenido.TabIndex = 1;
         pnlContenido.Paint += pnlContenido_Paint;
         // 
@@ -191,9 +191,9 @@ partial class FormAdminPrincipal
         // picReportes
         picReportes.BackColor = Color.Transparent;
         picReportes.Image = (Image)resources.GetObject("picReportes.Image");
-        picReportes.Location = new Point(37, 10);
+        picReportes.Location = new Point(40, 12);
         picReportes.Name = "picReportes";
-        picReportes.Size = new Size(140, 186);
+        picReportes.Size = new Size(150, 190);
         picReportes.SizeMode = PictureBoxSizeMode.Zoom;
         picReportes.TabStop = false;
         picReportes.Click += BTREPORTES_Click;
@@ -201,9 +201,9 @@ partial class FormAdminPrincipal
         // picPropietarios
         picPropietarios.BackColor = Color.Transparent;
         picPropietarios.Image = (Image)resources.GetObject("picPropietarios.Image");
-        picPropietarios.Location = new Point(37, 10);
+        picPropietarios.Location = new Point(40, 12);
         picPropietarios.Name = "picPropietarios";
-        picPropietarios.Size = new Size(140, 186);
+        picPropietarios.Size = new Size(150, 190);
         picPropietarios.SizeMode = PictureBoxSizeMode.Zoom;
         picPropietarios.TabStop = false;
         picPropietarios.Click += button1_Click;
@@ -211,9 +211,9 @@ partial class FormAdminPrincipal
         // picUsuarios
         picUsuarios.BackColor = Color.Transparent;
         picUsuarios.Image = (Image)resources.GetObject("picUsuarios.Image");
-        picUsuarios.Location = new Point(37, 10);
+        picUsuarios.Location = new Point(40, 12);
         picUsuarios.Name = "picUsuarios";
-        picUsuarios.Size = new Size(140, 186);
+        picUsuarios.Size = new Size(150, 190);
         picUsuarios.SizeMode = PictureBoxSizeMode.Zoom;
         picUsuarios.TabStop = false;
         picUsuarios.Click += BTUSUARIOS_Click;
@@ -221,9 +221,9 @@ partial class FormAdminPrincipal
         // picMascotas
         picMascotas.BackColor = Color.Transparent;
         picMascotas.Image = (Image)resources.GetObject("picMascotas.Image");
-        picMascotas.Location = new Point(37, 10);
+        picMascotas.Location = new Point(40, 12);
         picMascotas.Name = "picMascotas";
-        picMascotas.Size = new Size(140, 186);
+        picMascotas.Size = new Size(150, 190);
         picMascotas.SizeMode = PictureBoxSizeMode.Zoom;
         picMascotas.TabStop = false;
         picMascotas.Click += BTMASCOTAS_Click;
@@ -231,13 +231,13 @@ partial class FormAdminPrincipal
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
-        ClientSize = new Size(1100, 700);
+        ClientSize = new Size(1220, 720);
         Controls.Add(pnlContenido);
         Controls.Add(barraEstado);
         Controls.Add(pnlEncabezado);
         Font = new Font("Segoe UI", 9F);
         ForeColor = Color.FromArgb(58, 53, 59);
-        MinimumSize = new Size(800, 500);
+        MinimumSize = new Size(1220, 720);
         Name = "FormAdminPrincipal";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Veterinaria - Panel Administrador";

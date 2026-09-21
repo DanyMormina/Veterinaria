@@ -66,6 +66,93 @@ public class TratamientoControlador(ContextoVeterinaria context)
         }
     }
 
+    /// <summary>
+    /// Registra la aplicación de un tratamiento a una consulta médica veterinaria (DetalleConsulta).
+    /// </summary>
+    public async Task<Resultado<long>> CrearAsync(DetalleConsultaSolicitudDto solicitud)
+    {
+        try
+        {
+            // 1. Validaciones previas de integridad del detalle aplicado
+            if (solicitud.IdConsulta <= 0)
+                return Resultado<long>.Falla("Debe seleccionar una consulta clínica válida.");
+
+            if (solicitud.IdTratamiento <= 0)
+                return Resultado<long>.Falla("Debe seleccionar un tratamiento válido del catálogo.");
+
+            if (solicitud.Cantidad <= 0)
+                return Resultado<long>.Falla("La cantidad debe ser mayor a cero.");
+
+            var consultaExiste = await context.Consultas.AnyAsync(c => c.Id == solicitud.IdConsulta);
+            if (!consultaExiste)
+                return Resultado<long>.Falla($"No existe la consulta con ID {solicitud.IdConsulta}.");
+
+            var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
+            if (tratamiento is null)
+                return Resultado<long>.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
+
+            // 2. Cálculo de importes unitario y subtotal
+            var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : tratamiento.Precio;
+            var subtotal = solicitud.Subtotal > 0 ? solicitud.Subtotal : (precioUnitario * solicitud.Cantidad);
+
+            // 3. Creación y persistencia de la entidad DetalleConsulta
+            var entidad = new DetalleConsulta
+            {
+                IdConsulta = solicitud.IdConsulta,
+                IdTratamiento = solicitud.IdTratamiento,
+                Cantidad = solicitud.Cantidad,
+                PrecioUnitario = precioUnitario,
+                Subtotal = subtotal,
+                Indicaciones = string.IsNullOrWhiteSpace(solicitud.Indicaciones) ? null : solicitud.Indicaciones.Trim(),
+                Activo = true
+            };
+
+            context.DetalleConsultas.Add(entidad);
+            await context.SaveChangesAsync();
+            return Resultado<long>.Exito(entidad.Id, "Tratamiento aplicado exitosamente a la consulta.");
+        }
+        catch (Exception ex)
+        {
+            return Resultado<long>.Falla($"Error interno al aplicar el tratamiento: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Obtiene todos los tratamientos aplicados a una consulta médica específica.
+    /// </summary>
+    public async Task<Resultado<IEnumerable<DetalleConsultaRespuestaDto>>> ObtenerTratamientosAplicadosPorConsultaAsync(long idConsulta)
+    {
+        try
+        {
+            if (idConsulta <= 0)
+                return Resultado<IEnumerable<DetalleConsultaRespuestaDto>>.Falla("El identificador de la consulta debe ser mayor a cero.");
+
+            var detalles = await context.DetalleConsultas
+                .AsNoTracking()
+                .Where(d => d.IdConsulta == idConsulta && d.Activo)
+                .Select(d => new DetalleConsultaRespuestaDto
+                {
+                    Id = d.Id,
+                    IdConsulta = d.IdConsulta,
+                    IdTratamiento = d.IdTratamiento,
+                    TipoTratamiento = d.Tratamiento != null ? d.Tratamiento.TipoTratamiento : string.Empty,
+                    DescripcionTratamiento = d.Tratamiento != null ? d.Tratamiento.Descripcion : string.Empty,
+                    Cantidad = d.Cantidad,
+                    PrecioUnitario = d.PrecioUnitario,
+                    Subtotal = d.Subtotal,
+                    Indicaciones = d.Indicaciones,
+                    Activo = d.Activo
+                })
+                .ToListAsync();
+
+            return Resultado<IEnumerable<DetalleConsultaRespuestaDto>>.Exito(detalles);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<DetalleConsultaRespuestaDto>>.Falla($"Error al obtener tratamientos aplicados: {ex.Message}");
+        }
+    }
+
     public async Task<Resultado> ActualizarAsync(long id, TratamientoSolicitudDto solicitud)
     {
         try

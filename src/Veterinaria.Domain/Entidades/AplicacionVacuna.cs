@@ -7,6 +7,7 @@ public class AplicacionVacuna
     public long IdVacuna { get; set; }
     public DateTime FechaAplicacion { get; set; } = DateTime.Today;
     public DateTime? ProximaDosis { get; set; }
+    public decimal? PrecioUnitario { get; set; }
     public string? Observaciones { get; set; }
 
     public Consulta Consulta { get; set; } = null!;

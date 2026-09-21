@@ -26,19 +26,12 @@ partial class FormVacunasControles
         colVacuna = new DataGridViewTextBoxColumn();
         colFechaAplicacion = new DataGridViewTextBoxColumn();
         colProximaDosis = new DataGridViewTextBoxColumn();
-        colProximoControl = new DataGridViewTextBoxColumn();
         colObservaciones = new DataGridViewTextBoxColumn();
         pnlBotones = new Panel();
-        btnNuevo = new Button();
         btnGuardar = new Button();
         btnModificar = new Button();
-        btnCancelar = new Button();
+        btnLimpiar = new Button();
         btnVolver = new Button();
-        grpControles = new GroupBox();
-        lblMascotaControl = new Label();
-        cboMascotaControl = new ComboBox();
-        lblMotivoControl = new Label();
-        txtMotivoControl = new TextBox();
         grpAplicacion = new GroupBox();
         lblMascota = new Label();
         cboMascota = new ComboBox();
@@ -46,12 +39,13 @@ partial class FormVacunasControles
         cboConsulta = new ComboBox();
         lblVacuna = new Label();
         cboVacuna = new ComboBox();
+        btnAltaVacuna = new Button();
+        btnModificarVacuna = new Button();
         lblFechaAplicacion = new Label();
         dtpFechaAplicacion = new DateTimePicker();
+        chkVacunaPrevia = new CheckBox();
         lblProximaDosis = new Label();
         dtpProximaDosis = new DateTimePicker();
-        lblFechaRecomendada = new Label();
-        dtpFechaRecomendada = new DateTimePicker();
         lblObservaciones = new Label();
         txtObservaciones = new TextBox();
         barraEstado = new StatusStrip();
@@ -60,7 +54,6 @@ partial class FormVacunasControles
         pnlContenido.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvVacunas).BeginInit();
         pnlBotones.SuspendLayout();
-        grpControles.SuspendLayout();
         grpAplicacion.SuspendLayout();
         barraEstado.SuspendLayout();
         SuspendLayout();
@@ -86,7 +79,7 @@ partial class FormVacunasControles
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(720, 50);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — CONTROLES";
+        lblTitulo.Text = "CLÍNICA VETERINARIA - ATENCIÓN CLÍNICA - VACUNACIÓN";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -106,7 +99,6 @@ partial class FormVacunasControles
         pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
         pnlContenido.Controls.Add(dgvVacunas);
         pnlContenido.Controls.Add(pnlBotones);
-        pnlContenido.Controls.Add(grpControles);
         pnlContenido.Controls.Add(grpAplicacion);
         pnlContenido.Dock = DockStyle.Fill;
         pnlContenido.Location = new Point(0, 50);
@@ -124,13 +116,13 @@ partial class FormVacunasControles
         dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
         dataGridViewCellStyle1.BackColor = SystemColors.Control;
         dataGridViewCellStyle1.Font = new Font("Segoe UI", 9F);
-        dataGridViewCellStyle1.ForeColor = SystemColors.WindowText;
+        dataGridViewCellStyle1.ForeColor = Color.FromArgb(58, 53, 59);
         dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
         dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
         dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
         dgvVacunas.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
         dgvVacunas.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dgvVacunas.Columns.AddRange(new DataGridViewColumn[] { colMascota, colVacuna, colFechaAplicacion, colProximaDosis, colProximoControl, colObservaciones });
+        dgvVacunas.Columns.AddRange(new DataGridViewColumn[] { colMascota, colVacuna, colFechaAplicacion, colProximaDosis, colObservaciones });
         dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
         dataGridViewCellStyle2.BackColor = SystemColors.Window;
         dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
@@ -139,14 +131,15 @@ partial class FormVacunasControles
         dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
         dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
         dgvVacunas.DefaultCellStyle = dataGridViewCellStyle2;
-        dgvVacunas.Location = new Point(16, 305);
+        dgvVacunas.Location = new Point(16, 238);
         dgvVacunas.MultiSelect = false;
         dgvVacunas.Name = "dgvVacunas";
         dgvVacunas.ReadOnly = true;
         dgvVacunas.RowHeadersVisible = false;
         dgvVacunas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvVacunas.Size = new Size(1068, 307);
+        dgvVacunas.Size = new Size(1068, 374);
         dgvVacunas.TabIndex = 0;
+        dgvVacunas.SelectionChanged += dgvVacunas_SelectionChanged;
         // 
         // colMascota
         // 
@@ -172,12 +165,6 @@ partial class FormVacunasControles
         colProximaDosis.Name = "colProximaDosis";
         colProximaDosis.ReadOnly = true;
         // 
-        // colProximoControl
-        // 
-        colProximoControl.HeaderText = "Próximo control";
-        colProximoControl.Name = "colProximoControl";
-        colProximoControl.ReadOnly = true;
-        // 
         // colObservaciones
         // 
         colObservaciones.HeaderText = "Observaciones";
@@ -186,135 +173,75 @@ partial class FormVacunasControles
         // 
         // pnlBotones
         // 
-        pnlBotones.Controls.Add(btnNuevo);
         pnlBotones.Controls.Add(btnGuardar);
         pnlBotones.Controls.Add(btnModificar);
-        pnlBotones.Controls.Add(btnCancelar);
+        pnlBotones.Controls.Add(btnLimpiar);
         pnlBotones.Controls.Add(btnVolver);
-        pnlBotones.Location = new Point(16, 264);
+        pnlBotones.Location = new Point(16, 192);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1068, 40);
         pnlBotones.TabIndex = 2;
-        // 
-        // btnNuevo
-        // 
-        btnNuevo.BackColor = Color.FromArgb(230, 196, 202);
-        btnNuevo.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
-        btnNuevo.FlatStyle = FlatStyle.Flat;
-        btnNuevo.ForeColor = Color.FromArgb(58, 53, 59);
-        btnNuevo.Location = new Point(0, 4);
-        btnNuevo.Name = "btnNuevo";
-        btnNuevo.Size = new Size(100, 32);
-        btnNuevo.TabIndex = 0;
-        btnNuevo.Text = "Nuevo";
-        btnNuevo.UseVisualStyleBackColor = false;
         // 
         // btnGuardar
         // 
         btnGuardar.BackColor = Color.FromArgb(152, 196, 164);
         btnGuardar.FlatAppearance.BorderColor = Color.FromArgb(112, 158, 124);
         btnGuardar.FlatStyle = FlatStyle.Flat;
-        btnGuardar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnGuardar.Location = new Point(108, 4);
+        btnGuardar.Font = new Font("Segoe UI", 9F);
+        btnGuardar.ForeColor = Color.Black;
+        btnGuardar.Location = new Point(16, 5);
         btnGuardar.Name = "btnGuardar";
         btnGuardar.Size = new Size(100, 32);
-        btnGuardar.TabIndex = 1;
+        btnGuardar.TabIndex = 0;
         btnGuardar.Text = "Guardar";
         btnGuardar.UseVisualStyleBackColor = false;
+        btnGuardar.Click += btnGuardar_Click;
         // 
         // btnModificar
         // 
         btnModificar.BackColor = Color.FromArgb(148, 176, 214);
         btnModificar.FlatAppearance.BorderColor = Color.FromArgb(112, 142, 182);
         btnModificar.FlatStyle = FlatStyle.Flat;
-        btnModificar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnModificar.Location = new Point(216, 4);
+        btnModificar.Font = new Font("Segoe UI", 9F);
+        btnModificar.ForeColor = Color.Black;
+        btnModificar.Location = new Point(124, 5);
         btnModificar.Name = "btnModificar";
         btnModificar.Size = new Size(100, 32);
-        btnModificar.TabIndex = 2;
+        btnModificar.TabIndex = 1;
         btnModificar.Text = "Modificar";
         btnModificar.UseVisualStyleBackColor = false;
+        btnModificar.Click += btnModificar_Click;
         // 
-        // btnCancelar
+        // btnLimpiar
         // 
-        btnCancelar.BackColor = Color.FromArgb(220, 150, 154);
-        btnCancelar.FlatAppearance.BorderColor = Color.FromArgb(186, 118, 122);
-        btnCancelar.FlatStyle = FlatStyle.Flat;
-        btnCancelar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnCancelar.Location = new Point(324, 4);
-        btnCancelar.Name = "btnCancelar";
-        btnCancelar.Size = new Size(100, 32);
-        btnCancelar.TabIndex = 3;
-        btnCancelar.Text = "Cancelar";
-        btnCancelar.UseVisualStyleBackColor = false;
+        btnLimpiar.BackColor = Color.FromArgb(226, 217, 220);
+        btnLimpiar.Cursor = Cursors.Hand;
+        btnLimpiar.FlatAppearance.BorderSize = 0;
+        btnLimpiar.FlatStyle = FlatStyle.Flat;
+        btnLimpiar.Font = new Font("Segoe UI", 9F);
+        btnLimpiar.ForeColor = Color.FromArgb(58, 53, 59);
+        btnLimpiar.Location = new Point(232, 5);
+        btnLimpiar.Name = "btnLimpiar";
+        btnLimpiar.Size = new Size(100, 32);
+        btnLimpiar.TabIndex = 2;
+        btnLimpiar.Text = "Limpiar";
+        btnLimpiar.UseVisualStyleBackColor = false;
+        btnLimpiar.Click += btnLimpiar_Click;
         // 
         // btnVolver
         // 
-        btnVolver.BackColor = Color.FromArgb(230, 196, 202);
+        btnVolver.BackColor = Color.FromArgb(220, 200, 204);
         btnVolver.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
         btnVolver.FlatStyle = FlatStyle.Flat;
-        btnVolver.ForeColor = Color.FromArgb(58, 53, 59);
-        btnVolver.Location = new Point(432, 4);
+        btnVolver.Font = new Font("Segoe UI", 9F);
+        btnVolver.ForeColor = Color.Black;
+        btnVolver.Location = new Point(340, 5);
         btnVolver.Name = "btnVolver";
         btnVolver.Size = new Size(140, 32);
-        btnVolver.TabIndex = 4;
+        btnVolver.TabIndex = 3;
         btnVolver.Text = "Volver al panel";
         btnVolver.UseVisualStyleBackColor = false;
         btnVolver.Click += btnVolver_Click;
-        // 
-        // grpControles
-        // 
-        grpControles.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        grpControles.Controls.Add(lblMascotaControl);
-        grpControles.Controls.Add(cboMascotaControl);
-        grpControles.Controls.Add(lblMotivoControl);
-        grpControles.Controls.Add(txtMotivoControl);
-        grpControles.Font = new Font("Segoe UI", 9F);
-        grpControles.ForeColor = Color.FromArgb(58, 53, 59);
-        grpControles.Location = new Point(16, 176);
-        grpControles.Name = "grpControles";
-        grpControles.Size = new Size(1068, 82);
-        grpControles.TabIndex = 1;
-        grpControles.TabStop = false;
-        grpControles.Text = "Próximos controles";
-        grpControles.Visible = false;
-        // 
-        // lblMascotaControl
-        // 
-        lblMascotaControl.Location = new Point(16, 36);
-        lblMascotaControl.Name = "lblMascotaControl";
-        lblMascotaControl.Size = new Size(118, 23);
-        lblMascotaControl.TabIndex = 0;
-        lblMascotaControl.Text = "Mascota";
-        lblMascotaControl.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // cboMascotaControl
-        // 
-        cboMascotaControl.BackColor = Color.White;
-        cboMascotaControl.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboMascotaControl.FormattingEnabled = true;
-        cboMascotaControl.Location = new Point(140, 36);
-        cboMascotaControl.Name = "cboMascotaControl";
-        cboMascotaControl.Size = new Size(220, 23);
-        cboMascotaControl.TabIndex = 1;
-        // 
-        // lblMotivoControl
-        // 
-        lblMotivoControl.Location = new Point(660, 36);
-        lblMotivoControl.Name = "lblMotivoControl";
-        lblMotivoControl.Size = new Size(140, 23);
-        lblMotivoControl.TabIndex = 2;
-        lblMotivoControl.Text = "Motivo u observaciones";
-        lblMotivoControl.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // txtMotivoControl
-        // 
-        txtMotivoControl.BackColor = Color.White;
-        txtMotivoControl.BorderStyle = BorderStyle.FixedSingle;
-        txtMotivoControl.Location = new Point(806, 36);
-        txtMotivoControl.Name = "txtMotivoControl";
-        txtMotivoControl.Size = new Size(238, 23);
-        txtMotivoControl.TabIndex = 3;
         // 
         // grpAplicacion
         // 
@@ -325,19 +252,20 @@ partial class FormVacunasControles
         grpAplicacion.Controls.Add(cboConsulta);
         grpAplicacion.Controls.Add(lblVacuna);
         grpAplicacion.Controls.Add(cboVacuna);
+        grpAplicacion.Controls.Add(btnAltaVacuna);
+        grpAplicacion.Controls.Add(btnModificarVacuna);
         grpAplicacion.Controls.Add(lblFechaAplicacion);
         grpAplicacion.Controls.Add(dtpFechaAplicacion);
+        grpAplicacion.Controls.Add(chkVacunaPrevia);
         grpAplicacion.Controls.Add(lblProximaDosis);
         grpAplicacion.Controls.Add(dtpProximaDosis);
-        grpAplicacion.Controls.Add(lblFechaRecomendada);
-        grpAplicacion.Controls.Add(dtpFechaRecomendada);
         grpAplicacion.Controls.Add(lblObservaciones);
         grpAplicacion.Controls.Add(txtObservaciones);
         grpAplicacion.Font = new Font("Segoe UI", 9F);
         grpAplicacion.ForeColor = Color.FromArgb(58, 53, 59);
         grpAplicacion.Location = new Point(16, 12);
         grpAplicacion.Name = "grpAplicacion";
-        grpAplicacion.Size = new Size(1068, 196);
+        grpAplicacion.Size = new Size(1068, 174);
         grpAplicacion.TabIndex = 0;
         grpAplicacion.TabStop = false;
         grpAplicacion.Text = "Aplicación de vacuna";
@@ -353,13 +281,15 @@ partial class FormVacunasControles
         // 
         // cboMascota
         // 
+        cboMascota.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cboMascota.AutoCompleteSource = AutoCompleteSource.ListItems;
         cboMascota.BackColor = Color.White;
-        cboMascota.DropDownStyle = ComboBoxStyle.DropDownList;
         cboMascota.FormattingEnabled = true;
         cboMascota.Location = new Point(140, 32);
         cboMascota.Name = "cboMascota";
         cboMascota.Size = new Size(360, 23);
         cboMascota.TabIndex = 1;
+        cboMascota.SelectedIndexChanged += cboMascota_SelectedIndexChanged;
         // 
         // lblConsulta
         // 
@@ -379,6 +309,7 @@ partial class FormVacunasControles
         cboConsulta.Name = "cboConsulta";
         cboConsulta.Size = new Size(400, 23);
         cboConsulta.TabIndex = 3;
+        cboConsulta.SelectedIndexChanged += cboConsulta_SelectedIndexChanged;
         // 
         // lblVacuna
         // 
@@ -391,21 +322,55 @@ partial class FormVacunasControles
         // 
         // cboVacuna
         // 
+        cboVacuna.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cboVacuna.AutoCompleteSource = AutoCompleteSource.ListItems;
         cboVacuna.BackColor = Color.White;
-        cboVacuna.DropDownStyle = ComboBoxStyle.DropDownList;
         cboVacuna.FormattingEnabled = true;
         cboVacuna.Location = new Point(140, 68);
         cboVacuna.Name = "cboVacuna";
-        cboVacuna.Size = new Size(360, 23);
+        cboVacuna.Size = new Size(210, 23);
         cboVacuna.TabIndex = 5;
+        cboVacuna.SelectedIndexChanged += cboVacuna_SelectedIndexChanged;
+        // 
+        // btnAltaVacuna
+        // 
+        btnAltaVacuna.BackColor = Color.FromArgb(200, 138, 150);
+        btnAltaVacuna.Cursor = Cursors.Hand;
+        btnAltaVacuna.FlatAppearance.BorderSize = 0;
+        btnAltaVacuna.FlatStyle = FlatStyle.Flat;
+        btnAltaVacuna.Font = new Font("Segoe UI", 9F);
+        btnAltaVacuna.ForeColor = Color.White;
+        btnAltaVacuna.Location = new Point(356, 67);
+        btnAltaVacuna.Name = "btnAltaVacuna";
+        btnAltaVacuna.Size = new Size(70, 25);
+        btnAltaVacuna.TabIndex = 6;
+        btnAltaVacuna.Text = "Alta Vac.";
+        btnAltaVacuna.UseVisualStyleBackColor = false;
+        btnAltaVacuna.Click += btnAltaVacuna_Click;
+        // 
+        // btnModificarVacuna
+        // 
+        btnModificarVacuna.BackColor = Color.FromArgb(226, 217, 220);
+        btnModificarVacuna.Cursor = Cursors.Hand;
+        btnModificarVacuna.FlatAppearance.BorderSize = 0;
+        btnModificarVacuna.FlatStyle = FlatStyle.Flat;
+        btnModificarVacuna.Font = new Font("Segoe UI", 9F);
+        btnModificarVacuna.ForeColor = Color.FromArgb(58, 53, 59);
+        btnModificarVacuna.Location = new Point(430, 67);
+        btnModificarVacuna.Name = "btnModificarVacuna";
+        btnModificarVacuna.Size = new Size(70, 25);
+        btnModificarVacuna.TabIndex = 7;
+        btnModificarVacuna.Text = "Mod. Vac.";
+        btnModificarVacuna.UseVisualStyleBackColor = false;
+        btnModificarVacuna.Click += btnModificarVacuna_Click;
         // 
         // lblFechaAplicacion
         // 
         lblFechaAplicacion.Location = new Point(528, 68);
         lblFechaAplicacion.Name = "lblFechaAplicacion";
         lblFechaAplicacion.Size = new Size(110, 23);
-        lblFechaAplicacion.TabIndex = 6;
-        lblFechaAplicacion.Text = "Fecha de aplicación";
+        lblFechaAplicacion.TabIndex = 8;
+        lblFechaAplicacion.Text = "Fecha aplicación";
         lblFechaAplicacion.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // dtpFechaAplicacion
@@ -414,7 +379,21 @@ partial class FormVacunasControles
         dtpFechaAplicacion.Location = new Point(644, 68);
         dtpFechaAplicacion.Name = "dtpFechaAplicacion";
         dtpFechaAplicacion.Size = new Size(160, 23);
-        dtpFechaAplicacion.TabIndex = 7;
+        dtpFechaAplicacion.TabIndex = 9;
+        dtpFechaAplicacion.ValueChanged += dtpFechaAplicacion_ValueChanged;
+        // 
+        // chkVacunaPrevia
+        // 
+        chkVacunaPrevia.AutoSize = true;
+        chkVacunaPrevia.Cursor = Cursors.Hand;
+        chkVacunaPrevia.Font = new Font("Segoe UI", 9F);
+        chkVacunaPrevia.ForeColor = Color.FromArgb(58, 53, 59);
+        chkVacunaPrevia.Location = new Point(820, 70);
+        chkVacunaPrevia.Name = "chkVacunaPrevia";
+        chkVacunaPrevia.Size = new Size(206, 19);
+        chkVacunaPrevia.TabIndex = 10;
+        chkVacunaPrevia.Text = "Vacuna previa / Externa (sin costo)";
+        chkVacunaPrevia.UseVisualStyleBackColor = true;
         // 
         // lblProximaDosis
         // 
@@ -432,23 +411,6 @@ partial class FormVacunasControles
         dtpProximaDosis.Name = "dtpProximaDosis";
         dtpProximaDosis.Size = new Size(160, 23);
         dtpProximaDosis.TabIndex = 9;
-        // 
-        // lblFechaRecomendada
-        // 
-        lblFechaRecomendada.Location = new Point(328, 104);
-        lblFechaRecomendada.Name = "lblFechaRecomendada";
-        lblFechaRecomendada.Size = new Size(230, 23);
-        lblFechaRecomendada.TabIndex = 10;
-        lblFechaRecomendada.Text = "Fecha recomendada del próximo control";
-        lblFechaRecomendada.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // dtpFechaRecomendada
-        // 
-        dtpFechaRecomendada.Format = DateTimePickerFormat.Short;
-        dtpFechaRecomendada.Location = new Point(564, 104);
-        dtpFechaRecomendada.Name = "dtpFechaRecomendada";
-        dtpFechaRecomendada.Size = new Size(160, 23);
-        dtpFechaRecomendada.TabIndex = 11;
         // 
         // lblObservaciones
         // 
@@ -499,14 +461,12 @@ partial class FormVacunasControles
         MinimumSize = new Size(1100, 700);
         Name = "FormVacunasControles";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — CONTROLES";
+        Text = "CLÍNICA VETERINARIA - ATENCIÓN CLÍNICA - VACUNACIÓN";
         Load += FormVacunasControles_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)dgvVacunas).EndInit();
         pnlBotones.ResumeLayout(false);
-        grpControles.ResumeLayout(false);
-        grpControles.PerformLayout();
         grpAplicacion.ResumeLayout(false);
         grpAplicacion.PerformLayout();
         barraEstado.ResumeLayout(false);
@@ -532,26 +492,23 @@ partial class FormVacunasControles
     private DateTimePicker dtpProximaDosis;
     private Label lblObservaciones;
     private TextBox txtObservaciones;
-    private GroupBox grpControles;
-    private Label lblMascotaControl;
-    private ComboBox cboMascotaControl;
-    private Label lblFechaRecomendada;
-    private DateTimePicker dtpFechaRecomendada;
-    private Label lblMotivoControl;
     private Panel pnlBotones;
-    private Button btnNuevo;
     private Button btnGuardar;
     private Button btnModificar;
-    private Button btnCancelar;
+    private Button btnLimpiar;
     private Button btnVolver;
+    private Button btnAltaVacuna;
+    private Button btnModificarVacuna;
+    private ComboBox cboMascotas => cboMascota;
+    private ComboBox cboConsultas => cboConsulta;
+    private ComboBox cboVacunas => cboVacuna;
     private DataGridView dgvVacunas;
     private DataGridViewTextBoxColumn colMascota;
     private DataGridViewTextBoxColumn colVacuna;
     private DataGridViewTextBoxColumn colFechaAplicacion;
     private DataGridViewTextBoxColumn colProximaDosis;
-    private DataGridViewTextBoxColumn colProximoControl;
     private DataGridViewTextBoxColumn colObservaciones;
     private StatusStrip barraEstado;
     private ToolStripStatusLabel lblInfoEstado;
-    private TextBox txtMotivoControl;
+    private CheckBox chkVacunaPrevia;
 }

@@ -15,7 +15,7 @@ public static class InicializadorDatos
         await AsegurarColumnasUsuarioAsync(context);
 
         // 2. Sembrar Tipos de Usuario si la tabla está vacía
-        if (!await context.TiposUsuario.AnyAsync())
+        if (!await context.TiposUsuario.IgnoreQueryFilters().AnyAsync())
         {
             context.TiposUsuario.AddRange(
                 new TipoUsuario { Nombre = "Administrador", Activo = true },
@@ -27,7 +27,7 @@ public static class InicializadorDatos
         }
 
         // 3. Sembrar Especies iniciales
-        if (!await context.Especies.AnyAsync())
+        if (!await context.Especies.IgnoreQueryFilters().AnyAsync())
         {
             context.Especies.AddRange(
                 new Especie { Nombre = "Canino", Activo = true },
@@ -40,7 +40,7 @@ public static class InicializadorDatos
         }
 
         // 4. Sembrar Métodos de Pago iniciales
-        if (!await context.MetodosPago.AnyAsync())
+        if (!await context.MetodosPago.IgnoreQueryFilters().AnyAsync())
         {
             context.MetodosPago.AddRange(
                 new MetodoPago { Nombre = "Efectivo", Activo = true },
@@ -81,6 +81,12 @@ public static class InicializadorDatos
             IF COL_LENGTH('dbo.Usuario', 'Sexo') IS NULL
                 ALTER TABLE dbo.Usuario ADD Sexo NVARCHAR(10) NULL;
             """);
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.AplicacionVacuna', 'PrecioUnitario') IS NULL
+                ALTER TABLE dbo.AplicacionVacuna ADD PrecioUnitario DECIMAL(18,2) NULL;
+            ELSE
+                ALTER TABLE dbo.AplicacionVacuna ALTER COLUMN PrecioUnitario DECIMAL(18,2) NULL;
+            """);
     }
 
     private static async Task SembrarUsuarioSiNoExisteAsync(
@@ -93,13 +99,13 @@ public static class InicializadorDatos
         string dni,
         string matricula)
     {
-        var tipo = await context.TiposUsuario.FirstOrDefaultAsync(t => t.Nombre == nombreTipo);
+        var tipo = await context.TiposUsuario.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Nombre == nombreTipo);
         if (tipo is null)
         {
             return;
         }
 
-        var existe = await context.Usuarios.AnyAsync(u => u.NombreUsuario.ToLower() == nombreUsuario);
+        var existe = await context.Usuarios.IgnoreQueryFilters().AnyAsync(u => u.NombreUsuario.ToLower() == nombreUsuario.ToLower() || u.DNI == dni);
         if (existe)
         {
             return;

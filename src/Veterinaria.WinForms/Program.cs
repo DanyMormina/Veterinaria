@@ -49,6 +49,16 @@ internal static class Program
         services.AddTransient<FormInicioSesion>();
         services.AddTransient<FormAdminPrincipal>();
         services.AddTransient<FormUsuarios>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Administrador.FormPropietarios>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Administrador.FormMascotas>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Administrador.FormReportes>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Secretario.FormPropietarios>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Secretario.FormMascotas>();
+        services.AddTransient<FormConsultas>();
+        services.AddTransient<FormFichaMedica>();
+        services.AddTransient<FormHistorialClinico>();
+        services.AddTransient<FormTratamientos>();
+        services.AddTransient<FormVacunasControles>();
         services.AddTransient<FormVeterinarioPrincipal>();
         services.AddTransient<FormSecretarioPrincipal>();
 
@@ -75,22 +85,50 @@ internal static class Program
             using var scope = serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ContextoVeterinaria>();
 
-            // Inicializar esquema y sembrado inicial de datos si la base está vacía
+            // 1. Validar conectividad física con el servidor de base de datos
+            if (!dbContext.Database.CanConnect())
+            {
+                MostrarErrorConexion(
+                    "Error al conectar con el servidor de base de datos SQL Server.",
+                    cadenaConexion,
+                    "No se pudo establecer conexión con el servidor especificado.",
+                    "Error de Conexión a Base de Datos");
+                return false;
+            }
+
+            // 2. Inicializar esquema y sembrado inicial de datos si la base está vacía
             InicializadorDatos.InicializarAsync(dbContext).GetAwaiter().GetResult();
 
             return true;
         }
         catch (Exception ex)
         {
+            var detalle = ObtenerMensajeExcepcionCompleto(ex);
             MostrarErrorConexion(
-                "Error al conectar con la base de datos SQL Server.",
+                "Error al inicializar los datos base del sistema.",
                 cadenaConexion,
-                ex.Message);
+                detalle,
+                "Error de Inicialización de Base de Datos");
             return false;
         }
     }
 
-    private static void MostrarErrorConexion(string mensajePrincipal, string cadenaConexion, string detalleTecnico)
+    private static string ObtenerMensajeExcepcionCompleto(Exception ex)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine(ex.Message);
+
+        var actual = ex.InnerException;
+        while (actual != null)
+        {
+            sb.AppendLine($"Detalle interno: {actual.Message}");
+            actual = actual.InnerException;
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private static void MostrarErrorConexion(string mensajePrincipal, string cadenaConexion, string detalleTecnico, string titulo = "Error de Conexión a Base de Datos")
     {
         var mensaje = $"{mensajePrincipal}\n\n" +
                       $"Detalle:\n{detalleTecnico}\n\n" +
@@ -99,7 +137,7 @@ internal static class Program
 
         MessageBox.Show(
             mensaje,
-            "Error de Conexión a Base de Datos",
+            titulo,
             MessageBoxButtons.OK,
             MessageBoxIcon.Error);
     }
