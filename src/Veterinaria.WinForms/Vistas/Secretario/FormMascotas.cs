@@ -25,6 +25,11 @@ public partial class FormMascotas : Form
     private static readonly Color ColorEtiquetaNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
 
+    private static readonly Color ColorBotonActivarHabilitado = ColorTranslator.FromHtml("#8FA89B");
+    private static readonly Color ColorBotonDesactivarHabilitado = ColorTranslator.FromHtml("#B85D69");
+    private static readonly Color ColorBotonDeshabilitado = ColorTranslator.FromHtml("#E2D9DC");
+    private static readonly Color ColorTextoBotonDeshabilitado = ColorTranslator.FromHtml("#888888");
+
     private readonly MascotaControlador? _mascotaControlador;
     private readonly PropietarioControlador? _propietarioControlador;
     private readonly EspecieControlador? _especieControlador;
@@ -76,6 +81,8 @@ public partial class FormMascotas : Form
         btnModificar.Click += async (_, _) => await ModificarMascotaAsync();
         btnLimpiar.Click += (_, _) => LimpiarFormulario();
         btnVolver.Click += (_, _) => Close();
+        btnActivar.Click += async (_, _) => await btnActivar_Click();
+        btnDesactivar.Click += async (_, _) => await btnDesactivar_Click();
 
         // Botón auxiliar para redirección a gestión de propietarios
         btnNuevoPropietario.Click += btnNuevoPropietario_Click;
@@ -198,6 +205,8 @@ public partial class FormMascotas : Form
         // Estado inicial de botones CRUD
         btnGuardar.Enabled = true;
         btnModificar.Enabled = false;
+
+        ActualizarEstadoBotonesAccion(null);
 
         // Carga inicial de catálogos y grilla
         await InicializarCatalogosAsync();
@@ -521,6 +530,8 @@ public partial class FormMascotas : Form
             btnGuardar.Enabled = true;
             btnModificar.Enabled = false;
 
+            ActualizarEstadoBotonesAccion(null);
+
             RestablecerBordes();
             dgvMascotas.ClearSelection();
         }
@@ -604,6 +615,8 @@ public partial class FormMascotas : Form
             // Modo Edición: Guardar desactivado, Modificar activado
             btnGuardar.Enabled = false;
             btnModificar.Enabled = true;
+
+            ActualizarEstadoBotonesAccion(mascota.Activo);
 
             RestablecerBordes();
         }
@@ -852,5 +865,113 @@ public partial class FormMascotas : Form
     private void grpDatos_Enter(object sender, EventArgs e)
     {
 
+    }
+
+    /// <summary>
+    /// Actualiza de forma reactiva el estado y colores de los botones de estado (Activar / Desactivar).
+    /// null = sin selección (ambos deshabilitados).
+    /// true = registro activo (Desactivar habilitado).
+    /// false = registro inactivo (Activar habilitado).
+    /// </summary>
+    private void ActualizarEstadoBotonesAccion(bool? activo)
+    {
+        if (!activo.HasValue)
+        {
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+        else if (activo.Value)
+        {
+            // Registro Activo: Desactivar habilitado, Activar deshabilitado
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = true;
+            btnDesactivar.BackColor = ColorBotonDesactivarHabilitado;
+            btnDesactivar.ForeColor = Color.White;
+        }
+        else
+        {
+            // Registro Inactivo: Activar habilitado, Desactivar deshabilitado
+            btnActivar.Enabled = true;
+            btnActivar.BackColor = ColorBotonActivarHabilitado;
+            btnActivar.ForeColor = Color.White;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+    }
+
+    private async Task btnActivar_Click()
+    {
+        if (_idMascotaSeleccionada <= 0)
+        {
+            MessageBox.Show("Debe seleccionar una mascota de la grilla.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Desea reactivar este registro?",
+            "Confirmar Activación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_mascotaControlador is null)
+            return;
+
+        var resultado = await _mascotaControlador.CambiarEstadoAsync(_idMascotaSeleccionada, true);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            LimpiarFormulario();
+            await CargarMascotasGrillaAsync();
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private async Task btnDesactivar_Click()
+    {
+        if (_idMascotaSeleccionada <= 0)
+        {
+            MessageBox.Show("Debe seleccionar una mascota de la grilla.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Está seguro de que desea desactivar este registro?",
+            "Confirmar Desactivación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_mascotaControlador is null)
+            return;
+
+        var resultado = await _mascotaControlador.CambiarEstadoAsync(_idMascotaSeleccionada, false);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            LimpiarFormulario();
+            await CargarMascotasGrillaAsync();
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 }

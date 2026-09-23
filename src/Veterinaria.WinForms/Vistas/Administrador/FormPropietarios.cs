@@ -23,6 +23,11 @@ public partial class FormPropietarios : Form
     private static readonly Color ColorEtiquetaNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
 
+    private static readonly Color ColorBotonActivarHabilitado = ColorTranslator.FromHtml("#8FA89B");
+    private static readonly Color ColorBotonDesactivarHabilitado = ColorTranslator.FromHtml("#B85D69");
+    private static readonly Color ColorBotonDeshabilitado = ColorTranslator.FromHtml("#E2D9DC");
+    private static readonly Color ColorTextoBotonDeshabilitado = ColorTranslator.FromHtml("#888888");
+
     private readonly ErrorProvider _errores = new();
     private readonly PropietarioControlador? _propietarioControlador;
     private readonly MascotaControlador? _mascotaControlador;
@@ -91,6 +96,7 @@ public partial class FormPropietarios : Form
         txtBuscar.TextChanged += (_, _) => AplicarFiltros();
         cboFiltroEstado.SelectedIndexChanged += (_, _) => AplicarFiltros();
         dgvPropietarios.CellClick += dgvPropietarios_CellClick;
+        dgvPropietarios.SelectionChanged += dgvPropietarios_SelectionChanged;
     }
 
     private void ConfigurarValidacionVisual()
@@ -320,7 +326,6 @@ public partial class FormPropietarios : Form
         lblTelefono.ForeColor = ColorEtiquetaNormal;
         lblCorreoElectronico.ForeColor = ColorEtiquetaNormal;
         lblDireccion.ForeColor = ColorEtiquetaNormal;
-        lblEstado.ForeColor = ColorEtiquetaNormal;
     }
 
     private async void FormPropietarios_Load(object? sender, EventArgs e)
@@ -333,9 +338,7 @@ public partial class FormPropietarios : Form
         cboFiltroEstado.Items.AddRange(["(Todos)", "Solo Activos", "Solo Inactivos"]);
         cboFiltroEstado.SelectedIndex = 0;
 
-        cboEstado.Items.Clear();
-        cboEstado.Items.AddRange(["Activo", "Inactivo"]);
-        cboEstado.SelectedIndex = 0;
+        ActualizarEstadoBotonesAccion(null);
 
         await CargarPropietariosAsync();
     }
@@ -387,13 +390,20 @@ public partial class FormPropietarios : Form
         }
     }
 
+    /// <summary>
+    /// Aplica los filtros combinados de búsqueda por texto y estado sobre la nómina de propietarios en memoria,
+    /// actualizando la grilla y seleccionando automáticamente el primer resultado obtenido.
+    /// </summary>
     private void AplicarFiltros()
     {
+        // 1. Obtener el texto ingresado (sin espacios en los extremos) y el índice del filtro por estado
         var texto = txtBuscar.Text.Trim();
         var estadoSeleccionado = cboFiltroEstado.SelectedIndex; // 0 = Todos, 1 = Solo Activos, 2 = Solo Inactivos
 
+        // 2. Iniciar la consulta LINQ sobre la lista de propietarios cargada en memoria
         var consulta = _propietarios.AsEnumerable();
 
+        // 3. Filtrar por estado si no se seleccionó la opción "(Todos)"
         if (estadoSeleccionado == 1)
         {
             consulta = consulta.Where(p => p.Activo);
@@ -403,6 +413,7 @@ public partial class FormPropietarios : Form
             consulta = consulta.Where(p => !p.Activo);
         }
 
+        // 4. Si se ingresó texto en la caja de búsqueda, evaluar coincidencias en múltiples campos
         if (!string.IsNullOrWhiteSpace(texto))
         {
             consulta = consulta.Where(p =>
@@ -414,9 +425,11 @@ public partial class FormPropietarios : Form
                 (p.Direccion?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
+        // 5. Materializar la lista de resultados filtrados y representarlos en la grilla principal
         var filtrados = consulta.ToList();
         MostrarPropietariosEnGrilla(filtrados);
 
+        // 6. Sincronizar el panel de detalles: si hay coincidencias, auto-seleccionar el primer registro; de lo contrario, limpiar los campos
         if (filtrados.Count > 0)
         {
             _ = SeleccionarPropietarioAsync(filtrados[0]);
@@ -427,49 +440,78 @@ public partial class FormPropietarios : Form
         }
     }
 
+    /// <summary>
+    /// Manejador del evento de clic en la grilla de propietarios:
+    /// Identifica al propietario seleccionado y carga sus datos junto a sus mascotas asociadas.
+    /// </summary>
     private async void dgvPropietarios_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
+        // 1. Evitar procesar clics sobre los encabezados de las columnas (RowIndex < 0)
         if (e.RowIndex < 0)
             return;
 
+        // 2. Obtener la fila seleccionada y comprobar que el ID de la primera celda no sea nulo
         var fila = dgvPropietarios.Rows[e.RowIndex];
         if (fila.Cells[0].Value is null)
             return;
 
+        // 3. Extraer el ID numérico de la fila seleccionada
         var id = Convert.ToInt64(fila.Cells[0].Value);
+
+        // 4. Buscar en la colección en memoria el objeto completo del propietario correspondiente a ese ID
         var propietario = _propietarios.FirstOrDefault(p => p.Id == id);
         if (propietario is null)
             return;
 
+        // 5. Poblar los campos de la izquierda y consultar asíncronamente las mascotas de ese propietario
         await SeleccionarPropietarioAsync(propietario);
     }
 
+    /// <summary>
+    /// Pobla automáticamente los controles del formulario izquierdo con los datos del propietario seleccionado
+    /// y desencadena la carga asíncrona de sus mascotas asociadas.
+    /// </summary>
     private async Task SeleccionarPropietarioAsync(PropietarioRespuestaDto propietario)
     {
+        // 1. Limpiar cualquier resaltado de error previo en las cajas de texto
         LimpiarErroresValidacion();
+
+        // 2. Guardar el ID del propietario actualmente seleccionado en memoria
         _idSeleccionado = propietario.Id;
+
+        // 3. Asignar los datos del propietario a cada campo del formulario (usando cadena vacía si es nulo)
         txtDni.Text = propietario.DNI;
         txtNombre.Text = propietario.Nombre;
         txtApellido.Text = propietario.Apellido;
         txtTelefono.Text = propietario.Telefono ?? string.Empty;
         txtCorreoElectronico.Text = propietario.CorreoElectronico ?? string.Empty;
         txtDireccion.Text = propietario.Direccion ?? string.Empty;
-        cboEstado.SelectedItem = propietario.Activo ? "Activo" : "Inactivo";
 
+        // 4. Actualizar visualmente la habilitación y colores de los botones Activar / Desactivar
+        ActualizarEstadoBotonesAccion(propietario.Activo);
+
+        // 5. Cargar en cascada la grilla inferior con las mascotas registradas a cargo de este propietario
         await CargarMascotasDelPropietarioAsync(propietario.Id);
     }
 
+    /// <summary>
+    /// Consulta de manera asíncrona a la base de datos las mascotas que pertenecen al propietario
+    /// y las dibuja en la grilla secundaria de pacientes asociados.
+    /// </summary>
     private async Task CargarMascotasDelPropietarioAsync(long idPropietario)
     {
+        // 1. Vaciar la grilla de mascotas para evitar duplicar filas previas
         dgvMascotasPropietario.Rows.Clear();
 
         if (_mascotaControlador is null)
             return;
 
+        // 2. Consultar a través del controlador todas las mascotas asociadas a este ID de tutor
         var resultado = await _mascotaControlador.ObtenerPorPropietarioAsync(idPropietario);
         if (!resultado.EsExitoso || resultado.Valor is null)
             return;
 
+        // 3. Iterar cada mascota recibida y agregarla como una nueva fila en dgvMascotasPropietario
         foreach (var m in resultado.Valor)
         {
             dgvMascotasPropietario.Rows.Add(
@@ -492,7 +534,7 @@ public partial class FormPropietarios : Form
         txtTelefono.Clear();
         txtCorreoElectronico.Clear();
         txtDireccion.Clear();
-        cboEstado.SelectedIndex = 0;
+        ActualizarEstadoBotonesAccion(null);
         dgvMascotasPropietario.Rows.Clear();
     }
 
@@ -665,5 +707,139 @@ public partial class FormPropietarios : Form
     private void btnVolver_Click(object? sender, EventArgs e)
     {
         Close();
+    }
+
+    private void dgvPropietarios_SelectionChanged(object? sender, EventArgs e)
+    {
+        if (dgvPropietarios.CurrentRow == null || dgvPropietarios.CurrentRow.Index < 0)
+        {
+            ActualizarEstadoBotonesAccion(null);
+            return;
+        }
+
+        var fila = dgvPropietarios.CurrentRow;
+        if (fila.Cells[0].Value is null)
+        {
+            ActualizarEstadoBotonesAccion(null);
+            return;
+        }
+
+        var id = Convert.ToInt64(fila.Cells[0].Value);
+        var propietario = _propietarios.FirstOrDefault(p => p.Id == id);
+        if (propietario is not null)
+        {
+            ActualizarEstadoBotonesAccion(propietario.Activo);
+        }
+    }
+
+    /// <summary>
+    /// Actualiza de forma reactiva el estado y colores de los botones de estado (Activar / Desactivar).
+    /// null = sin selección (ambos deshabilitados).
+    /// true = registro activo (Desactivar habilitado).
+    /// false = registro inactivo (Activar habilitado).
+    /// </summary>
+    private void ActualizarEstadoBotonesAccion(bool? activo)
+    {
+        if (!activo.HasValue)
+        {
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+        else if (activo.Value)
+        {
+            // Registro Activo: Desactivar habilitado, Activar deshabilitado
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = true;
+            btnDesactivar.BackColor = ColorBotonDesactivarHabilitado;
+            btnDesactivar.ForeColor = Color.White;
+        }
+        else
+        {
+            // Registro Inactivo: Activar habilitado, Desactivar deshabilitado
+            btnActivar.Enabled = true;
+            btnActivar.BackColor = ColorBotonActivarHabilitado;
+            btnActivar.ForeColor = Color.White;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+    }
+
+    private async void btnActivar_Click(object? sender, EventArgs e)
+    {
+        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
+        {
+            MessageBox.Show("Debe seleccionar un propietario de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Desea reactivar este registro?",
+            "Confirmar Activación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_propietarioControlador is null)
+            return;
+
+        var resultado = await _propietarioControlador.CambiarEstadoAsync(_idSeleccionado.Value, true);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            await CargarPropietariosAsync();
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private async void btnDesactivar_Click(object? sender, EventArgs e)
+    {
+        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
+        {
+            MessageBox.Show("Debe seleccionar un propietario de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Está seguro de que desea desactivar este registro?",
+            "Confirmar Desactivación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_propietarioControlador is null)
+            return;
+
+        var resultado = await _propietarioControlador.CambiarEstadoAsync(_idSeleccionado.Value, false);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            await CargarPropietariosAsync();
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private void grpDatos_Enter(object sender, EventArgs e)
+    {
+
     }
 }

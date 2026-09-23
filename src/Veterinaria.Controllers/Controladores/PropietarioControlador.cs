@@ -174,22 +174,34 @@ public class PropietarioControlador(ContextoVeterinaria context)
 
     public async Task<Resultado> EliminarAsync(long id)
     {
+        return await CambiarEstadoAsync(id, false);
+    }
+
+    /// <summary>
+    /// Modifica el estado de activación (Activo = true/false) de un propietario.
+    /// Utiliza IgnoreQueryFilters para permitir encontrar propietarios desactivados y reactivarlos.
+    /// </summary>
+    public async Task<Resultado> CambiarEstadoAsync(long id, bool activo)
+    {
         try
         {
             if (id <= 0)
                 return Resultado.Falla("El identificador del propietario debe ser mayor a cero.");
 
-            var entidad = await context.Propietarios.FirstOrDefaultAsync(p => p.Id == id);
+            // Buscar el propietario ignorando el filtro global de soft delete
+            var entidad = await context.Propietarios.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el propietario con ID {id}.");
 
-            entidad.Activo = false;
+            entidad.Activo = activo;
             await context.SaveChangesAsync();
-            return Resultado.Exito("Propietario eliminado exitosamente.");
+
+            var accion = activo ? "activado" : "desactivado";
+            return Resultado.Exito($"Propietario {accion} exitosamente.");
         }
         catch (Exception ex)
         {
-            return Resultado.Falla($"Error interno al eliminar el propietario: {ex.Message}");
+            return Resultado.Falla($"Error interno al cambiar el estado del propietario: {ex.Message}");
         }
     }
 

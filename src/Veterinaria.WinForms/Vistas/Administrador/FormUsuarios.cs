@@ -235,9 +235,7 @@ public partial class FormUsuarios : Form
         _idSeleccionado = usuario.Id;
         LimpiarErroresValidacion();
         HabilitarControlesEntrada(true);
-
-        // En modo edición no se permite cambiar el username por consistencia de auditoría
-        txtUsuario.Enabled = false;
+        txtUsuario.Enabled = true;
 
         txtNombre.Text = usuario.Nombre;
         txtApellido.Text = usuario.Apellido;
@@ -404,7 +402,14 @@ public partial class FormUsuarios : Form
 
         var usuarioActualizado = _usuarios.FirstOrDefault(u => u.Id == idActualizado);
         if (usuarioActualizado is not null)
+        {
+            if (idActualizado == SesionActual.IdUsuario)
+            {
+                SesionActual.IniciarSesion(usuarioActualizado);
+                lblUsuarioSesion.Text = $"Usuario: {SesionActual.NombreCompleto} | Rol: {SesionActual.Rol}";
+            }
             ActivarModoEdicion(usuarioActualizado);
+        }
         else
             EstablecerEstadoInicial();
     }

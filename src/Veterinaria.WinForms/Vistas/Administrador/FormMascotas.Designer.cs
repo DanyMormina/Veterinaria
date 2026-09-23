@@ -10,6 +10,11 @@ partial class FormMascotas
         {
             components.Dispose();
         }
+        if (disposing)
+        {
+            _temporizadorBusqueda?.Dispose();
+            _semaforoBusqueda?.Dispose();
+        }
         base.Dispose(disposing);
     }
 
@@ -21,13 +26,17 @@ partial class FormMascotas
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
         pnlContenido = new Panel();
-        grpDatos = new GroupBox();
-        btnBuscar = new Button();
+        pnlBotones = new Panel();
         btnLimpiar = new Button();
+        btnBuscar = new Button();
+        grpDatos = new GroupBox();
+        lbEstado = new Label();
         lblNombre = new Label();
         txtNombre = new TextBox();
         lblPropietario = new Label();
         txtPropietario = new TextBox();
+        btnActivar = new Button();
+        btnDesactivar = new Button();
         lblEspecie = new Label();
         cboEspecie = new ComboBox();
         lblRaza = new Label();
@@ -36,8 +45,6 @@ partial class FormMascotas
         cboSexo = new ComboBox();
         lblColor = new Label();
         txtColor = new TextBox();
-        lblEstado = new Label();
-        cboEstado = new ComboBox();
         btnVolver = new Button();
         pnlListado = new Panel();
         lblBuscar = new Label();
@@ -58,6 +65,7 @@ partial class FormMascotas
         colEstado = new DataGridViewTextBoxColumn();
         pnlEncabezado.SuspendLayout();
         pnlContenido.SuspendLayout();
+        pnlBotones.SuspendLayout();
         grpDatos.SuspendLayout();
         pnlListado.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvMascotas).BeginInit();
@@ -102,6 +110,7 @@ partial class FormMascotas
         // pnlContenido
         // 
         pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
+        pnlContenido.Controls.Add(pnlBotones);
         pnlContenido.Controls.Add(grpDatos);
         pnlContenido.Controls.Add(btnVolver);
         pnlContenido.Controls.Add(pnlListado);
@@ -111,49 +120,14 @@ partial class FormMascotas
         pnlContenido.Size = new Size(1220, 672);
         pnlContenido.TabIndex = 1;
         // 
-        // grpDatos
+        // pnlBotones
         // 
-        grpDatos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-        grpDatos.Controls.Add(btnBuscar);
-        grpDatos.Controls.Add(btnLimpiar);
-        grpDatos.Controls.Add(lblNombre);
-        grpDatos.Controls.Add(txtNombre);
-        grpDatos.Controls.Add(lblPropietario);
-        grpDatos.Controls.Add(txtPropietario);
-        grpDatos.Controls.Add(lblEspecie);
-        grpDatos.Controls.Add(cboEspecie);
-        grpDatos.Controls.Add(lblRaza);
-        grpDatos.Controls.Add(cboRaza);
-        grpDatos.Controls.Add(lblSexo);
-        grpDatos.Controls.Add(cboSexo);
-        grpDatos.Controls.Add(lblColor);
-        grpDatos.Controls.Add(txtColor);
-        grpDatos.Controls.Add(lblEstado);
-        grpDatos.Controls.Add(cboEstado);
-        grpDatos.Font = new Font("Segoe UI", 9F);
-        grpDatos.ForeColor = Color.FromArgb(58, 53, 59);
-        grpDatos.Location = new Point(12, 16);
-        grpDatos.Name = "grpDatos";
-        grpDatos.Size = new Size(434, 371);
-        grpDatos.TabIndex = 0;
-        grpDatos.TabStop = false;
-        grpDatos.Text = "Datos de la mascota";
-        // 
-        // btnBuscar
-        // 
-        btnBuscar.BackColor = Color.FromArgb(200, 138, 150);
-        btnBuscar.Cursor = Cursors.Hand;
-        btnBuscar.FlatAppearance.BorderSize = 0;
-        btnBuscar.FlatStyle = FlatStyle.Flat;
-        btnBuscar.Font = new Font("Segoe UI", 9F);
-        btnBuscar.ForeColor = Color.Black;
-        btnBuscar.Location = new Point(25, 314);
-        btnBuscar.Name = "btnBuscar";
-        btnBuscar.Size = new Size(153, 32);
-        btnBuscar.TabIndex = 8;
-        btnBuscar.Text = "Buscar";
-        btnBuscar.UseVisualStyleBackColor = false;
-        btnBuscar.Click += btnBuscar_Click;
+        pnlBotones.Controls.Add(btnLimpiar);
+        pnlBotones.Controls.Add(btnBuscar);
+        pnlBotones.Location = new Point(12, 346);
+        pnlBotones.Name = "pnlBotones";
+        pnlBotones.Size = new Size(434, 61);
+        pnlBotones.TabIndex = 10;
         // 
         // btnLimpiar
         // 
@@ -163,12 +137,64 @@ partial class FormMascotas
         btnLimpiar.FlatStyle = FlatStyle.Flat;
         btnLimpiar.Font = new Font("Segoe UI", 9F);
         btnLimpiar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnLimpiar.Location = new Point(253, 314);
+        btnLimpiar.Location = new Point(25, 15);
         btnLimpiar.Name = "btnLimpiar";
         btnLimpiar.Size = new Size(153, 32);
         btnLimpiar.TabIndex = 9;
         btnLimpiar.Text = "Limpiar";
         btnLimpiar.UseVisualStyleBackColor = false;
+        // 
+        // btnBuscar
+        // 
+        btnBuscar.BackColor = Color.FromArgb(152, 196, 164);
+        btnBuscar.Cursor = Cursors.Hand;
+        btnBuscar.FlatAppearance.BorderSize = 0;
+        btnBuscar.FlatStyle = FlatStyle.Flat;
+        btnBuscar.Font = new Font("Segoe UI", 9F);
+        btnBuscar.ForeColor = Color.Black;
+        btnBuscar.Location = new Point(197, 15);
+        btnBuscar.Name = "btnBuscar";
+        btnBuscar.Size = new Size(153, 32);
+        btnBuscar.TabIndex = 8;
+        btnBuscar.Text = "Buscar";
+        btnBuscar.UseVisualStyleBackColor = false;
+        btnBuscar.Click += btnBuscar_Click;
+        // 
+        // grpDatos
+        // 
+        grpDatos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+        grpDatos.Controls.Add(lbEstado);
+        grpDatos.Controls.Add(lblNombre);
+        grpDatos.Controls.Add(txtNombre);
+        grpDatos.Controls.Add(lblPropietario);
+        grpDatos.Controls.Add(txtPropietario);
+        grpDatos.Controls.Add(btnActivar);
+        grpDatos.Controls.Add(btnDesactivar);
+        grpDatos.Controls.Add(lblEspecie);
+        grpDatos.Controls.Add(cboEspecie);
+        grpDatos.Controls.Add(lblRaza);
+        grpDatos.Controls.Add(cboRaza);
+        grpDatos.Controls.Add(lblSexo);
+        grpDatos.Controls.Add(cboSexo);
+        grpDatos.Controls.Add(lblColor);
+        grpDatos.Controls.Add(txtColor);
+        grpDatos.Font = new Font("Segoe UI", 9F);
+        grpDatos.ForeColor = Color.FromArgb(58, 53, 59);
+        grpDatos.Location = new Point(12, 16);
+        grpDatos.Name = "grpDatos";
+        grpDatos.Size = new Size(434, 324);
+        grpDatos.TabIndex = 0;
+        grpDatos.TabStop = false;
+        grpDatos.Text = "Datos de la mascota";
+        // 
+        // lbEstado
+        // 
+        lbEstado.AutoSize = true;
+        lbEstado.Location = new Point(25, 270);
+        lbEstado.Name = "lbEstado";
+        lbEstado.Size = new Size(42, 15);
+        lbEstado.TabIndex = 13;
+        lbEstado.Text = "Estado";
         // 
         // lblNombre
         // 
@@ -205,6 +231,42 @@ partial class FormMascotas
         txtPropietario.Name = "txtPropietario";
         txtPropietario.Size = new Size(282, 23);
         txtPropietario.TabIndex = 3;
+        // 
+        // btnActivar
+        // 
+        btnActivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnActivar.BackColor = Color.Thistle;
+        btnActivar.Cursor = Cursors.Hand;
+        btnActivar.Enabled = false;
+        btnActivar.FlatAppearance.BorderSize = 0;
+        btnActivar.FlatStyle = FlatStyle.Flat;
+        btnActivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnActivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnActivar.Location = new Point(124, 261);
+        btnActivar.Name = "btnActivar";
+        btnActivar.Size = new Size(127, 32);
+        btnActivar.TabIndex = 8;
+        btnActivar.Text = "Activar";
+        btnActivar.UseVisualStyleBackColor = false;
+        btnActivar.Click += btnActivar_Click;
+        // 
+        // btnDesactivar
+        // 
+        btnDesactivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnDesactivar.BackColor = Color.MistyRose;
+        btnDesactivar.Cursor = Cursors.Hand;
+        btnDesactivar.Enabled = false;
+        btnDesactivar.FlatAppearance.BorderSize = 0;
+        btnDesactivar.FlatStyle = FlatStyle.Flat;
+        btnDesactivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnDesactivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnDesactivar.Location = new Point(279, 261);
+        btnDesactivar.Name = "btnDesactivar";
+        btnDesactivar.Size = new Size(127, 32);
+        btnDesactivar.TabIndex = 9;
+        btnDesactivar.Text = "Desactivar";
+        btnDesactivar.UseVisualStyleBackColor = false;
+        btnDesactivar.Click += btnDesactivar_Click;
         // 
         // lblEspecie
         // 
@@ -281,26 +343,6 @@ partial class FormMascotas
         txtColor.Name = "txtColor";
         txtColor.Size = new Size(282, 23);
         txtColor.TabIndex = 11;
-        // 
-        // lblEstado
-        // 
-        lblEstado.Location = new Point(25, 260);
-        lblEstado.Name = "lblEstado";
-        lblEstado.Size = new Size(84, 23);
-        lblEstado.TabIndex = 12;
-        lblEstado.Text = "Estado";
-        lblEstado.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // cboEstado
-        // 
-        cboEstado.BackColor = Color.White;
-        cboEstado.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboEstado.FormattingEnabled = true;
-        cboEstado.Items.AddRange(new object[] { "Activo", "Inactivo" });
-        cboEstado.Location = new Point(124, 258);
-        cboEstado.Name = "cboEstado";
-        cboEstado.Size = new Size(282, 23);
-        cboEstado.TabIndex = 13;
         // 
         // btnVolver
         // 
@@ -426,7 +468,7 @@ partial class FormMascotas
         dgvMascotas.ReadOnly = true;
         dgvMascotas.RowHeadersVisible = false;
         dgvMascotas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvMascotas.Size = new Size(726, 564);
+        dgvMascotas.Size = new Size(726, 560);
         dgvMascotas.TabIndex = 7;
         // 
         // colId
@@ -500,6 +542,7 @@ partial class FormMascotas
         Load += FormMascotas_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);
+        pnlBotones.ResumeLayout(false);
         grpDatos.ResumeLayout(false);
         grpDatos.PerformLayout();
         pnlListado.ResumeLayout(false);
@@ -525,8 +568,8 @@ partial class FormMascotas
     private ComboBox cboSexo;
     private Label lblColor;
     private TextBox txtColor;
-    private Label lblEstado;
-    private ComboBox cboEstado;
+    private Button btnActivar;
+    private Button btnDesactivar;
     private Button btnVolver;
     private Panel pnlListado;
     private Label lblBuscar;
@@ -547,4 +590,6 @@ partial class FormMascotas
     private DataGridViewTextBoxColumn colEstado;
     private Button btnBuscar;
     private Button btnLimpiar;
+    private Label lbEstado;
+    private Panel pnlBotones;
 }

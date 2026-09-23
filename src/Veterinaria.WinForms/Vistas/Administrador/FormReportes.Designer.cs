@@ -15,6 +15,7 @@ partial class FormReportes
 
     private void InitializeComponent()
     {
+        DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
         pnlEncabezado = new Panel();
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
@@ -105,7 +106,16 @@ partial class FormReportes
         dgvReporte.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         dgvReporte.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dgvReporte.BackgroundColor = Color.White;
+        dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+        dataGridViewCellStyle1.BackColor = Color.White;
+        dataGridViewCellStyle1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        dataGridViewCellStyle1.ForeColor = Color.Black;
+        dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+        dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+        dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+        dgvReporte.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
         dgvReporte.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        dgvReporte.EnableHeadersVisualStyles = false;
         dgvReporte.Location = new Point(16, 190);
         dgvReporte.Name = "dgvReporte";
         dgvReporte.ReadOnly = true;

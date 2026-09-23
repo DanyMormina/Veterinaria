@@ -23,15 +23,23 @@ public partial class FormMascotas : Form
     private static readonly Color ColorEtiquetaNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
 
+    private static readonly Color ColorBotonActivarHabilitado = ColorTranslator.FromHtml("#8FA89B");
+    private static readonly Color ColorBotonDesactivarHabilitado = ColorTranslator.FromHtml("#B85D69");
+    private static readonly Color ColorBotonDeshabilitado = ColorTranslator.FromHtml("#E2D9DC");
+    private static readonly Color ColorTextoBotonDeshabilitado = ColorTranslator.FromHtml("#888888");
+
     private readonly ErrorProvider _errores = new();
     private readonly MascotaService? _mascotaService;
     private readonly PropietarioControlador? _propietarioControlador;
     private readonly EspecieControlador? _especieControlador;
     private readonly RazaControlador? _razaControlador;
+    private readonly SemaphoreSlim _semaforoBusqueda = new(1, 1);
+    private readonly System.Windows.Forms.Timer _temporizadorBusqueda = new() { Interval = 350 };
 
     private Control[] _controlesEntrada = [];
     private List<MascotaRespuestaDto> _mascotas = [];
     private bool _cargandoDatos = false;
+    private long? _idSeleccionado;
 
     /// <summary>
     /// Constructor por defecto para soporte del Diseñador de Windows Forms.
@@ -68,7 +76,7 @@ public partial class FormMascotas : Form
         _errores.ContainerControl = this;
         _errores.BlinkStyle = ErrorBlinkStyle.NeverBlink;
 
-        _controlesEntrada = [txtNombre, txtPropietario, cboEspecie, cboRaza, cboSexo, txtColor, cboEstado];
+        _controlesEntrada = [txtNombre, txtPropietario, cboEspecie, cboRaza, cboSexo, txtColor];
 
         foreach (var control in _controlesEntrada)
         {
@@ -122,38 +130,56 @@ public partial class FormMascotas : Form
         btnLimpiar.Click += async (_, _) => await RestablecerEstadoInicialAsync();
         cboEspecie.SelectedIndexChanged += async (_, _) => await cboEspecie_SelectedIndexChangedAsync();
 
+        // Temporizador para búsqueda debounceada (antirrebote) al tipear en el cuadro de búsqueda
+        _temporizadorBusqueda.Tick += async (_, _) =>
+        {
+            _temporizadorBusqueda.Stop();
+            await EjecutarBusquedaAsync(permitirVacio: true);
+        };
+
         // Búsqueda rápida desde el cuadro de texto del listado
         txtBuscar.KeyDown += async (_, e) =>
         {
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
+                _temporizadorBusqueda.Stop();
                 await EjecutarBusquedaAsync(permitirVacio: true);
             }
         };
-        txtBuscar.TextChanged += async (_, _) =>
+        txtBuscar.TextChanged += (_, _) =>
         {
             if (_cargandoDatos) return;
-            await EjecutarBusquedaAsync(permitirVacio: true);
+            _temporizadorBusqueda.Stop();
+            _temporizadorBusqueda.Start();
         };
 
-        // Filtro rápido de especie sobre la grilla
+        // Filtro rápido de especie sobre la grilla con sincronización atómica
         cboFiltroEspecie.SelectedIndexChanged += async (_, _) =>
         {
             if (_cargandoDatos) return;
             var item = cboFiltroEspecie.SelectedItem as ItemCombo;
             var idEspecie = item?.Id;
 
-            // Sincronizar con el combo principal si se utiliza el filtro rápido
-            if (idEspecie.HasValue)
+            // Sincronizar con el combo principal evitando ejecuciones concurrentes desincronizadas
+            try
             {
-                SeleccionarEnComboPorId(cboEspecie, idEspecie.Value);
+                _cargandoDatos = true;
+                if (idEspecie.HasValue)
+                {
+                    SeleccionarEnComboPorId(cboEspecie, idEspecie.Value);
+                }
+                else
+                {
+                    cboEspecie.SelectedIndex = 0;
+                }
             }
-            else
+            finally
             {
-                cboEspecie.SelectedIndex = 0;
+                _cargandoDatos = false;
             }
 
+            await cboEspecie_SelectedIndexChangedAsync();
             await EjecutarBusquedaAsync(permitirVacio: true);
         };
 
@@ -166,6 +192,7 @@ public partial class FormMascotas : Form
 
         // Selección de fila en la grilla para consultar detalles
         dgvMascotas.CellClick += dgvMascotas_CellClick;
+        dgvMascotas.SelectionChanged += dgvMascotas_SelectionChanged;
     }
 
     private async void FormMascotas_Load(object? sender, EventArgs e)
@@ -173,6 +200,8 @@ public partial class FormMascotas : Form
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
             ? $"Usuario: {SesionActual.NombreCompleto} | Rol: {SesionActual.Rol}"
             : "Usuario: Administrador";
+
+        ActualizarEstadoBotonesAccion(null);
 
         await InicializarCombosAsync();
         await EjecutarBusquedaAsync(permitirVacio: true);
@@ -242,11 +271,6 @@ public partial class FormMascotas : Form
             cboFiltroEstado.Items.Clear();
             cboFiltroEstado.Items.AddRange(["(Todos)", "Solo Activos", "Solo Inactivos"]);
             cboFiltroEstado.SelectedIndex = 0;
-
-            // 6. Estado en el panel de datos
-            cboEstado.Items.Clear();
-            cboEstado.Items.AddRange(["Activo", "Inactivo"]);
-            cboEstado.SelectedIndex = 0;
         }
         finally
         {
@@ -392,6 +416,7 @@ public partial class FormMascotas : Form
         if (_mascotaService is null)
             return;
 
+        await _semaforoBusqueda.WaitAsync();
         try
         {
             btnBuscar.Enabled = false;
@@ -444,6 +469,7 @@ public partial class FormMascotas : Form
             btnBuscar.Enabled = true;
             btnBuscar.Text = "Buscar";
             Cursor = Cursors.Default;
+            _semaforoBusqueda.Release();
         }
     }
 
@@ -564,7 +590,6 @@ public partial class FormMascotas : Form
         if (control == cboRaza) return lblRaza;
         if (control == cboSexo) return lblSexo;
         if (control == txtColor) return lblColor;
-        if (control == cboEstado) return lblEstado;
         return null;
     }
 
@@ -589,6 +614,7 @@ public partial class FormMascotas : Form
     /// </summary>
     private async Task RestablecerEstadoInicialAsync()
     {
+        _temporizadorBusqueda.Stop();
         _cargandoDatos = true;
         try
         {
@@ -608,8 +634,8 @@ public partial class FormMascotas : Form
 
             txtColor.Clear();
 
-            if (cboEstado.Items.Count > 0)
-                cboEstado.SelectedIndex = 0;
+            _idSeleccionado = null;
+            ActualizarEstadoBotonesAccion(null);
 
             txtBuscar.Clear();
 
@@ -631,7 +657,7 @@ public partial class FormMascotas : Form
         txtNombre.Focus();
     }
 
-    private void dgvMascotas_CellClick(object? sender, DataGridViewCellEventArgs e)
+    private async void dgvMascotas_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
         if (e.RowIndex < 0) return;
         var fila = dgvMascotas.Rows[e.RowIndex];
@@ -643,13 +669,30 @@ public partial class FormMascotas : Form
         LimpiarErroresValidacion();
         txtNombre.Text = mascota.Nombre;
         txtPropietario.Text = mascota.NombrePropietario ?? string.Empty;
-        if (mascota.IdEspecie > 0)
-            SeleccionarEnComboPorId(cboEspecie, mascota.IdEspecie);
+
+        // Cargar especie y razas de forma secuencial evitando disparos concurrentes
+        _cargandoDatos = true;
+        try
+        {
+            if (mascota.IdEspecie > 0)
+                SeleccionarEnComboPorId(cboEspecie, mascota.IdEspecie);
+            else
+                cboEspecie.SelectedIndex = 0;
+        }
+        finally
+        {
+            _cargandoDatos = false;
+        }
+
+        await cboEspecie_SelectedIndexChangedAsync();
+
         if (mascota.IdRaza > 0)
             SeleccionarEnComboPorId(cboRaza, mascota.IdRaza);
+
         cboSexo.SelectedItem = !string.IsNullOrWhiteSpace(mascota.Sexo) ? mascota.Sexo : "(Todos)";
         txtColor.Text = mascota.Color ?? string.Empty;
-        cboEstado.SelectedItem = mascota.Activo ? "Activo" : "Inactivo";
+        _idSeleccionado = mascota.Id;
+        ActualizarEstadoBotonesAccion(mascota.Activo);
     }
 
     private void btnVolver_Click(object? sender, EventArgs e)
@@ -660,6 +703,138 @@ public partial class FormMascotas : Form
     private void btnBuscar_Click(object sender, EventArgs e)
     {
 
+    }
+
+    private void dgvMascotas_SelectionChanged(object? sender, EventArgs e)
+    {
+        if (dgvMascotas.CurrentRow == null || dgvMascotas.CurrentRow.Index < 0)
+        {
+            _idSeleccionado = null;
+            ActualizarEstadoBotonesAccion(null);
+            return;
+        }
+
+        var fila = dgvMascotas.CurrentRow;
+        if (fila.Cells[0].Value is null)
+        {
+            _idSeleccionado = null;
+            ActualizarEstadoBotonesAccion(null);
+            return;
+        }
+
+        var id = Convert.ToInt64(fila.Cells[0].Value);
+        var mascota = _mascotas.FirstOrDefault(m => m.Id == id);
+        if (mascota is not null)
+        {
+            _idSeleccionado = mascota.Id;
+            ActualizarEstadoBotonesAccion(mascota.Activo);
+        }
+    }
+
+    /// <summary>
+    /// Actualiza de forma reactiva el estado y colores de los botones de estado (Activar / Desactivar).
+    /// null = sin selección (ambos deshabilitados).
+    /// true = registro activo (Desactivar habilitado).
+    /// false = registro inactivo (Activar habilitado).
+    /// </summary>
+    private void ActualizarEstadoBotonesAccion(bool? activo)
+    {
+        if (!activo.HasValue)
+        {
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+        else if (activo.Value)
+        {
+            // Registro Activo: Desactivar habilitado, Activar deshabilitado
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = true;
+            btnDesactivar.BackColor = ColorBotonDesactivarHabilitado;
+            btnDesactivar.ForeColor = Color.White;
+        }
+        else
+        {
+            // Registro Inactivo: Activar habilitado, Desactivar deshabilitado
+            btnActivar.Enabled = true;
+            btnActivar.BackColor = ColorBotonActivarHabilitado;
+            btnActivar.ForeColor = Color.White;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+    }
+
+    private async void btnActivar_Click(object? sender, EventArgs e)
+    {
+        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
+        {
+            MessageBox.Show("Debe seleccionar una mascota de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Desea reactivar este registro?",
+            "Confirmar Activación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_mascotaService is null)
+            return;
+
+        var resultado = await _mascotaService.CambiarEstadoAsync(_idSeleccionado.Value, true);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            await EjecutarBusquedaAsync(permitirVacio: true);
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private async void btnDesactivar_Click(object? sender, EventArgs e)
+    {
+        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
+        {
+            MessageBox.Show("Debe seleccionar una mascota de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Está seguro de que desea desactivar este registro?",
+            "Confirmar Desactivación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_mascotaService is null)
+            return;
+
+        var resultado = await _mascotaService.CambiarEstadoAsync(_idSeleccionado.Value, false);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            await EjecutarBusquedaAsync(permitirVacio: true);
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     /// <summary>

@@ -138,22 +138,34 @@ public class MascotaControlador(ContextoVeterinaria context)
 
     public async Task<Resultado> EliminarAsync(long id)
     {
+        return await CambiarEstadoAsync(id, false);
+    }
+
+    /// <summary>
+    /// Modifica el estado de activación (Activo = true/false) de una mascota.
+    /// Utiliza IgnoreQueryFilters para permitir encontrar mascotas desactivadas y reactivarlas.
+    /// </summary>
+    public async Task<Resultado> CambiarEstadoAsync(long id, bool activo)
+    {
         try
         {
             if (id <= 0)
                 return Resultado.Falla("El identificador de la mascota debe ser mayor a cero.");
 
-            var entidad = await context.Mascotas.FirstOrDefaultAsync(m => m.Id == id);
+            // Buscar la mascota ignorando el filtro global de soft delete
+            var entidad = await context.Mascotas.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró la mascota con ID {id}.");
 
-            entidad.Activo = false;
+            entidad.Activo = activo;
             await context.SaveChangesAsync();
-            return Resultado.Exito("Mascota eliminada exitosamente.");
+
+            var accion = activo ? "activada" : "desactivada";
+            return Resultado.Exito($"Mascota {accion} exitosamente.");
         }
         catch (Exception ex)
         {
-            return Resultado.Falla($"Error interno al eliminar la mascota: {ex.Message}");
+            return Resultado.Falla($"Error interno al cambiar el estado de la mascota: {ex.Message}");
         }
     }
 

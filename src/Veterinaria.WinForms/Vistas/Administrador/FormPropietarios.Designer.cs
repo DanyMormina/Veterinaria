@@ -15,27 +15,28 @@ partial class FormPropietarios
 
     private void InitializeComponent()
     {
-        DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
-        DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
+        DataGridViewCellStyle dataGridViewCellStyle9 = new DataGridViewCellStyle();
+        DataGridViewCellStyle dataGridViewCellStyle10 = new DataGridViewCellStyle();
         pnlEncabezado = new Panel();
         lblTitulo = new Label();
         lblUsuarioSesion = new Label();
         pnlContenido = new Panel();
         grpDatos = new GroupBox();
-        lblDni = new Label();
-        txtDni = new TextBox();
+        lbEstado = new Label();
         lblNombre = new Label();
+        btnActivar = new Button();
         txtNombre = new TextBox();
         lblApellido = new Label();
         txtApellido = new TextBox();
+        lblDni = new Label();
+        txtDni = new TextBox();
+        btnDesactivar = new Button();
         lblTelefono = new Label();
         txtTelefono = new TextBox();
         lblCorreoElectronico = new Label();
         txtCorreoElectronico = new TextBox();
         lblDireccion = new Label();
         txtDireccion = new TextBox();
-        lblEstado = new Label();
-        cboEstado = new ComboBox();
         grpMascotas = new GroupBox();
         dgvMascotasPropietario = new DataGridView();
         colMascotaId = new DataGridViewTextBoxColumn();
@@ -123,20 +124,21 @@ partial class FormPropietarios
         // 
         // grpDatos
         // 
+        grpDatos.Controls.Add(lbEstado);
         grpDatos.Controls.Add(lblNombre);
+        grpDatos.Controls.Add(btnActivar);
         grpDatos.Controls.Add(txtNombre);
         grpDatos.Controls.Add(lblApellido);
         grpDatos.Controls.Add(txtApellido);
         grpDatos.Controls.Add(lblDni);
         grpDatos.Controls.Add(txtDni);
+        grpDatos.Controls.Add(btnDesactivar);
         grpDatos.Controls.Add(lblTelefono);
         grpDatos.Controls.Add(txtTelefono);
         grpDatos.Controls.Add(lblCorreoElectronico);
         grpDatos.Controls.Add(txtCorreoElectronico);
         grpDatos.Controls.Add(lblDireccion);
         grpDatos.Controls.Add(txtDireccion);
-        grpDatos.Controls.Add(lblEstado);
-        grpDatos.Controls.Add(cboEstado);
         grpDatos.Font = new Font("Segoe UI", 9F);
         grpDatos.ForeColor = Color.FromArgb(58, 53, 59);
         grpDatos.Location = new Point(16, 16);
@@ -145,6 +147,16 @@ partial class FormPropietarios
         grpDatos.TabIndex = 0;
         grpDatos.TabStop = false;
         grpDatos.Text = "Datos del propietario";
+        grpDatos.Enter += grpDatos_Enter;
+        // 
+        // lbEstado
+        // 
+        lbEstado.AutoSize = true;
+        lbEstado.Location = new Point(16, 252);
+        lbEstado.Name = "lbEstado";
+        lbEstado.Size = new Size(42, 15);
+        lbEstado.TabIndex = 12;
+        lbEstado.Text = "Estado";
         // 
         // lblNombre
         // 
@@ -154,6 +166,24 @@ partial class FormPropietarios
         lblNombre.TabIndex = 0;
         lblNombre.Text = "Nombre";
         lblNombre.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // btnActivar
+        // 
+        btnActivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnActivar.BackColor = Color.Thistle;
+        btnActivar.Cursor = Cursors.Hand;
+        btnActivar.Enabled = false;
+        btnActivar.FlatAppearance.BorderSize = 0;
+        btnActivar.FlatStyle = FlatStyle.Flat;
+        btnActivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnActivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnActivar.Location = new Point(128, 243);
+        btnActivar.Name = "btnActivar";
+        btnActivar.Size = new Size(124, 32);
+        btnActivar.TabIndex = 5;
+        btnActivar.Text = "Activar";
+        btnActivar.UseVisualStyleBackColor = false;
+        btnActivar.Click += btnActivar_Click;
         // 
         // txtNombre
         // 
@@ -202,6 +232,24 @@ partial class FormPropietarios
         txtDni.Name = "txtDni";
         txtDni.Size = new Size(266, 23);
         txtDni.TabIndex = 5;
+        // 
+        // btnDesactivar
+        // 
+        btnDesactivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnDesactivar.BackColor = Color.MistyRose;
+        btnDesactivar.Cursor = Cursors.Hand;
+        btnDesactivar.Enabled = false;
+        btnDesactivar.FlatAppearance.BorderSize = 0;
+        btnDesactivar.FlatStyle = FlatStyle.Flat;
+        btnDesactivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnDesactivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnDesactivar.Location = new Point(270, 243);
+        btnDesactivar.Name = "btnDesactivar";
+        btnDesactivar.Size = new Size(124, 32);
+        btnDesactivar.TabIndex = 6;
+        btnDesactivar.Text = "Desactivar";
+        btnDesactivar.UseVisualStyleBackColor = false;
+        btnDesactivar.Click += btnDesactivar_Click;
         // 
         // lblTelefono
         // 
@@ -259,26 +307,6 @@ partial class FormPropietarios
         txtDireccion.Name = "txtDireccion";
         txtDireccion.Size = new Size(266, 23);
         txtDireccion.TabIndex = 11;
-        // 
-        // lblEstado
-        // 
-        lblEstado.Location = new Point(16, 244);
-        lblEstado.Name = "lblEstado";
-        lblEstado.Size = new Size(106, 23);
-        lblEstado.TabIndex = 12;
-        lblEstado.Text = "Estado";
-        lblEstado.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // cboEstado
-        // 
-        cboEstado.BackColor = Color.White;
-        cboEstado.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboEstado.FormattingEnabled = true;
-        cboEstado.Items.AddRange(new object[] { "Activo", "Inactivo" });
-        cboEstado.Location = new Point(128, 244);
-        cboEstado.Name = "cboEstado";
-        cboEstado.Size = new Size(266, 23);
-        cboEstado.TabIndex = 13;
         // 
         // grpMascotas
         // 
@@ -359,7 +387,7 @@ partial class FormPropietarios
         // 
         // btnBuscar
         // 
-        btnBuscar.BackColor = Color.FromArgb(200, 138, 150);
+        btnBuscar.BackColor = Color.FromArgb(152, 196, 164);
         btnBuscar.Cursor = Cursors.Hand;
         btnBuscar.FlatAppearance.BorderSize = 0;
         btnBuscar.FlatStyle = FlatStyle.Flat;
@@ -467,31 +495,31 @@ partial class FormPropietarios
         dgvPropietarios.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         dgvPropietarios.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dgvPropietarios.BackgroundColor = Color.White;
-        dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
-        dataGridViewCellStyle3.BackColor = SystemColors.Control;
-        dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
-        dataGridViewCellStyle3.ForeColor = SystemColors.WindowText;
-        dataGridViewCellStyle3.SelectionBackColor = SystemColors.Highlight;
-        dataGridViewCellStyle3.SelectionForeColor = SystemColors.HighlightText;
-        dataGridViewCellStyle3.WrapMode = DataGridViewTriState.True;
-        dgvPropietarios.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
+        dataGridViewCellStyle9.Alignment = DataGridViewContentAlignment.MiddleLeft;
+        dataGridViewCellStyle9.BackColor = SystemColors.Control;
+        dataGridViewCellStyle9.Font = new Font("Segoe UI", 9F);
+        dataGridViewCellStyle9.ForeColor = SystemColors.WindowText;
+        dataGridViewCellStyle9.SelectionBackColor = SystemColors.Highlight;
+        dataGridViewCellStyle9.SelectionForeColor = SystemColors.HighlightText;
+        dataGridViewCellStyle9.WrapMode = DataGridViewTriState.True;
+        dgvPropietarios.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle9;
         dgvPropietarios.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
         dgvPropietarios.Columns.AddRange(new DataGridViewColumn[] { colId, colNombre, colApellido, colDni, colTelefono, colCorreoElectronico, colDireccion, colEstado });
-        dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
-        dataGridViewCellStyle4.BackColor = SystemColors.Window;
-        dataGridViewCellStyle4.Font = new Font("Segoe UI", 9F);
-        dataGridViewCellStyle4.ForeColor = Color.FromArgb(58, 53, 59);
-        dataGridViewCellStyle4.SelectionBackColor = SystemColors.Highlight;
-        dataGridViewCellStyle4.SelectionForeColor = SystemColors.HighlightText;
-        dataGridViewCellStyle4.WrapMode = DataGridViewTriState.False;
-        dgvPropietarios.DefaultCellStyle = dataGridViewCellStyle4;
+        dataGridViewCellStyle10.Alignment = DataGridViewContentAlignment.MiddleLeft;
+        dataGridViewCellStyle10.BackColor = SystemColors.Window;
+        dataGridViewCellStyle10.Font = new Font("Segoe UI", 9F);
+        dataGridViewCellStyle10.ForeColor = Color.FromArgb(58, 53, 59);
+        dataGridViewCellStyle10.SelectionBackColor = SystemColors.Highlight;
+        dataGridViewCellStyle10.SelectionForeColor = SystemColors.HighlightText;
+        dataGridViewCellStyle10.WrapMode = DataGridViewTriState.False;
+        dgvPropietarios.DefaultCellStyle = dataGridViewCellStyle10;
         dgvPropietarios.Location = new Point(19, 48);
         dgvPropietarios.MultiSelect = false;
         dgvPropietarios.Name = "dgvPropietarios";
         dgvPropietarios.ReadOnly = true;
         dgvPropietarios.RowHeadersVisible = false;
         dgvPropietarios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvPropietarios.Size = new Size(720, 575);
+        dgvPropietarios.Size = new Size(720, 565);
         dgvPropietarios.TabIndex = 4;
         // 
         // colId
@@ -600,8 +628,8 @@ partial class FormPropietarios
     private TextBox txtCorreoElectronico;
     private Label lblDireccion;
     private TextBox txtDireccion;
-    private Label lblEstado;
-    private ComboBox cboEstado;
+    private Button btnActivar;
+    private Button btnDesactivar;
     private GroupBox grpMascotas;
     private DataGridView dgvMascotasPropietario;
     private DataGridViewTextBoxColumn colMascotaId;
@@ -627,5 +655,6 @@ partial class FormPropietarios
     private DataGridViewTextBoxColumn colCorreoElectronico;
     private DataGridViewTextBoxColumn colDireccion;
     private DataGridViewTextBoxColumn colEstado;
+    private Label lbEstado;
 }
 

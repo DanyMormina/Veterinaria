@@ -65,6 +65,8 @@ partial class FormMascotas
         colColor = new DataGridViewTextBoxColumn();
         colEstado = new DataGridViewTextBoxColumn();
         lblTotalRegistros = new Label();
+        btnActivar = new Button();
+        btnDesactivar = new Button();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         pnlEncabezado.SuspendLayout();
@@ -487,6 +489,8 @@ partial class FormMascotas
         pnlListado.Controls.Add(cboFiltroEspecie);
         pnlListado.Controls.Add(dgvMascotas);
         pnlListado.Controls.Add(lblTotalRegistros);
+        pnlListado.Controls.Add(btnActivar);
+        pnlListado.Controls.Add(btnDesactivar);
         pnlListado.Location = new Point(16, 218);
         pnlListado.Name = "pnlListado";
         pnlListado.Size = new Size(1072, 399);
@@ -646,6 +650,40 @@ partial class FormMascotas
         lblTotalRegistros.Text = "Total de registros: 0";
         lblTotalRegistros.TextAlign = ContentAlignment.MiddleLeft;
         // 
+        // btnActivar
+        // 
+        btnActivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnActivar.BackColor = Color.FromArgb(226, 217, 220);
+        btnActivar.Cursor = Cursors.Hand;
+        btnActivar.Enabled = false;
+        btnActivar.FlatAppearance.BorderSize = 0;
+        btnActivar.FlatStyle = FlatStyle.Flat;
+        btnActivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnActivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnActivar.Location = new Point(840, 363);
+        btnActivar.Name = "btnActivar";
+        btnActivar.Size = new Size(105, 30);
+        btnActivar.TabIndex = 9;
+        btnActivar.Text = "Activar";
+        btnActivar.UseVisualStyleBackColor = false;
+        // 
+        // btnDesactivar
+        // 
+        btnDesactivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnDesactivar.BackColor = Color.FromArgb(226, 217, 220);
+        btnDesactivar.Cursor = Cursors.Hand;
+        btnDesactivar.Enabled = false;
+        btnDesactivar.FlatAppearance.BorderSize = 0;
+        btnDesactivar.FlatStyle = FlatStyle.Flat;
+        btnDesactivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnDesactivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnDesactivar.Location = new Point(955, 363);
+        btnDesactivar.Name = "btnDesactivar";
+        btnDesactivar.Size = new Size(105, 30);
+        btnDesactivar.TabIndex = 10;
+        btnDesactivar.Text = "Desactivar";
+        btnDesactivar.UseVisualStyleBackColor = false;
+        // 
         // barraEstado
         // 
         barraEstado.BackColor = Color.FromArgb(249, 240, 242);
@@ -745,4 +783,6 @@ partial class FormMascotas
     private Button btnModificar;
     private Button btnLimpiar;
     private Button btnVolver;
+    private Button btnActivar;
+    private Button btnDesactivar;
 }

@@ -78,8 +78,8 @@ public partial class FormReportes : Form
     {
         dgvReporte.AutoGenerateColumns = false;
         dgvReporte.EnableHeadersVisualStyles = false;
-        dgvReporte.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(200, 138, 150); // Rosa viejo / Malva (#C88A96)
-        dgvReporte.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+        dgvReporte.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
+        dgvReporte.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
         dgvReporte.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         dgvReporte.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
         dgvReporte.ColumnHeadersHeight = 32;

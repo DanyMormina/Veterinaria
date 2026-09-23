@@ -98,7 +98,7 @@ namespace Veterinaria.WinForms.Vistas.Administrador
             lblTitulo.ForeColor = Color.White;
             lblTitulo.Location = new Point(16, 0);
             lblTitulo.Name = "lblTitulo";
-            lblTitulo.Size = new Size(908, 48);
+            lblTitulo.Size = new Size(809, 48);
             lblTitulo.TabIndex = 0;
             lblTitulo.Text = "CLÍNICA VETERINARIA — GESTIÓN DE USUARIOS";
             lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
@@ -108,9 +108,9 @@ namespace Veterinaria.WinForms.Vistas.Administrador
             lblUsuarioSesion.Dock = DockStyle.Right;
             lblUsuarioSesion.Font = new Font("Segoe UI", 9F);
             lblUsuarioSesion.ForeColor = Color.FromArgb(250, 244, 244);
-            lblUsuarioSesion.Location = new Point(924, 0);
+            lblUsuarioSesion.Location = new Point(825, 0);
             lblUsuarioSesion.Name = "lblUsuarioSesion";
-            lblUsuarioSesion.Size = new Size(280, 48);
+            lblUsuarioSesion.Size = new Size(379, 48);
             lblUsuarioSesion.TabIndex = 1;
             lblUsuarioSesion.Text = "Usuario: Admin";
             lblUsuarioSesion.TextAlign = ContentAlignment.MiddleRight;
