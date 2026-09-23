@@ -18,6 +18,15 @@ public partial class FormCobros : Form
             ? $"Recepción: {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Recepción: Secretario";
 
+        cboConsultaClinica.Items.Clear();
+        cboConsultaClinica.Items.AddRange(
+        [
+            "Seleccione una consulta clínica",
+            "Consulta #001 — Mascota: Ejemplo — Propietario: Ejemplo",
+            "Consulta #002 — Mascota: Ejemplo — Propietario: Ejemplo"
+        ]);
+        cboConsultaClinica.SelectedIndex = 0;
+
         cboMetodoPago.Items.Clear();
         cboMetodoPago.Items.AddRange(
         [

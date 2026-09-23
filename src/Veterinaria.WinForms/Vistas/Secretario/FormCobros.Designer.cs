@@ -26,18 +26,16 @@ partial class FormCobros
         btnCobrar = new Button();
         btnCancelar = new Button();
         grpConsulta = new GroupBox();
-        lblIdConsulta = new Label();
-        txtIdConsulta = new TextBox();
-        lblPropietario = new Label();
-        txtPropietario = new TextBox();
-        lblMascota = new Label();
-        txtMascota = new TextBox();
+        lblConsultaClinica = new Label();
+        cboConsultaClinica = new ComboBox();
         grpPago = new GroupBox();
         lblFecha = new Label();
         dtpFecha = new DateTimePicker();
         lblMetodoPago = new Label();
         cboMetodoPago = new ComboBox();
         lblImporte = new Label();
+        pnlImporte = new Panel();
+        lblSimboloPeso = new Label();
         txtImporte = new TextBox();
         lblEstado = new Label();
         cboEstado = new ComboBox();
@@ -112,74 +110,38 @@ partial class FormCobros
         // 
         // grpConsulta
         // 
-        grpConsulta.Controls.Add(lblIdConsulta);
-        grpConsulta.Controls.Add(txtIdConsulta);
-        grpConsulta.Controls.Add(lblPropietario);
-        grpConsulta.Controls.Add(txtPropietario);
-        grpConsulta.Controls.Add(lblMascota);
-        grpConsulta.Controls.Add(txtMascota);
+        grpConsulta.Controls.Add(lblConsultaClinica);
+        grpConsulta.Controls.Add(cboConsultaClinica);
         grpConsulta.Font = new Font("Segoe UI", 9F);
         grpConsulta.ForeColor = Color.FromArgb(58, 53, 59);
         grpConsulta.Location = new Point(16, 16);
         grpConsulta.Name = "grpConsulta";
-        grpConsulta.Size = new Size(1072, 110);
+        grpConsulta.Size = new Size(1072, 86);
         grpConsulta.TabIndex = 0;
         grpConsulta.TabStop = false;
         grpConsulta.Text = "Datos de la consulta";
         // 
-        // lblIdConsulta
+        // lblConsultaClinica
         // 
-        lblIdConsulta.Location = new Point(28, 32);
-        lblIdConsulta.Name = "lblIdConsulta";
-        lblIdConsulta.Size = new Size(118, 23);
-        lblIdConsulta.TabIndex = 0;
-        lblIdConsulta.Text = "ID de consulta";
-        lblIdConsulta.TextAlign = ContentAlignment.MiddleLeft;
+        lblConsultaClinica.Font = new Font("Segoe UI", 9F);
+        lblConsultaClinica.ForeColor = Color.FromArgb(58, 53, 59);
+        lblConsultaClinica.Location = new Point(28, 24);
+        lblConsultaClinica.Name = "lblConsultaClinica";
+        lblConsultaClinica.Size = new Size(1016, 18);
+        lblConsultaClinica.TabIndex = 0;
+        lblConsultaClinica.Text = "Consulta clínica:";
         // 
-        // txtIdConsulta
+        // cboConsultaClinica
         // 
-        txtIdConsulta.BackColor = Color.White;
-        txtIdConsulta.BorderStyle = BorderStyle.FixedSingle;
-        txtIdConsulta.Location = new Point(152, 32);
-        txtIdConsulta.Name = "txtIdConsulta";
-        txtIdConsulta.Size = new Size(120, 23);
-        txtIdConsulta.TabIndex = 1;
-        // 
-        // lblPropietario
-        // 
-        lblPropietario.Location = new Point(320, 32);
-        lblPropietario.Name = "lblPropietario";
-        lblPropietario.Size = new Size(118, 23);
-        lblPropietario.TabIndex = 2;
-        lblPropietario.Text = "Propietario";
-        lblPropietario.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // txtPropietario
-        // 
-        txtPropietario.BackColor = Color.White;
-        txtPropietario.BorderStyle = BorderStyle.FixedSingle;
-        txtPropietario.Location = new Point(444, 32);
-        txtPropietario.Name = "txtPropietario";
-        txtPropietario.Size = new Size(280, 23);
-        txtPropietario.TabIndex = 3;
-        // 
-        // lblMascota
-        // 
-        lblMascota.Location = new Point(28, 68);
-        lblMascota.Name = "lblMascota";
-        lblMascota.Size = new Size(118, 23);
-        lblMascota.TabIndex = 4;
-        lblMascota.Text = "Mascota";
-        lblMascota.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // txtMascota
-        // 
-        txtMascota.BackColor = Color.White;
-        txtMascota.BorderStyle = BorderStyle.FixedSingle;
-        txtMascota.Location = new Point(152, 68);
-        txtMascota.Name = "txtMascota";
-        txtMascota.Size = new Size(280, 23);
-        txtMascota.TabIndex = 5;
+        cboConsultaClinica.BackColor = Color.White;
+        cboConsultaClinica.DropDownStyle = ComboBoxStyle.DropDownList;
+        cboConsultaClinica.Font = new Font("Segoe UI", 9F);
+        cboConsultaClinica.ForeColor = Color.FromArgb(58, 53, 59);
+        cboConsultaClinica.FormattingEnabled = true;
+        cboConsultaClinica.Location = new Point(28, 44);
+        cboConsultaClinica.Name = "cboConsultaClinica";
+        cboConsultaClinica.Size = new Size(1016, 23);
+        cboConsultaClinica.TabIndex = 1;
         // 
         // grpPago
         // 
@@ -188,12 +150,12 @@ partial class FormCobros
         grpPago.Controls.Add(lblMetodoPago);
         grpPago.Controls.Add(cboMetodoPago);
         grpPago.Controls.Add(lblImporte);
-        grpPago.Controls.Add(txtImporte);
         grpPago.Controls.Add(lblEstado);
         grpPago.Controls.Add(cboEstado);
         grpPago.Font = new Font("Segoe UI", 9F);
         grpPago.ForeColor = Color.FromArgb(58, 53, 59);
-        grpPago.Location = new Point(16, 132);
+        grpPago.Controls.Add(pnlImporte);
+        grpPago.Location = new Point(16, 108);
         grpPago.Name = "grpPago";
         grpPago.Size = new Size(1072, 110);
         grpPago.TabIndex = 1;
@@ -245,14 +207,36 @@ partial class FormCobros
         lblImporte.Text = "Importe";
         lblImporte.TextAlign = ContentAlignment.MiddleLeft;
         // 
+        // pnlImporte
+        // 
+        pnlImporte.BackColor = Color.White;
+        pnlImporte.BorderStyle = BorderStyle.FixedSingle;
+        pnlImporte.Controls.Add(lblSimboloPeso);
+        pnlImporte.Controls.Add(txtImporte);
+        pnlImporte.Location = new Point(152, 68);
+        pnlImporte.Name = "pnlImporte";
+        pnlImporte.Size = new Size(200, 23);
+        pnlImporte.TabIndex = 5;
+        // 
+        // lblSimboloPeso
+        // 
+        lblSimboloPeso.AutoSize = true;
+        lblSimboloPeso.Font = new Font("Segoe UI", 9F);
+        lblSimboloPeso.ForeColor = Color.FromArgb(58, 53, 59);
+        lblSimboloPeso.Location = new Point(6, 4);
+        lblSimboloPeso.Name = "lblSimboloPeso";
+        lblSimboloPeso.Size = new Size(13, 15);
+        lblSimboloPeso.TabIndex = 0;
+        lblSimboloPeso.Text = "$";
+        // 
         // txtImporte
         // 
         txtImporte.BackColor = Color.White;
-        txtImporte.BorderStyle = BorderStyle.FixedSingle;
-        txtImporte.Location = new Point(152, 68);
+        txtImporte.BorderStyle = BorderStyle.None;
+        txtImporte.Location = new Point(22, 4);
         txtImporte.Name = "txtImporte";
-        txtImporte.Size = new Size(200, 23);
-        txtImporte.TabIndex = 5;
+        txtImporte.Size = new Size(172, 16);
+        txtImporte.TabIndex = 1;
         // 
         // lblEstado
         // 
@@ -278,7 +262,7 @@ partial class FormCobros
         pnlBotones.Controls.Add(btnNuevo);
         pnlBotones.Controls.Add(btnCobrar);
         pnlBotones.Controls.Add(btnCancelar);
-        pnlBotones.Location = new Point(12, 252);
+        pnlBotones.Location = new Point(12, 228);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1076, 40);
         pnlBotones.TabIndex = 2;
@@ -332,9 +316,9 @@ partial class FormCobros
         pnlListado.BackColor = Color.White;
         pnlListado.BorderStyle = BorderStyle.FixedSingle;
         pnlListado.Controls.Add(dgvCobros);
-        pnlListado.Location = new Point(12, 298);
+        pnlListado.Location = new Point(12, 274);
         pnlListado.Name = "pnlListado";
-        pnlListado.Size = new Size(1076, 327);
+        pnlListado.Size = new Size(1076, 351);
         pnlListado.TabIndex = 3;
         // 
         // dgvCobros
@@ -369,7 +353,7 @@ partial class FormCobros
         dgvCobros.ReadOnly = true;
         dgvCobros.RowHeadersVisible = false;
         dgvCobros.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvCobros.Size = new Size(1054, 305);
+        dgvCobros.Size = new Size(1054, 329);
         dgvCobros.TabIndex = 0;
         // 
         // colId
@@ -451,9 +435,9 @@ partial class FormCobros
         pnlContenido.ResumeLayout(false);
         pnlBotones.ResumeLayout(false);
         grpConsulta.ResumeLayout(false);
-        grpConsulta.PerformLayout();
         grpPago.ResumeLayout(false);
-        grpPago.PerformLayout();
+        pnlImporte.ResumeLayout(false);
+        pnlImporte.PerformLayout();
         pnlListado.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)dgvCobros).EndInit();
         barraEstado.ResumeLayout(false);
@@ -467,18 +451,16 @@ partial class FormCobros
     private Label lblUsuarioSesion;
     private Panel pnlContenido;
     private GroupBox grpConsulta;
-    private Label lblIdConsulta;
-    private TextBox txtIdConsulta;
-    private Label lblPropietario;
-    private TextBox txtPropietario;
-    private Label lblMascota;
-    private TextBox txtMascota;
+    private Label lblConsultaClinica;
+    private ComboBox cboConsultaClinica;
     private GroupBox grpPago;
     private Label lblFecha;
     private DateTimePicker dtpFecha;
     private Label lblMetodoPago;
     private ComboBox cboMetodoPago;
     private Label lblImporte;
+    private Panel pnlImporte;
+    private Label lblSimboloPeso;
     private TextBox txtImporte;
     private Label lblEstado;
     private ComboBox cboEstado;
