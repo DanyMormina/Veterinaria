@@ -10,11 +10,6 @@ partial class FormMascotas
         {
             components.Dispose();
         }
-        if (disposing)
-        {
-            _temporizadorBusqueda?.Dispose();
-            _semaforoBusqueda?.Dispose();
-        }
         base.Dispose(disposing);
     }
 

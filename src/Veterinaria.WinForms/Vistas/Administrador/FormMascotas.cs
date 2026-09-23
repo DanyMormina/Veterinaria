@@ -33,9 +33,6 @@ public partial class FormMascotas : Form
     private readonly PropietarioControlador? _propietarioControlador;
     private readonly EspecieControlador? _especieControlador;
     private readonly RazaControlador? _razaControlador;
-    private readonly SemaphoreSlim _semaforoBusqueda = new(1, 1);
-    private readonly System.Windows.Forms.Timer _temporizadorBusqueda = new() { Interval = 350 };
-
     private Control[] _controlesEntrada = [];
     private List<MascotaRespuestaDto> _mascotas = [];
     private bool _cargandoDatos = false;
@@ -122,57 +119,25 @@ public partial class FormMascotas : Form
     }
 
     /// <summary>
-    /// Asocia los eventos de botones y filtros en cascada.
+    /// Asocia los eventos de botones y filtros en cascada de forma reactiva.
     /// </summary>
     private void ConfigurarEventosInteraccion()
     {
-        btnBuscar.Click += async (_, _) => await EjecutarBusquedaAsync();
-        btnLimpiar.Click += async (_, _) => await RestablecerEstadoInicialAsync();
-        cboEspecie.SelectedIndexChanged += async (_, _) => await cboEspecie_SelectedIndexChangedAsync();
+        // 1. Filtros reactivos instantáneos sobre la grilla
+        txtBuscar.TextChanged += (_, _) => AplicarFiltros();
+        cboFiltroEstado.SelectedIndexChanged += (_, _) => AplicarFiltros();
 
-        // Temporizador para búsqueda debounceada (antirrebote) al tipear en el cuadro de búsqueda
-        _temporizadorBusqueda.Tick += async (_, _) =>
-        {
-            _temporizadorBusqueda.Stop();
-            await EjecutarBusquedaAsync(permitirVacio: true);
-        };
-
-        // Búsqueda rápida desde el cuadro de texto del listado
-        txtBuscar.KeyDown += async (_, e) =>
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.SuppressKeyPress = true;
-                _temporizadorBusqueda.Stop();
-                await EjecutarBusquedaAsync(permitirVacio: true);
-            }
-        };
-        txtBuscar.TextChanged += (_, _) =>
-        {
-            if (_cargandoDatos) return;
-            _temporizadorBusqueda.Stop();
-            _temporizadorBusqueda.Start();
-        };
-
-        // Filtro rápido de especie sobre la grilla con sincronización atómica
         cboFiltroEspecie.SelectedIndexChanged += async (_, _) =>
         {
             if (_cargandoDatos) return;
             var item = cboFiltroEspecie.SelectedItem as ItemCombo;
-            var idEspecie = item?.Id;
-
-            // Sincronizar con el combo principal evitando ejecuciones concurrentes desincronizadas
+            _cargandoDatos = true;
             try
             {
-                _cargandoDatos = true;
-                if (idEspecie.HasValue)
-                {
-                    SeleccionarEnComboPorId(cboEspecie, idEspecie.Value);
-                }
+                if (item?.Id != null)
+                    SeleccionarEnComboPorId(cboEspecie, item.Id.Value);
                 else
-                {
                     cboEspecie.SelectedIndex = 0;
-                }
             }
             finally
             {
@@ -180,17 +145,23 @@ public partial class FormMascotas : Form
             }
 
             await cboEspecie_SelectedIndexChangedAsync();
-            await EjecutarBusquedaAsync(permitirVacio: true);
+            AplicarFiltros();
         };
 
-        // Filtro rápido de estado sobre la grilla
-        cboFiltroEstado.SelectedIndexChanged += async (_, _) =>
+        // 2. Filtros del panel izquierdo en cascada
+        cboEspecie.SelectedIndexChanged += async (_, _) =>
         {
-            if (_cargandoDatos) return;
-            await EjecutarBusquedaAsync(permitirVacio: true);
+            await cboEspecie_SelectedIndexChangedAsync();
+            AplicarFiltros();
         };
+        cboRaza.SelectedIndexChanged += (_, _) => AplicarFiltros();
+        cboSexo.SelectedIndexChanged += (_, _) => AplicarFiltros();
 
-        // Selección de fila en la grilla para consultar detalles
+        // 3. Botones de acción
+        btnBuscar.Click += (_, _) => AplicarFiltros();
+        btnLimpiar.Click += async (_, _) => await RestablecerEstadoInicialAsync();
+
+        // 4. Selección de fila en la grilla para consultar detalles
         dgvMascotas.CellClick += dgvMascotas_CellClick;
         dgvMascotas.SelectionChanged += dgvMascotas_SelectionChanged;
     }
@@ -204,7 +175,7 @@ public partial class FormMascotas : Form
         ActualizarEstadoBotonesAccion(null);
 
         await InicializarCombosAsync();
-        await EjecutarBusquedaAsync(permitirVacio: true);
+        await CargarMascotasAsync();
     }
 
     /// <summary>
@@ -317,160 +288,106 @@ public partial class FormMascotas : Form
         cboRaza.SelectedIndex = 0;
     }
 
-    /// <summary>
-    /// Valida la integridad de formato de los filtros de búsqueda opcionales si fueron provistos.
-    /// </summary>
-    private bool ValidarFiltros(out Control? controlConError, out string? mensajeError)
-    {
-        LimpiarErroresValidacion();
-
-        // 1. txtNombre: opcional, pero si tiene texto debe tener al menos 2 caracteres y formato alfabético
-        var nombre = txtNombre.Text.Trim();
-        if (!string.IsNullOrWhiteSpace(nombre))
-        {
-            if (nombre.Length < 2 || !RegexNombre.IsMatch(nombre))
-            {
-                controlConError = txtNombre;
-                mensajeError = "El nombre de la mascota debe tener entre 2 y 80 caracteres y contener solo letras y espacios.";
-                return false;
-            }
-        }
-
-        // 2. txtPropietario: opcional, pero si tiene texto debe tener al menos 2 caracteres y formato alfabético
-        var propietario = txtPropietario.Text.Trim();
-        if (!string.IsNullOrWhiteSpace(propietario))
-        {
-            if (propietario.Length < 2 || !RegexNombre.IsMatch(propietario))
-            {
-                controlConError = txtPropietario;
-                mensajeError = "El nombre o apellido del propietario debe tener entre 2 y 80 caracteres y contener solo letras y espacios.";
-                return false;
-            }
-        }
-
-        // 3. txtColor: opcional, pero si tiene texto debe tener al menos 3 caracteres y formato alfabético
-        var color = txtColor.Text.Trim();
-        if (!string.IsNullOrWhiteSpace(color))
-        {
-            if (color.Length < 3 || !RegexColor.IsMatch(color))
-            {
-                controlConError = txtColor;
-                mensajeError = "El color debe tener entre 3 y 50 caracteres y contener solo letras y espacios.";
-                return false;
-            }
-        }
-
-        controlConError = null;
-        mensajeError = null;
-        return true;
-    }
 
     /// <summary>
-    /// Ejecuta la consulta de búsqueda asíncrona hacia MascotaService y llena el DataGridView.
-    /// Combina acumulativamente todos los criterios provistos (AND): mientras más campos se completen, más restringida será la búsqueda.
+    /// Carga la nómina completa de mascotas desde la base de datos a la memoria
+    /// y aplica los filtros vigentes para renderizar la grilla.
     /// </summary>
-    private async Task EjecutarBusquedaAsync(bool permitirVacio = false)
+    private async Task CargarMascotasAsync()
     {
-        var nombre = txtNombre.Text.Trim();
-        var propietario = txtPropietario.Text.Trim();
-        var espItem = cboEspecie.SelectedItem as ItemCombo;
-        var razaItem = cboRaza.SelectedItem as ItemCombo;
-        var sexo = cboSexo.SelectedItem?.ToString();
-        var color = txtColor.Text.Trim();
-        var textoGeneral = txtBuscar.Text.Trim();
-
-        bool tieneEspecie = espItem?.Id.HasValue == true;
-        bool tieneRaza = razaItem?.Id.HasValue == true;
-        bool tieneSexo = !string.IsNullOrWhiteSpace(sexo) && !sexo.Equals("(Todos)", StringComparison.OrdinalIgnoreCase);
-
-        // Si no es carga inicial y no completó ningún campo, advertir que debe completar al menos uno
-        if (!permitirVacio &&
-            string.IsNullOrWhiteSpace(nombre) &&
-            string.IsNullOrWhiteSpace(propietario) &&
-            !tieneEspecie &&
-            !tieneRaza &&
-            !tieneSexo &&
-            string.IsNullOrWhiteSpace(color) &&
-            string.IsNullOrWhiteSpace(textoGeneral))
-        {
-            MessageBox.Show(
-                $"Debe completar al menos un campo{Environment.NewLine}para poder realizar la búsqueda.",
-                "Búsqueda de Mascotas",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-            txtNombre.Focus();
-            return;
-        }
-
-        if (!ValidarFiltros(out var controlConError, out var mensajeError))
-        {
-            MarcarError(controlConError, mensajeError!);
-            MessageBox.Show(
-                mensajeError,
-                "Búsqueda de Mascotas",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-            return;
-        }
-
         if (_mascotaService is null)
             return;
 
-        await _semaforoBusqueda.WaitAsync();
-        try
+        var resultado = await _mascotaService.ObtenerTodosAsync();
+        if (!resultado.EsExitoso || resultado.Valor is null)
         {
-            btnBuscar.Enabled = false;
-            btnBuscar.Text = "Buscando...";
-            Cursor = Cursors.WaitCursor;
-
-            var estadoFiltro = cboFiltroEstado.SelectedIndex;
-            bool? activoFiltro = estadoFiltro switch
-            {
-                1 => true,
-                2 => false,
-                _ => null
-            };
-
-            // Cada filtro activo se combina con AND: mientras más datos ingrese, más restringida será la búsqueda
-            var resultado = await _mascotaService.BuscarMascotasAsync(
-                string.IsNullOrWhiteSpace(nombre) ? null : nombre,
-                string.IsNullOrWhiteSpace(propietario) ? null : propietario,
-                espItem?.Id,
-                razaItem?.Id,
-                tieneSexo ? sexo : null,
-                string.IsNullOrWhiteSpace(color) ? null : color,
-                string.IsNullOrWhiteSpace(textoGeneral) ? null : textoGeneral,
-                activoFiltro);
-
-            if (!resultado.EsExitoso || resultado.Valor is null)
-            {
-                MessageBox.Show(
-                    resultado.Mensaje,
-                    "Búsqueda de Mascotas",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-
-            _mascotas = resultado.Valor.ToList();
-            MostrarMascotasEnGrilla(_mascotas);
-
-            if (_mascotas.Count == 0 && (!string.IsNullOrWhiteSpace(nombre) || !string.IsNullOrWhiteSpace(propietario) || espItem?.Id != null || !string.IsNullOrWhiteSpace(textoGeneral)))
-            {
-                MessageBox.Show(
-                    $"No se encontraron mascotas que coincidan{Environment.NewLine}con los criterios de búsqueda especificados.",
-                    "Búsqueda de Mascotas",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
+            MessageBox.Show(
+                resultado.Mensaje,
+                "Mascotas",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
         }
-        finally
+
+        _mascotas = resultado.Valor.ToList();
+        AplicarFiltros();
+    }
+
+    /// <summary>
+    /// Aplica los filtros combinados de búsqueda en memoria sobre la lista de mascotas,
+    /// actualizando la grilla de forma instantánea conforme a la misma filosofía de FormPropietarios.
+    /// </summary>
+    private void AplicarFiltros()
+    {
+        // 1. Obtener texto de búsqueda rápida y estado seleccionado
+        var texto = txtBuscar.Text.Trim();
+        var estadoSeleccionado = cboFiltroEstado.SelectedIndex; // 0 = (Todos), 1 = Solo Activos, 2 = Solo Inactivos
+
+        // 2. Obtener filtros opcionales de especie, raza y sexo
+        var espItem = cboFiltroEspecie.SelectedItem as ItemCombo ?? cboEspecie.SelectedItem as ItemCombo;
+        var idEspecie = espItem?.Id;
+        var razaItem = cboRaza.SelectedItem as ItemCombo;
+        var idRaza = razaItem?.Id;
+        var sexo = cboSexo.SelectedItem?.ToString();
+
+        // 3. Obtener criterios de los campos individuales si se usó la búsqueda izquierda
+        var nombre = txtNombre.Text.Trim();
+        var propietario = txtPropietario.Text.Trim();
+        var color = txtColor.Text.Trim();
+
+        var consulta = _mascotas.AsEnumerable();
+
+        // 4. Filtrar por estado (Activo / Inactivo)
+        if (estadoSeleccionado == 1)
         {
-            btnBuscar.Enabled = true;
-            btnBuscar.Text = "Buscar";
-            Cursor = Cursors.Default;
-            _semaforoBusqueda.Release();
+            consulta = consulta.Where(m => m.Activo);
         }
+        else if (estadoSeleccionado == 2)
+        {
+            consulta = consulta.Where(m => !m.Activo);
+        }
+
+        // 5. Filtrar por especie
+        if (idEspecie.HasValue && idEspecie.Value > 0)
+        {
+            consulta = consulta.Where(m => m.IdEspecie == idEspecie.Value);
+        }
+
+        // 6. Filtrar por raza
+        if (idRaza.HasValue && idRaza.Value > 0)
+        {
+            consulta = consulta.Where(m => m.IdRaza == idRaza.Value);
+        }
+
+        // 7. Filtrar por sexo
+        if (!string.IsNullOrWhiteSpace(sexo) && !sexo.Equals("(Todos)", StringComparison.OrdinalIgnoreCase))
+        {
+            consulta = consulta.Where(m => string.Equals(m.Sexo, sexo, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // 8. Filtrar por texto de búsqueda rápida (multi-campo)
+        if (!string.IsNullOrWhiteSpace(texto))
+        {
+            consulta = consulta.Where(m =>
+                m.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                (m.NombrePropietario?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.NombreEspecie?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.NombreRaza?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.Color?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+        else
+        {
+            // O filtrar por campos específicos si fueron ingresados
+            if (!string.IsNullOrWhiteSpace(nombre))
+                consulta = consulta.Where(m => m.Nombre.Contains(nombre, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(propietario))
+                consulta = consulta.Where(m => m.NombrePropietario != null && m.NombrePropietario.Contains(propietario, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(color))
+                consulta = consulta.Where(m => m.Color != null && m.Color.Contains(color, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var filtradas = consulta.ToList();
+        MostrarMascotasEnGrilla(filtradas);
     }
 
     /// <summary>
@@ -614,7 +531,6 @@ public partial class FormMascotas : Form
     /// </summary>
     private async Task RestablecerEstadoInicialAsync()
     {
-        _temporizadorBusqueda.Stop();
         _cargandoDatos = true;
         try
         {
@@ -653,7 +569,7 @@ public partial class FormMascotas : Form
             _cargandoDatos = false;
         }
 
-        await EjecutarBusquedaAsync(permitirVacio: true);
+        await CargarMascotasAsync();
         txtNombre.Focus();
     }
 
@@ -797,7 +713,7 @@ public partial class FormMascotas : Form
         if (resultado.EsExitoso)
         {
             MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            await EjecutarBusquedaAsync(permitirVacio: true);
+            await CargarMascotasAsync();
         }
         else
         {
@@ -829,7 +745,7 @@ public partial class FormMascotas : Form
         if (resultado.EsExitoso)
         {
             MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            await EjecutarBusquedaAsync(permitirVacio: true);
+            await CargarMascotasAsync();
         }
         else
         {
