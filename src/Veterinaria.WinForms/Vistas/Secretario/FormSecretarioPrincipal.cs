@@ -39,6 +39,12 @@ public partial class FormSecretarioPrincipal : Form
         vistaMascotas.ShowDialog(this);
     }
 
+    private void BTCOBROS_Click(object? sender, EventArgs e)
+    {
+        using var vistaCobros = new FormCobros();
+        vistaCobros.ShowDialog(this);
+    }
+
     private void btnCerrarSesion_Click(object? sender, EventArgs e)
     {
         Close();
