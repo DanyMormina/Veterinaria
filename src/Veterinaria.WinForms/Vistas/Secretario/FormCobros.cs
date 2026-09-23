@@ -19,12 +19,7 @@ public partial class FormCobros : Form
             : "Recepción: Secretario";
 
         cboConsultaClinica.Items.Clear();
-        cboConsultaClinica.Items.AddRange(
-        [
-            "Seleccione una consulta clínica",
-            "Consulta #001 — Mascota: Ejemplo — Propietario: Ejemplo",
-            "Consulta #002 — Mascota: Ejemplo — Propietario: Ejemplo"
-        ]);
+        cboConsultaClinica.Items.Add("Seleccione una consulta clínica");
         cboConsultaClinica.SelectedIndex = 0;
 
         cboMetodoPago.Items.Clear();
