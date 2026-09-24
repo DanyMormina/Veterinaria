@@ -64,7 +64,7 @@ public static class GestorCredencialesLocales
             config.UltimoUsuario = usuario.Trim();
 
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(RutaArchivo, json);
+            EscribirArchivoJson(json);
         }
         catch
         {
@@ -91,7 +91,33 @@ public static class GestorCredencialesLocales
             }
 
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(RutaArchivo, json);
+            EscribirArchivoJson(json);
+        }
+        catch
+        {
+            // Silencioso
+        }
+    }
+
+    private static void EscribirArchivoJson(string json)
+    {
+        File.WriteAllText(RutaArchivo, json);
+
+        try
+        {
+            // Sincronizar también con la copia del repositorio si existe para visualización en IDE
+            var rutaDev = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\..\credenciales.json"));
+            if (File.Exists(rutaDev))
+            {
+                File.WriteAllText(rutaDev, json);
+                return;
+            }
+
+            var rutaAlt = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\credenciales.json"));
+            if (File.Exists(rutaAlt))
+            {
+                File.WriteAllText(rutaAlt, json);
+            }
         }
         catch
         {

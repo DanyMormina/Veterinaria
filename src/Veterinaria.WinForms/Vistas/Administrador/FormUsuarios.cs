@@ -376,6 +376,9 @@ public partial class FormUsuarios : Form
             return;
         }
 
+        var usuarioPrevio = _usuarios.FirstOrDefault(u => u.Id == _idSeleccionado.Value);
+        var nombreUsuarioAnterior = usuarioPrevio?.NombreUsuario;
+
         var solicitud = ArmarSolicitud();
         var resultado = await _usuarioControlador.ActualizarAsync(_idSeleccionado.Value, solicitud);
 
@@ -389,6 +392,17 @@ public partial class FormUsuarios : Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
             return;
+        }
+
+        // Purgar de las credenciales recordadas si se desactivó la cuenta o se cambió el nombre de usuario
+        if (nombreUsuarioAnterior is not null && !string.Equals(nombreUsuarioAnterior, solicitud.NombreUsuario, StringComparison.OrdinalIgnoreCase))
+        {
+            GestorCredencialesLocales.Eliminar(nombreUsuarioAnterior);
+        }
+
+        if (solicitud.Activo.HasValue && !solicitud.Activo.Value)
+        {
+            GestorCredencialesLocales.Eliminar(solicitud.NombreUsuario);
         }
 
         MessageBox.Show(
@@ -445,24 +459,35 @@ public partial class FormUsuarios : Form
         AplicarFiltros();
     }
 
+    /// <summary>
+    /// Aplica los filtros combinados de Rol, Estado y búsqueda multi-campo de texto
+    /// sobre la nómina de usuarios en memoria, actualizando la grilla al instante.
+    /// </summary>
     private void AplicarFiltros()
     {
+        // 1. Obtener el texto de búsqueda (sin espacios sobrantes)
         var texto = txtBuscar.Text.Trim();
+
+        // 2. Extraer de forma segura el ID del rol seleccionado en el desplegable
         long rolSeleccionado = 0;
         if (cboFiltroRol.SelectedValue is not null && long.TryParse(cboFiltroRol.SelectedValue.ToString(), out var rId))
         {
             rolSeleccionado = rId;
         }
 
-        var estadoSeleccionado = cboFiltroEstado.SelectedIndex; // 0 = Todos, 1 = Activos, 2 = Inactivos
+        // 3. Obtener el estado seleccionado (0 = Todos, 1 = Solo Activos, 2 = Solo Inactivos)
+        var estadoSeleccionado = cboFiltroEstado.SelectedIndex;
 
+        // 4. Iniciar la consulta LINQ sobre la lista de usuarios en memoria
         var consulta = _usuarios.AsEnumerable();
 
+        // 5. Primer filtro: Si se seleccionó un rol específico, filtrar por ese rol
         if (rolSeleccionado > 0)
         {
             consulta = consulta.Where(u => u.IdTipoUsuario == rolSeleccionado);
         }
 
+        // 6. Segundo filtro: Filtrar por estado activo o inactivo
         if (estadoSeleccionado == 1)
         {
             consulta = consulta.Where(u => u.Activo);
@@ -472,6 +497,7 @@ public partial class FormUsuarios : Form
             consulta = consulta.Where(u => !u.Activo);
         }
 
+        // 7. Tercer filtro: Si se ingresó texto, buscar coincidencias en 8 campos a la vez sin distinguir mayúsculas/minúsculas
         if (!string.IsNullOrWhiteSpace(texto))
         {
             consulta = consulta.Where(u =>
@@ -485,6 +511,7 @@ public partial class FormUsuarios : Form
                 (u.Telefono?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
+        // 8. Renderizar los resultados filtrados en el DataGridView
         MostrarUsuariosEnGrilla(consulta.ToList());
     }
 

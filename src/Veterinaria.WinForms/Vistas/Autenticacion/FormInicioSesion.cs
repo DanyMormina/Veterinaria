@@ -187,6 +187,13 @@ public partial class FormInicioSesion : Form
 
             if (!resultadoAuth.EsExitoso || resultadoAuth.Valor is null || !resultadoAuth.Valor.Activo)
             {
+                // Si la autenticación falló porque el usuario fue desactivado, remover de credenciales recordadas
+                if (!resultadoAuth.EsExitoso && resultadoAuth.Mensaje.Contains("inactivo", StringComparison.OrdinalIgnoreCase))
+                {
+                    GestorCredencialesLocales.Eliminar(nombreUsuario);
+                    CargarCredencialesRecordadas();
+                }
+
                 MostrarError("Usuario o contraseña incorrectos.");
                 return;
             }

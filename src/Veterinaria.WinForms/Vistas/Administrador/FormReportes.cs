@@ -365,16 +365,21 @@ public partial class FormReportes : Form
     /// </summary>
     private PrintDocument CrearPrintDocument()
     {
+        // 1. Instanciamos el componente estándar de .NET para impresión (System.Drawing.Printing)
         var pd = new PrintDocument();
+
+        // 2. Definimos orientación horizontal (apaisada/landscape) y márgenes de 40 puntos para que las tablas encajen bien
         pd.DefaultPageSettings.Landscape = true;
         pd.DefaultPageSettings.Margins = new Margins(40, 40, 40, 40);
 
+        // 3. Al iniciar cada trabajo de impresión, reiniciamos los contadores de página y fila para arrancar desde cero
         pd.BeginPrint += (s, ev) =>
         {
             _filaActualImpresion = 0;
             _paginaActual = 0;
         };
 
+        // 4. Conectamos el evento PrintPage con nuestro método que dibuja fila por fila con GDI+
         pd.PrintPage += ImprimirPaginaReporte;
         return pd;
     }
@@ -384,6 +389,7 @@ public partial class FormReportes : Form
     /// </summary>
     private void btnImprimir_Click(object? sender, EventArgs e)
     {
+        // Validación: no permitir imprimir si la grilla está vacía
         if (dgvReporte.Rows.Count == 0)
         {
             MessageBox.Show("No hay datos en la grilla para imprimir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -392,7 +398,10 @@ public partial class FormReportes : Form
 
         try
         {
+            // Creamos el documento de impresión configurado
             using var pd = CrearPrintDocument();
+
+            // Usamos la ventana estándar de Windows Forms para previsualizar las hojas antes de mandar a la impresora física
             using var printDialog = new PrintPreviewDialog
             {
                 Document = pd,
@@ -414,12 +423,14 @@ public partial class FormReportes : Form
     /// </summary>
     private void btnExportarPdf_Click(object? sender, EventArgs e)
     {
+        // Validación: verificar que existan registros cargados en pantalla
         if (dgvReporte.Rows.Count == 0)
         {
             MessageBox.Show("No hay datos en la grilla para exportar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
+        // Diálogo para que el usuario elija dónde guardar el archivo y con qué nombre
         using var sfd = new SaveFileDialog
         {
             Filter = "Archivo PDF (*.pdf)|*.pdf|Archivo CSV (*.csv)|*.csv",
@@ -427,11 +438,13 @@ public partial class FormReportes : Form
             Title = "Exportar Reporte"
         };
 
+        // Si el usuario canceló la ventana de guardado, no hacemos nada
         if (sfd.ShowDialog(this) != DialogResult.OK)
             return;
 
         try
         {
+            // OPCIÓN 1: Si el usuario seleccionó guardar directamente en formato CSV (texto delimitado por punto y coma)
             if (sfd.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
                 ExportarCsv(sfd.FileName);
@@ -439,11 +452,15 @@ public partial class FormReportes : Form
                 return;
             }
 
-            // Exportar a PDF utilizando Microsoft Print to PDF
+            // OPCIÓN 2: Exportación a PDF sin librerías externas de terceros.
+            // Para no depender de librerías pesadas o de pago (como iText, QuestPDF, etc.),
+            // aprovechamos la impresora virtual nativa de Windows: "Microsoft Print to PDF".
+            // Aquí comprobamos si está instalada en el sistema operativo del usuario.
             bool impresoraPdfDisponible = PrinterSettings.InstalledPrinters
                 .Cast<string>()
                 .Any(p => p.Equals("Microsoft Print to PDF", StringComparison.OrdinalIgnoreCase));
 
+            // Si por alguna razón la impresora virtual de Windows no está instalada o está deshabilitada:
             if (!impresoraPdfDisponible)
             {
                 var respuesta = MessageBox.Show(
@@ -454,6 +471,7 @@ public partial class FormReportes : Form
 
                 if (respuesta == DialogResult.Yes)
                 {
+                    // Cambiamos la extensión a .csv y generamos el archivo alternativo
                     var rutaCsv = Path.ChangeExtension(sfd.FileName, ".csv");
                     ExportarCsv(rutaCsv);
                     MessageBox.Show($"Reporte exportado exitosamente a:\n{rutaCsv}", "Exportación Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -461,10 +479,19 @@ public partial class FormReportes : Form
                 return;
             }
 
+            // Si "Microsoft Print to PDF" sí está disponible, la usamos de forma silenciosa para generar el PDF:
             using var pd = CrearPrintDocument();
+
+            // 1. Asignamos la impresora virtual de Windows como destino
             pd.PrinterSettings.PrinterName = "Microsoft Print to PDF";
+
+            // 2. Le indicamos a Windows que la salida no saldrá en papel, sino que se escribirá a un archivo
             pd.PrinterSettings.PrintToFile = true;
+
+            // 3. Establecemos la ruta y nombre exacto del archivo PDF que seleccionó el usuario
             pd.PrinterSettings.PrintFileName = sfd.FileName;
+
+            // 4. Ejecutamos la impresión (esto ejecuta el motor gráfico ImprimirPaginaReporte y vuelca todo al PDF)
             pd.Print();
 
             MessageBox.Show($"El reporte se exportó correctamente como archivo PDF en:\n{sfd.FileName}", "Exportación Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);

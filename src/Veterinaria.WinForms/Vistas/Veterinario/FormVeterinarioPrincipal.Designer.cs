@@ -32,22 +32,22 @@ partial class FormVeterinarioPrincipal
         lblUsuarioSesion = new Label();
         btnCerrarSesion = new Button();
         pnlContenido = new Panel();
-        BTVACUNAS = new Button();
         picVacunas = new PictureBox();
-        BTTRATAMIENTOS = new Button();
         picTratamientos = new PictureBox();
-        BTFICHAMEDICA = new Button();
-        picFichaMedica = new PictureBox();
-        BTCONSULTAS = new Button();
         picConsultas = new PictureBox();
+        picFichaMedica = new PictureBox();
+        BTVACUNAS = new Button();
+        BTTRATAMIENTOS = new Button();
+        BTFICHAMEDICA = new Button();
+        BTCONSULTAS = new Button();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         pnlEncabezado.SuspendLayout();
         pnlContenido.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)picVacunas).BeginInit();
         ((System.ComponentModel.ISupportInitialize)picTratamientos).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)picFichaMedica).BeginInit();
         ((System.ComponentModel.ISupportInitialize)picConsultas).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)picFichaMedica).BeginInit();
         barraEstado.SuspendLayout();
         SuspendLayout();
         // 
@@ -122,6 +122,54 @@ partial class FormVeterinarioPrincipal
         pnlContenido.Size = new Size(1100, 628);
         pnlContenido.TabIndex = 1;
         // 
+        // picVacunas
+        // 
+        picVacunas.BackColor = Color.Transparent;
+        picVacunas.Image = (Image)resources.GetObject("picVacunas.Image");
+        picVacunas.Location = new Point(854, 162);
+        picVacunas.Name = "picVacunas";
+        picVacunas.Size = new Size(125, 186);
+        picVacunas.SizeMode = PictureBoxSizeMode.Zoom;
+        picVacunas.TabIndex = 0;
+        picVacunas.TabStop = false;
+        picVacunas.Click += BTVACUNAS_Click;
+        // 
+        // picTratamientos
+        // 
+        picTratamientos.BackColor = Color.Transparent;
+        picTratamientos.Image = (Image)resources.GetObject("picTratamientos.Image");
+        picTratamientos.Location = new Point(615, 162);
+        picTratamientos.Name = "picTratamientos";
+        picTratamientos.Size = new Size(128, 186);
+        picTratamientos.SizeMode = PictureBoxSizeMode.Zoom;
+        picTratamientos.TabIndex = 0;
+        picTratamientos.TabStop = false;
+        picTratamientos.Click += BTTRATAMIENTOS_Click;
+        // 
+        // picConsultas
+        // 
+        picConsultas.BackColor = Color.Transparent;
+        picConsultas.Image = (Image)resources.GetObject("picConsultas.Image");
+        picConsultas.Location = new Point(107, 162);
+        picConsultas.Name = "picConsultas";
+        picConsultas.Size = new Size(125, 186);
+        picConsultas.SizeMode = PictureBoxSizeMode.Zoom;
+        picConsultas.TabIndex = 0;
+        picConsultas.TabStop = false;
+        picConsultas.Click += BTCONSULTAS_Click;
+        // 
+        // picFichaMedica
+        // 
+        picFichaMedica.BackColor = Color.Transparent;
+        picFichaMedica.Image = (Image)resources.GetObject("picFichaMedica.Image");
+        picFichaMedica.Location = new Point(367, 162);
+        picFichaMedica.Name = "picFichaMedica";
+        picFichaMedica.Size = new Size(129, 186);
+        picFichaMedica.SizeMode = PictureBoxSizeMode.Zoom;
+        picFichaMedica.TabIndex = 0;
+        picFichaMedica.TabStop = false;
+        picFichaMedica.Click += BTFICHAMEDICA_Click;
+        // 
         // BTVACUNAS
         // 
         BTVACUNAS.BackColor = Color.White;
@@ -134,23 +182,11 @@ partial class FormVeterinarioPrincipal
         BTVACUNAS.Padding = new Padding(12, 8, 12, 10);
         BTVACUNAS.Size = new Size(214, 277);
         BTVACUNAS.TabIndex = 3;
-        BTVACUNAS.Text = "CONTROLES";
+        BTVACUNAS.Text = "VACUNACIÓN";
         BTVACUNAS.TextAlign = ContentAlignment.BottomCenter;
         BTVACUNAS.TextImageRelation = TextImageRelation.ImageAboveText;
         BTVACUNAS.UseVisualStyleBackColor = false;
         BTVACUNAS.Click += BTVACUNAS_Click;
-        // 
-        // picVacunas
-        // 
-        picVacunas.BackColor = Color.Transparent;
-        picVacunas.Image = (Image)resources.GetObject("picVacunas.Image");
-        picVacunas.Location = new Point(854, 162);
-        picVacunas.Name = "picVacunas";
-        picVacunas.Size = new Size(125, 186);
-        picVacunas.SizeMode = PictureBoxSizeMode.Zoom;
-        picVacunas.TabIndex = 0;
-        picVacunas.TabStop = false;
-        picVacunas.Click += BTVACUNAS_Click;
         // 
         // BTTRATAMIENTOS
         // 
@@ -170,18 +206,6 @@ partial class FormVeterinarioPrincipal
         BTTRATAMIENTOS.UseVisualStyleBackColor = false;
         BTTRATAMIENTOS.Click += BTTRATAMIENTOS_Click;
         // 
-        // picTratamientos
-        // 
-        picTratamientos.BackColor = Color.Transparent;
-        picTratamientos.Image = (Image)resources.GetObject("picTratamientos.Image");
-        picTratamientos.Location = new Point(615, 162);
-        picTratamientos.Name = "picTratamientos";
-        picTratamientos.Size = new Size(128, 186);
-        picTratamientos.SizeMode = PictureBoxSizeMode.Zoom;
-        picTratamientos.TabIndex = 0;
-        picTratamientos.TabStop = false;
-        picTratamientos.Click += BTTRATAMIENTOS_Click;
-        // 
         // BTFICHAMEDICA
         // 
         BTFICHAMEDICA.BackColor = Color.White;
@@ -200,18 +224,6 @@ partial class FormVeterinarioPrincipal
         BTFICHAMEDICA.UseVisualStyleBackColor = false;
         BTFICHAMEDICA.Click += BTFICHAMEDICA_Click;
         // 
-        // picFichaMedica
-        // 
-        picFichaMedica.BackColor = Color.Transparent;
-        picFichaMedica.Image = (Image)resources.GetObject("picFichaMedica.Image");
-        picFichaMedica.Location = new Point(367, 162);
-        picFichaMedica.Name = "picFichaMedica";
-        picFichaMedica.Size = new Size(129, 186);
-        picFichaMedica.SizeMode = PictureBoxSizeMode.Zoom;
-        picFichaMedica.TabIndex = 0;
-        picFichaMedica.TabStop = false;
-        picFichaMedica.Click += BTFICHAMEDICA_Click;
-        // 
         // BTCONSULTAS
         // 
         BTCONSULTAS.BackColor = Color.White;
@@ -229,18 +241,6 @@ partial class FormVeterinarioPrincipal
         BTCONSULTAS.TextImageRelation = TextImageRelation.ImageAboveText;
         BTCONSULTAS.UseVisualStyleBackColor = false;
         BTCONSULTAS.Click += BTCONSULTAS_Click;
-        // 
-        // picConsultas
-        // 
-        picConsultas.BackColor = Color.Transparent;
-        picConsultas.Image = (Image)resources.GetObject("picConsultas.Image");
-        picConsultas.Location = new Point(107, 162);
-        picConsultas.Name = "picConsultas";
-        picConsultas.Size = new Size(125, 186);
-        picConsultas.SizeMode = PictureBoxSizeMode.Zoom;
-        picConsultas.TabIndex = 0;
-        picConsultas.TabStop = false;
-        picConsultas.Click += BTCONSULTAS_Click;
         // 
         // barraEstado
         // 
@@ -280,8 +280,8 @@ partial class FormVeterinarioPrincipal
         pnlContenido.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)picVacunas).EndInit();
         ((System.ComponentModel.ISupportInitialize)picTratamientos).EndInit();
-        ((System.ComponentModel.ISupportInitialize)picFichaMedica).EndInit();
         ((System.ComponentModel.ISupportInitialize)picConsultas).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picFichaMedica).EndInit();
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
         ResumeLayout(false);
