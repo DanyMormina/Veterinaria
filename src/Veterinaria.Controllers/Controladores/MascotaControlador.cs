@@ -127,6 +127,9 @@ public class MascotaControlador(ContextoVeterinaria context)
             entidad.FechaNacimiento = solicitud.FechaNacimiento;
             entidad.Color = solicitud.Color?.Trim();
 
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Mascota actualizada exitosamente.");
         }
@@ -200,6 +203,9 @@ public class MascotaControlador(ContextoVeterinaria context)
 
         if (solicitud.IdRaza <= 0)
             return "Debe seleccionar una raza válida.";
+
+        if (string.IsNullOrWhiteSpace(solicitud.Color))
+            return "El color de la mascota es obligatorio.";
 
         return null;
     }

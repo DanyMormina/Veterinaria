@@ -128,6 +128,10 @@ public class RazaControlador(ContextoVeterinaria context)
 
             entidad.Nombre = nombreNormalizado;
             entidad.IdEspecie = solicitud.IdEspecie;
+
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Raza actualizada exitosamente.");
         }

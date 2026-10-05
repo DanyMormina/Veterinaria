@@ -22,6 +22,7 @@ public partial class FormConsultas : Form
     private long? _idConsultaSeleccionada = null;
     private DateTime? _fechaHoraConsultaSeleccionada = null;
     private bool _sincronizandoCombos = false;
+    private string? _snapshotEdicion;
     private List<PropietarioRespuestaDto> _propietarios = [];
     private List<MascotaRespuestaDto> _mascotas = [];
     private List<ConsultaRespuestaDto> _consultas = [];
@@ -58,6 +59,7 @@ public partial class FormConsultas : Form
         _mapaEtiquetas[txtMotivo] = lblMotivo;
         _mapaEtiquetas[txtPeso] = lblPeso;
         _mapaEtiquetas[txtTemperatura] = lblTemperatura;
+        _mapaEtiquetas[txtImporte] = lblImporte;
         _mapaEtiquetas[txtDiagnostico] = lblDiagnostico;
         _mapaEtiquetas[txtObservaciones] = lblObservaciones;
 
@@ -73,6 +75,7 @@ public partial class FormConsultas : Form
         await CargarPropietariosAsync();
         await CargarMascotasAsync();
         await CargarHistorialConsultasAsync();
+        LimpiarFormulario();
 
         // Enlazar eventos de sincronización entre propietario y mascota
         cboPropietario.SelectedIndexChanged += cboPropietario_SelectedIndexChanged;
@@ -86,6 +89,7 @@ public partial class FormConsultas : Form
     {
         txtPeso.KeyPress += ValidarDecimal_KeyPress;
         txtTemperatura.KeyPress += ValidarDecimal_KeyPress;
+        txtImporte.KeyPress += ValidarDecimal_KeyPress;
         txtMotivo.KeyPress += ValidarTextoGeneral_KeyPress;
         cboMascota.KeyPress += ValidarSoloLetras_KeyPress;
         cboPropietario.KeyPress += ValidarSoloLetras_KeyPress;
@@ -267,6 +271,7 @@ public partial class FormConsultas : Form
                 dgvConsultas.Rows[idx].Tag = c;
             }
             dgvConsultas.ClearSelection();
+            dgvConsultas.CurrentCell = null;
         }
         catch (Exception ex)
         {
@@ -290,15 +295,8 @@ public partial class FormConsultas : Form
             cboMascota.DisplayMember = "Nombre";
             cboMascota.ValueMember = "Id";
             cboMascota.DataSource = mascotasFiltradas;
-            if (mascotasFiltradas.Count == 1)
-            {
-                cboMascota.SelectedIndex = 0;
-            }
-            else
-            {
-                cboMascota.SelectedIndex = -1;
-                cboMascota.Text = string.Empty;
-            }
+            cboMascota.SelectedIndex = -1;
+            cboMascota.Text = string.Empty;
             _sincronizandoCombos = false;
         }
         else if (cboPropietario.SelectedIndex == -1)
@@ -398,6 +396,15 @@ public partial class FormConsultas : Form
             temp = t;
         }
 
+        var textoImporte = txtImporte.Text.Trim().Replace(',', '.');
+        if (string.IsNullOrWhiteSpace(textoImporte) ||
+            !decimal.TryParse(textoImporte, NumberStyles.Any, CultureInfo.InvariantCulture, out var importe) ||
+            importe <= 0)
+        {
+            MarcarControlConError(txtImporte, "El importe base de la consulta es obligatorio y debe ser mayor a 0.");
+            return false;
+        }
+
         // Si es modificación, preserva la fecha y hora original; al crear una nueva consulta, se registra automáticamente
         DateTime fechaHora = _idConsultaSeleccionada.HasValue && _fechaHoraConsultaSeleccionada.HasValue
             ? _fechaHoraConsultaSeleccionada.Value
@@ -414,7 +421,8 @@ public partial class FormConsultas : Form
             PesoKg = peso,
             Temperatura = temp,
             Diagnostico = diagnostico,
-            Observaciones = string.IsNullOrWhiteSpace(txtObservaciones.Text) ? null : txtObservaciones.Text.Trim()
+            Observaciones = string.IsNullOrWhiteSpace(txtObservaciones.Text) ? null : txtObservaciones.Text.Trim(),
+            Importe = decimal.Round(importe, 2)
         };
 
         return true;
@@ -510,6 +518,12 @@ public partial class FormConsultas : Form
         if (!ValidarCampos(out var solicitud) || solicitud is null)
             return;
 
+        if (string.Equals(ObtenerSnapshotFormulario(), _snapshotEdicion, StringComparison.Ordinal))
+        {
+            MessageBox.Show("No se detectaron cambios para guardar.", "Sin cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         try
         {
             btnModificar.Enabled = false;
@@ -518,7 +532,7 @@ public partial class FormConsultas : Form
             var resultado = await _consultaControlador.ActualizarAsync(_idConsultaSeleccionada.Value, solicitud);
             if (!resultado.EsExitoso)
             {
-                MessageBox.Show(resultado.Mensaje, "Error al actualizar consulta", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(resultado.Mensaje, "Error al actualizar consulta", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -532,7 +546,7 @@ public partial class FormConsultas : Form
         }
         finally
         {
-            btnModificar.Enabled = false;
+            btnModificar.Enabled = _idConsultaSeleccionada.HasValue;
             Cursor = Cursors.Default;
         }
     }
@@ -540,7 +554,7 @@ public partial class FormConsultas : Form
     /// <summary>
     /// Carga los datos de la consulta seleccionada en la grilla para su revisión o modificación.
     /// </summary>
-    private void dgvConsultas_CellClick(object? sender, DataGridViewCellEventArgs e)
+    private async void dgvConsultas_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
         if (e.RowIndex < 0 || e.RowIndex >= dgvConsultas.Rows.Count)
             return;
@@ -567,13 +581,77 @@ public partial class FormConsultas : Form
         txtMotivo.Text = consulta.Motivo ?? string.Empty;
         txtPeso.Text = consulta.PesoKg.HasValue ? consulta.PesoKg.Value.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
         txtTemperatura.Text = consulta.Temperatura.HasValue ? consulta.Temperatura.Value.ToString("0.0", CultureInfo.InvariantCulture) : string.Empty;
+        txtImporte.Text = consulta.Importe > 0 ? consulta.Importe.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
         txtDiagnostico.Text = consulta.Diagnostico;
         txtObservaciones.Text = consulta.Observaciones ?? string.Empty;
 
         btnGuardar.Enabled = false;
         btnModificar.Enabled = true;
+        _snapshotEdicion = ObtenerSnapshotFormulario();
 
-        lblInfoEstado.Text = $"Consulta N° {consulta.Id} ({consulta.FechaHora:dd/MM/yyyy HH:mm}) cargada para modificación.";
+        var detalleImporte = await ObtenerDetalleImporteConsultaAsync(consulta.Id);
+        lblInfoEstado.Text = $"Consulta N° {consulta.Id} ({consulta.FechaHora:dd/MM/yyyy HH:mm}) | {detalleImporte}";
+    }
+
+    private string ObtenerSnapshotFormulario()
+    {
+        var idMascota = cboMascota.SelectedValue is long id ? id : 0L;
+        return string.Join("|",
+            idMascota,
+            txtMotivo.Text.Trim(),
+            txtPeso.Text.Trim(),
+            txtTemperatura.Text.Trim(),
+            txtImporte.Text.Trim(),
+            txtDiagnostico.Text.Trim(),
+            txtObservaciones.Text.Trim(),
+            dtpProximoControl.Value.Date.ToString("yyyy-MM-dd"));
+    }
+
+    private async Task<string> ObtenerDetalleImporteConsultaAsync(long idConsulta)
+    {
+        var sb = new System.Text.StringBuilder();
+        var total = 0m;
+
+        var consulta = _consultas.FirstOrDefault(c => c.Id == idConsulta);
+        if (consulta is not null && consulta.Importe > 0)
+        {
+            sb.Append($"[Consulta ${consulta.Importe:N2}] ");
+            total += consulta.Importe;
+        }
+
+        var detalleCtrl = _serviceProvider.GetService<DetalleConsultaControlador>();
+        if (detalleCtrl is not null)
+        {
+            var resDet = await detalleCtrl.ObtenerPorConsultaAsync(idConsulta);
+            if (resDet.EsExitoso && resDet.Valor is not null)
+            {
+                foreach (var d in resDet.Valor)
+                {
+                    sb.Append($"[Trat. {d.DescripcionTratamiento} ${d.Subtotal:N2}] ");
+                    total += d.Subtotal;
+                }
+            }
+        }
+
+        var vacCtrl = _serviceProvider.GetService<AplicacionVacunaControlador>();
+        if (vacCtrl is not null)
+        {
+            var resVac = await vacCtrl.ObtenerPorConsultaAsync(idConsulta);
+            if (resVac.EsExitoso && resVac.Valor is not null)
+            {
+                foreach (var v in resVac.Valor)
+                {
+                    var precio = v.PrecioUnitario ?? 0m;
+                    sb.Append($"[Vac. {v.NombreVacuna} ${precio:N2}] ");
+                    total += precio;
+                }
+            }
+        }
+
+        if (sb.Length == 0)
+            return "Sin detalle de importe";
+
+        return $"{sb}Total: ${total:N2}";
     }
 
     /// <summary>
@@ -591,6 +669,7 @@ public partial class FormConsultas : Form
     {
         _idConsultaSeleccionada = null;
         _fechaHoraConsultaSeleccionada = null;
+        _snapshotEdicion = null;
         LimpiarTodosLosErroresVisuales();
 
         _sincronizandoCombos = true;
@@ -614,6 +693,7 @@ public partial class FormConsultas : Form
         txtMotivo.Clear();
         txtPeso.Clear();
         txtTemperatura.Clear();
+        txtImporte.Clear();
         txtDiagnostico.Clear();
         txtObservaciones.Clear();
 

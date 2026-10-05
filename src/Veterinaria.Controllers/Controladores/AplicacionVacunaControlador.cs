@@ -170,6 +170,9 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
             entidad.ProximaDosis = solicitud.ProximaDosis ?? entidad.ProximaDosis;
             entidad.Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim();
 
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Aplicación de vacuna actualizada exitosamente.");
         }

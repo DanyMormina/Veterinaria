@@ -44,6 +44,8 @@ partial class FormVacunasControles
         lblFechaAplicacion = new Label();
         dtpFechaAplicacion = new DateTimePicker();
         chkVacunaPrevia = new CheckBox();
+        lblImporte = new Label();
+        txtImporte = new TextBox();
         lblProximaDosis = new Label();
         dtpProximaDosis = new DateTimePicker();
         lblObservaciones = new Label();
@@ -257,6 +259,8 @@ partial class FormVacunasControles
         grpAplicacion.Controls.Add(lblFechaAplicacion);
         grpAplicacion.Controls.Add(dtpFechaAplicacion);
         grpAplicacion.Controls.Add(chkVacunaPrevia);
+        grpAplicacion.Controls.Add(lblImporte);
+        grpAplicacion.Controls.Add(txtImporte);
         grpAplicacion.Controls.Add(lblProximaDosis);
         grpAplicacion.Controls.Add(dtpProximaDosis);
         grpAplicacion.Controls.Add(lblObservaciones);
@@ -394,6 +398,25 @@ partial class FormVacunasControles
         chkVacunaPrevia.TabIndex = 10;
         chkVacunaPrevia.Text = "Vacuna previa / Externa (sin costo)";
         chkVacunaPrevia.UseVisualStyleBackColor = true;
+        chkVacunaPrevia.CheckedChanged += chkVacunaPrevia_CheckedChanged;
+        // 
+        // lblImporte
+        // 
+        lblImporte.Location = new Point(320, 104);
+        lblImporte.Name = "lblImporte";
+        lblImporte.Size = new Size(80, 23);
+        lblImporte.TabIndex = 11;
+        lblImporte.Text = "Importe $";
+        lblImporte.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // txtImporte
+        // 
+        txtImporte.BackColor = Color.White;
+        txtImporte.BorderStyle = BorderStyle.FixedSingle;
+        txtImporte.Location = new Point(404, 104);
+        txtImporte.Name = "txtImporte";
+        txtImporte.Size = new Size(120, 23);
+        txtImporte.TabIndex = 12;
         // 
         // lblProximaDosis
         // 
@@ -511,4 +534,6 @@ partial class FormVacunasControles
     private StatusStrip barraEstado;
     private ToolStripStatusLabel lblInfoEstado;
     private CheckBox chkVacunaPrevia;
+    private Label lblImporte;
+    private TextBox txtImporte;
 }

@@ -32,6 +32,8 @@ partial class FormConsultas
         txtTemperatura = new TextBox();
         lblProximoControl = new Label();
         dtpProximoControl = new DateTimePicker();
+        lblImporte = new Label();
+        txtImporte = new TextBox();
         lblDiagnostico = new Label();
         txtDiagnostico = new TextBox();
         lblObservaciones = new Label();
@@ -124,6 +126,8 @@ partial class FormConsultas
         grpDatos.Controls.Add(txtTemperatura);
         grpDatos.Controls.Add(lblProximoControl);
         grpDatos.Controls.Add(dtpProximoControl);
+        grpDatos.Controls.Add(lblImporte);
+        grpDatos.Controls.Add(txtImporte);
         grpDatos.Controls.Add(lblDiagnostico);
         grpDatos.Controls.Add(txtDiagnostico);
         grpDatos.Controls.Add(lblObservaciones);
@@ -236,7 +240,23 @@ partial class FormConsultas
         dtpProximoControl.Format = DateTimePickerFormat.Short;
         dtpProximoControl.Location = new Point(644, 104);
         dtpProximoControl.Name = "dtpProximoControl";
-        dtpProximoControl.Size = new Size(160, 23);
+        dtpProximoControl.Size = new Size(120, 23);
+        // 
+        // lblImporte
+        // 
+        lblImporte.Location = new Point(780, 104);
+        lblImporte.Name = "lblImporte";
+        lblImporte.Size = new Size(70, 23);
+        lblImporte.Text = "Importe $";
+        lblImporte.TextAlign = ContentAlignment.MiddleLeft;
+        // 
+        // txtImporte
+        // 
+        txtImporte.BackColor = Color.White;
+        txtImporte.BorderStyle = BorderStyle.FixedSingle;
+        txtImporte.Location = new Point(854, 104);
+        txtImporte.Name = "txtImporte";
+        txtImporte.Size = new Size(190, 23);
         // 
         // lblDiagnostico
         // 
@@ -474,6 +494,8 @@ partial class FormConsultas
     private TextBox txtTemperatura;
     private Label lblProximoControl;
     private DateTimePicker dtpProximoControl;
+    private Label lblImporte;
+    private TextBox txtImporte;
     private Label lblDiagnostico;
     private TextBox txtDiagnostico;
     private Label lblObservaciones;

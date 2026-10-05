@@ -43,6 +43,8 @@ partial class FormPropietarios
         lblBuscar = new Label();
         txtBuscar = new TextBox();
         btnBuscar = new Button();
+        btnActivar = new Button();
+        btnDesactivar = new Button();
         dgvPropietarios = new DataGridView();
         colId = new DataGridViewTextBoxColumn();
         colDni = new DataGridViewTextBoxColumn();
@@ -321,6 +323,8 @@ partial class FormPropietarios
         pnlListado.Controls.Add(txtBuscar);
         pnlListado.Controls.Add(btnBuscar);
         pnlListado.Controls.Add(dgvPropietarios);
+        pnlListado.Controls.Add(btnActivar);
+        pnlListado.Controls.Add(btnDesactivar);
         pnlListado.Location = new Point(12, 245);
         pnlListado.Name = "pnlListado";
         pnlListado.Size = new Size(1076, 380);
@@ -391,8 +395,42 @@ partial class FormPropietarios
         dgvPropietarios.ReadOnly = true;
         dgvPropietarios.RowHeadersVisible = false;
         dgvPropietarios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvPropietarios.Size = new Size(1054, 320);
+        dgvPropietarios.Size = new Size(1054, 290);
         dgvPropietarios.TabIndex = 5;
+        // 
+        // btnActivar
+        // 
+        btnActivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnActivar.BackColor = Color.FromArgb(226, 217, 220);
+        btnActivar.Cursor = Cursors.Hand;
+        btnActivar.Enabled = false;
+        btnActivar.FlatAppearance.BorderSize = 0;
+        btnActivar.FlatStyle = FlatStyle.Flat;
+        btnActivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnActivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnActivar.Location = new Point(840, 343);
+        btnActivar.Name = "btnActivar";
+        btnActivar.Size = new Size(105, 30);
+        btnActivar.TabIndex = 9;
+        btnActivar.Text = "Activar";
+        btnActivar.UseVisualStyleBackColor = false;
+        // 
+        // btnDesactivar
+        // 
+        btnDesactivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        btnDesactivar.BackColor = Color.FromArgb(226, 217, 220);
+        btnDesactivar.Cursor = Cursors.Hand;
+        btnDesactivar.Enabled = false;
+        btnDesactivar.FlatAppearance.BorderSize = 0;
+        btnDesactivar.FlatStyle = FlatStyle.Flat;
+        btnDesactivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnDesactivar.ForeColor = Color.FromArgb(136, 136, 136);
+        btnDesactivar.Location = new Point(955, 343);
+        btnDesactivar.Name = "btnDesactivar";
+        btnDesactivar.Size = new Size(105, 30);
+        btnDesactivar.TabIndex = 10;
+        btnDesactivar.Text = "Desactivar";
+        btnDesactivar.UseVisualStyleBackColor = false;
         // 
         // colId
         // 
@@ -501,6 +539,8 @@ partial class FormPropietarios
     private Label lblBuscar;
     private TextBox txtBuscar;
     private Button btnBuscar;
+    private Button btnActivar;
+    private Button btnDesactivar;
     private DataGridView dgvPropietarios;
     private DataGridViewTextBoxColumn colId;
     private DataGridViewTextBoxColumn colDni;

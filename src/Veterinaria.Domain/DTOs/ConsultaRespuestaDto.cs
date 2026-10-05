@@ -14,6 +14,7 @@ public class ConsultaRespuestaDto
     public decimal? Temperatura { get; set; }
     public string Diagnostico { get; set; } = string.Empty;
     public string? Observaciones { get; set; }
+    public decimal Importe { get; set; }
     public bool Activo { get; set; }
     public int CantidadTratamientos { get; set; }
     public int CantidadVacunas { get; set; }

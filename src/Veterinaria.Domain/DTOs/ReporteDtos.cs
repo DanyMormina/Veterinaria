@@ -25,7 +25,34 @@ public record ReporteConsultaClinicaDto
     public string Raza { get; init; } = string.Empty;
     public string Propietario { get; init; } = string.Empty;
     public string Veterinario { get; init; } = string.Empty;
+    public string Motivo { get; init; } = string.Empty;
     public string Diagnostico { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Filtro para el reporte de cobros de recepción.
+/// </summary>
+public record FiltroReporteCobroDto
+{
+    public DateTime FechaDesde { get; init; }
+    public DateTime FechaHasta { get; init; }
+    public string? Estado { get; init; }
+}
+
+/// <summary>
+/// Modelo de datos para el reporte de cobros.
+/// </summary>
+public record ReporteCobroDto
+{
+    public DateTime Fecha { get; init; }
+    public string FechaFormateada => Fecha.ToString("dd/MM/yyyy");
+    public long IdConsulta { get; init; }
+    public string Mascota { get; init; } = string.Empty;
+    public string Propietario { get; init; } = string.Empty;
+    public string MetodoPago { get; init; } = string.Empty;
+    public int? Cuotas { get; init; }
+    public decimal Importe { get; init; }
+    public string Estado { get; init; } = string.Empty;
 }
 
 /// <summary>

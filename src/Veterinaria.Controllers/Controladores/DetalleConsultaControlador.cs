@@ -108,6 +108,9 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             entidad.Subtotal = subtotal;
             entidad.Indicaciones = string.IsNullOrWhiteSpace(solicitud.Indicaciones) ? null : solicitud.Indicaciones.Trim();
 
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Detalle de consulta actualizado exitosamente.");
         }

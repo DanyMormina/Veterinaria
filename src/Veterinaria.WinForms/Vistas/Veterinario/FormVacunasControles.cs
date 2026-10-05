@@ -79,10 +79,16 @@ public partial class FormVacunasControles : Form
         btnGuardar.Enabled = true;
         btnModificar.Enabled = false;
 
-        // 4. Precarga asíncrona de catálogos base
+        // 4. Precarga asíncrona de catálogos base (sin seleccionar nada en el formulario)
         await CargarCatalogoMascotasAsync();
         await CargarCatalogoVacunasAsync();
         await CargarAplicacionesGrillaAsync();
+        if (cboMascotas.Items.Count > 0)
+            cboMascotas.SelectedIndex = -1;
+        if (cboVacunas.Items.Count > 0)
+            cboVacunas.SelectedIndex = -1;
+        cboConsultas.DataSource = null;
+        btnModificar.Enabled = false;
     }
 
     #region Carga de Datos y Catálogos
@@ -247,12 +253,9 @@ public partial class FormVacunasControles : Form
             }).ToList();
 
             cboConsultas.DataSource = items;
+            cboConsultas.SelectedIndex = -1;
 
-            if (items.Count > 0)
-            {
-                cboConsultas.SelectedIndex = 0;
-            }
-            else
+            if (items.Count == 0)
             {
                 lblInfoEstado.Text = "La mascota no posee consultas clínicas activas registradas.";
             }
@@ -322,6 +325,10 @@ public partial class FormVacunasControles : Form
             }
 
             lblInfoEstado.Text = $"Se cargaron {_listaAplicaciones.Count} registro(s) de vacunación.";
+            dgvVacunas.ClearSelection();
+            dgvVacunas.CurrentCell = null;
+            _idAplicacionSeleccionada = null;
+            btnModificar.Enabled = false;
         }
         catch (Exception ex)
         {
@@ -383,6 +390,40 @@ public partial class FormVacunasControles : Form
     {
         if (_cargandoVacunas || _cargandoSeleccion) return;
         ActualizarSugerenciaFechasVacuna();
+        ActualizarImporteDesdeVacuna();
+    }
+
+    private void chkVacunaPrevia_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (chkVacunaPrevia.Checked)
+        {
+            txtImporte.Text = "0,00";
+            txtImporte.Enabled = false;
+        }
+        else
+        {
+            txtImporte.Enabled = true;
+            ActualizarImporteDesdeVacuna();
+        }
+    }
+
+    private void ActualizarImporteDesdeVacuna()
+    {
+        if (chkVacunaPrevia.Checked)
+        {
+            txtImporte.Text = "0,00";
+            return;
+        }
+
+        var idVacuna = ObtenerIdSeleccionado(cboVacunas);
+        if (!idVacuna.HasValue || idVacuna.Value <= 0)
+        {
+            txtImporte.Clear();
+            return;
+        }
+
+        var vacuna = _todasLasVacunas.FirstOrDefault(v => v.Id == idVacuna.Value);
+        txtImporte.Text = (vacuna?.Precio ?? 0m).ToString("N2", CulturaArgentina);
     }
 
     /// <summary>
@@ -484,6 +525,10 @@ public partial class FormVacunasControles : Form
                     }
 
                     chkVacunaPrevia.Checked = !app.PrecioUnitario.HasValue;
+                    txtImporte.Enabled = app.PrecioUnitario.HasValue;
+                    txtImporte.Text = app.PrecioUnitario.HasValue
+                        ? app.PrecioUnitario.Value.ToString("N2", CulturaArgentina)
+                        : "0,00";
                     txtObservaciones.Text = app.Observaciones ?? string.Empty;
 
                     btnModificar.Enabled = true;
@@ -610,11 +655,36 @@ public partial class FormVacunasControles : Form
             return;
         }
 
-        // 5. Capturar el precio unitario vigente de la vacuna o null si es vacuna previa / externa
-        var vacunaSeleccionada = _todasLasVacunas.FirstOrDefault(v => v.Id == idVacuna.Value);
-        decimal? precioHistorico = chkVacunaPrevia.Checked
-            ? null
-            : (vacunaSeleccionada?.Precio ?? 0.00m);
+        // 5. Capturar el importe de la vacuna (editable) o null si es vacuna previa / externa
+        decimal? precioHistorico = null;
+        if (!chkVacunaPrevia.Checked)
+        {
+            var textoImporte = txtImporte.Text.Trim().Replace("$", string.Empty).Trim();
+            if (!decimal.TryParse(textoImporte, NumberStyles.Any, CulturaArgentina, out var importe) &&
+                !decimal.TryParse(textoImporte.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out importe))
+            {
+                MessageBox.Show(
+                    "El importe de la vacuna es obligatorio y debe ser un número válido.",
+                    "Importe requerido",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                txtImporte.Focus();
+                return;
+            }
+
+            if (importe <= 0)
+            {
+                MessageBox.Show(
+                    "El importe de la vacuna debe ser mayor a 0 (o marque vacuna previa / externa).",
+                    "Importe inválido",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                txtImporte.Focus();
+                return;
+            }
+
+            precioHistorico = decimal.Round(importe, 2);
+        }
 
         // 6. Construir DTO de solicitud
         var solicitud = new AplicacionVacunaSolicitudDto
@@ -702,9 +772,27 @@ public partial class FormVacunasControles : Form
             return;
         }
 
-        decimal? precioModificado = chkVacunaPrevia.Checked
-            ? null
-            : (_todasLasVacunas.FirstOrDefault(v => v.Id == idVacuna.Value)?.Precio ?? 0.00m);
+        decimal? precioModificado = null;
+        if (!chkVacunaPrevia.Checked)
+        {
+            var textoImporte = txtImporte.Text.Trim().Replace("$", string.Empty).Trim();
+            if (!decimal.TryParse(textoImporte, NumberStyles.Any, CulturaArgentina, out var importe) &&
+                !decimal.TryParse(textoImporte.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out importe))
+            {
+                MessageBox.Show("El importe de la vacuna es obligatorio y debe ser un número válido.", "Importe requerido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtImporte.Focus();
+                return;
+            }
+
+            if (importe <= 0)
+            {
+                MessageBox.Show("El importe de la vacuna debe ser mayor a 0.", "Importe inválido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtImporte.Focus();
+                return;
+            }
+
+            precioModificado = decimal.Round(importe, 2);
+        }
 
         var idConsulta = ObtenerIdSeleccionado(cboConsultas);
 
@@ -793,6 +881,8 @@ public partial class FormVacunasControles : Form
 
             // 5. Limpiar casilla de vacuna previa / externa y observaciones
             chkVacunaPrevia.Checked = false;
+            txtImporte.Enabled = true;
+            txtImporte.Clear();
             txtObservaciones.Clear();
 
             // 6. Restablecer controles de fechas predeterminadas

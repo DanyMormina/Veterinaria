@@ -303,6 +303,10 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
             b.Property(c => c.Diagnostico)
                 .IsRequired();
 
+            b.Property(c => c.Importe)
+                .HasColumnType("decimal(18,2)")
+                .HasDefaultValue(0m);
+
             b.HasOne(c => c.Mascota)
                 .WithMany(m => m.Consultas)
                 .HasForeignKey(c => c.IdMascota)

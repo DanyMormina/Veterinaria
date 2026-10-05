@@ -1,3 +1,4 @@
+using System.Drawing.Printing;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
@@ -20,6 +21,8 @@ public partial class FormFichaMedica : Form
     private List<MascotaRespuestaDto> _listaMascotas = [];
     private MascotaRespuestaDto? _mascotaSeleccionada = null;
     private bool _cargandoMascotas = false;
+    private int _filaActualImpresion;
+    private int _paginaActualImpresion;
 
     /// <summary>
     /// Compatibilidad hacia atrás para referencias a la grilla con el nombre dgvHistorial.
@@ -394,25 +397,7 @@ public partial class FormFichaMedica : Form
     }
 
     /// <summary>
-    /// Permite al usuario refrescar manualmente el historial de la mascota seleccionada.
-    /// </summary>
-    private async void btnVerHistorial_Click(object? sender, EventArgs e)
-    {
-        if (_mascotaSeleccionada != null)
-        {
-            await CargarHistorialClinicoAsync(_mascotaSeleccionada.Id);
-            lblInfoEstado.Text = $"Historial clínico actualizado para {_mascotaSeleccionada.Nombre}.";
-        }
-        else
-        {
-            pnlContenedorBusqueda.BackColor = ColorError;
-            lblInfoEstado.Text = "Debe buscar y seleccionar una mascota para consultar su historial.";
-            cboBuscarMascota.Focus();
-        }
-    }
-
-    /// <summary>
-    /// Gestiona la impresión de la ficha médica o notifica si aún no hay paciente seleccionado.
+    /// Abre la vista previa de impresión de la ficha médica con datos del paciente e historial clínico.
     /// </summary>
     private void btnImprimirFicha_Click(object? sender, EventArgs e)
     {
@@ -429,11 +414,186 @@ public partial class FormFichaMedica : Form
             return;
         }
 
-        MessageBox.Show(
-            $"Preparando impresión de la ficha médica de {_mascotaSeleccionada.Nombre} (Propietario: {_mascotaSeleccionada.NombrePropietario}).\nHistorial con {dgvHistorialClinico.Rows.Count} consulta(s) registrada(s).",
-            "Impresión de Ficha Médica",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+        if (dgvHistorialClinico.Rows.Count == 0)
+        {
+            MessageBox.Show(
+                "La mascota seleccionada no tiene consultas en el historial clínico para imprimir.",
+                "Sin historial",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        try
+        {
+            using var pd = CrearPrintDocumentFicha();
+            using var vistaPrevia = new PrintPreviewDialog
+            {
+                Document = pd,
+                Width = 1050,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterScreen,
+                Text = $"Vista previa — Ficha médica de {_mascotaSeleccionada.Nombre}"
+            };
+            vistaPrevia.ShowDialog(this);
+            lblInfoEstado.Text = $"Vista previa de ficha médica lista: {_mascotaSeleccionada.Nombre}.";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Error al preparar la impresión de la ficha médica: {ex.Message}",
+                "Error de impresión",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
+
+    private PrintDocument CrearPrintDocumentFicha()
+    {
+        var pd = new PrintDocument();
+        pd.DefaultPageSettings.Landscape = true;
+        pd.DefaultPageSettings.Margins = new Margins(40, 40, 40, 40);
+        pd.BeginPrint += (_, _) =>
+        {
+            _filaActualImpresion = 0;
+            _paginaActualImpresion = 0;
+        };
+        pd.PrintPage += ImprimirPaginaFichaMedica;
+        return pd;
+    }
+
+    private void ImprimirPaginaFichaMedica(object sender, PrintPageEventArgs e)
+    {
+        _paginaActualImpresion++;
+        var g = e.Graphics;
+        if (g is null || _mascotaSeleccionada is null)
+        {
+            e.HasMorePages = false;
+            return;
+        }
+
+        var bounds = e.MarginBounds;
+        using var fontTitulo = new Font("Segoe UI", 12F, FontStyle.Bold);
+        using var fontSubtitulo = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+        using var fontInfo = new Font("Segoe UI", 8.5F, FontStyle.Regular);
+        using var fontCabecera = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+        using var fontCelda = new Font("Segoe UI", 8F, FontStyle.Regular);
+        using var fontPie = new Font("Segoe UI", 8F, FontStyle.Italic);
+        using var brushTexto = new SolidBrush(Color.FromArgb(58, 53, 59));
+        using var brushPrimario = new SolidBrush(Color.FromArgb(200, 138, 150));
+        using var brushCabeceraFondo = new SolidBrush(Color.FromArgb(240, 235, 237));
+        using var brushFilaAlt = new SolidBrush(Color.FromArgb(250, 244, 244));
+        using var penSeparador = new Pen(Color.FromArgb(200, 138, 150), 1.5f);
+        using var penLinea = new Pen(Color.FromArgb(226, 217, 220), 1f);
+
+        float y = bounds.Top;
+        var profesional = SesionActual.EstaAutenticado
+            ? SesionActual.NombreCompleto
+            : "Veterinario";
+
+        if (_paginaActualImpresion == 1)
+        {
+            g.DrawString("CLÍNICA VETERINARIA — FICHA MÉDICA", fontTitulo, brushPrimario, bounds.Left, y);
+            y += 22;
+            g.DrawString($"Paciente: {_mascotaSeleccionada.Nombre}", fontSubtitulo, brushTexto, bounds.Left, y);
+            y += 18;
+            g.DrawString(
+                $"Propietario: {_mascotaSeleccionada.NombrePropietario} | Especie: {_mascotaSeleccionada.EspecieNombre} | Raza: {_mascotaSeleccionada.RazaNombre}",
+                fontInfo, brushTexto, bounds.Left, y);
+            y += 16;
+            g.DrawString(
+                $"Sexo: {ObtenerSexo()} | Color: {_mascotaSeleccionada.Color ?? "-"} | Nacimiento: {(_mascotaSeleccionada.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "-")}",
+                fontInfo, brushTexto, bounds.Left, y);
+            y += 16;
+            g.DrawString(
+                $"Emisión: {DateTime.Now:dd/MM/yyyy HH:mm} | Profesional: {profesional} | Consultas: {dgvHistorialClinico.Rows.Count}",
+                fontInfo, Brushes.Gray, bounds.Left, y);
+            y += 18;
+            g.DrawLine(penSeparador, bounds.Left, y, bounds.Right, y);
+            y += 10;
+            g.DrawString("HISTORIAL CLÍNICO", fontSubtitulo, brushTexto, bounds.Left, y);
+            y += 20;
+        }
+        else
+        {
+            g.DrawString(
+                $"CLÍNICA VETERINARIA — Ficha de {_mascotaSeleccionada.Nombre} (Pág. {_paginaActualImpresion})",
+                fontSubtitulo, brushPrimario, bounds.Left, y);
+            y += 18;
+            g.DrawLine(penSeparador, bounds.Left, y, bounds.Right, y);
+            y += 10;
+        }
+
+        var columnas = dgvHistorialClinico.Columns.Cast<DataGridViewColumn>()
+            .Where(c => c.Visible)
+            .OrderBy(c => c.DisplayIndex)
+            .ToList();
+
+        if (columnas.Count == 0)
+        {
+            e.HasMorePages = false;
+            return;
+        }
+
+        float totalAncho = columnas.Sum(c => Math.Max(c.Width, 40));
+        var anchos = columnas.Select(c => (Math.Max(c.Width, 40) / totalAncho) * bounds.Width).ToArray();
+        const float altoCabecera = 22f;
+        const float altoFila = 20f;
+
+        using var formatTexto = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            LineAlignment = StringAlignment.Center,
+            Trimming = StringTrimming.EllipsisCharacter,
+            FormatFlags = StringFormatFlags.NoWrap
+        };
+
+        g.FillRectangle(brushCabeceraFondo, bounds.Left, y, bounds.Width, altoCabecera);
+        g.DrawRectangle(penLinea, bounds.Left, y, bounds.Width, altoCabecera);
+        float x = bounds.Left;
+        for (var i = 0; i < columnas.Count; i++)
+        {
+            g.DrawString(columnas[i].HeaderText, fontCabecera, brushTexto,
+                new RectangleF(x + 3, y, anchos[i] - 6, altoCabecera), formatTexto);
+            x += anchos[i];
+            if (i < columnas.Count - 1)
+                g.DrawLine(penLinea, x, y, x, y + altoCabecera);
+        }
+        y += altoCabecera;
+
+        while (_filaActualImpresion < dgvHistorialClinico.Rows.Count)
+        {
+            if (y + altoFila > bounds.Bottom - 30)
+            {
+                e.HasMorePages = true;
+                g.DrawLine(penSeparador, bounds.Left, bounds.Bottom - 22, bounds.Right, bounds.Bottom - 22);
+                g.DrawString($"Página {_paginaActualImpresion}", fontPie, brushTexto, bounds.Left, bounds.Bottom - 18);
+                return;
+            }
+
+            var fila = dgvHistorialClinico.Rows[_filaActualImpresion];
+            if (_filaActualImpresion % 2 == 1)
+                g.FillRectangle(brushFilaAlt, bounds.Left, y, bounds.Width, altoFila);
+
+            g.DrawRectangle(penLinea, bounds.Left, y, bounds.Width, altoFila);
+            x = bounds.Left;
+            for (var i = 0; i < columnas.Count; i++)
+            {
+                var valor = fila.Cells[columnas[i].Index].FormattedValue?.ToString() ?? string.Empty;
+                g.DrawString(valor, fontCelda, brushTexto,
+                    new RectangleF(x + 3, y, anchos[i] - 6, altoFila), formatTexto);
+                x += anchos[i];
+                if (i < columnas.Count - 1)
+                    g.DrawLine(penLinea, x, y, x, y + altoFila);
+            }
+
+            y += altoFila;
+            _filaActualImpresion++;
+        }
+
+        e.HasMorePages = false;
+        g.DrawLine(penSeparador, bounds.Left, bounds.Bottom - 22, bounds.Right, bounds.Bottom - 22);
+        g.DrawString($"Página {_paginaActualImpresion} | Fin de ficha médica", fontPie, brushTexto, bounds.Left, bounds.Bottom - 18);
     }
 
     private void btnVolver_Click(object? sender, EventArgs e)

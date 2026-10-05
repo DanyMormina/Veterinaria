@@ -23,10 +23,6 @@ public partial class FormPropietarios : Form
     private static readonly Color ColorEtiquetaNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
 
-    private static readonly Color ColorBotonActivarHabilitado = ColorTranslator.FromHtml("#8FA89B");
-    private static readonly Color ColorBotonDesactivarHabilitado = ColorTranslator.FromHtml("#B85D69");
-    private static readonly Color ColorBotonDeshabilitado = ColorTranslator.FromHtml("#E2D9DC");
-    private static readonly Color ColorTextoBotonDeshabilitado = ColorTranslator.FromHtml("#888888");
 
     private readonly ErrorProvider _errores = new();
     private readonly PropietarioControlador? _propietarioControlador;
@@ -338,7 +334,6 @@ public partial class FormPropietarios : Form
         cboFiltroEstado.Items.AddRange(["(Todos)", "Solo Activos", "Solo Inactivos"]);
         cboFiltroEstado.SelectedIndex = 0;
 
-        ActualizarEstadoBotonesAccion(null);
 
         await CargarPropietariosAsync();
     }
@@ -361,15 +356,9 @@ public partial class FormPropietarios : Form
 
         _propietarios = resultado.Valor.ToList();
         MostrarPropietariosEnGrilla(_propietarios);
-
-        if (_propietarios.Count > 0)
-        {
-            await SeleccionarPropietarioAsync(_propietarios[0]);
-        }
-        else
-        {
-            LimpiarDetalles();
-        }
+        dgvPropietarios.ClearSelection();
+        dgvPropietarios.CurrentCell = null;
+        LimpiarDetalles();
     }
 
     private void MostrarPropietariosEnGrilla(IEnumerable<PropietarioRespuestaDto> propietarios)
@@ -392,7 +381,7 @@ public partial class FormPropietarios : Form
 
     /// <summary>
     /// Aplica los filtros combinados de búsqueda por texto y estado sobre la nómina de propietarios en memoria,
-    /// actualizando la grilla y seleccionando automáticamente el primer resultado obtenido.
+    /// actualizando la grilla sin precargar el formulario (el usuario debe elegir una fila).
     /// </summary>
     private void AplicarFiltros()
     {
@@ -425,19 +414,12 @@ public partial class FormPropietarios : Form
                 (p.Direccion?.Contains(texto, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
-        // 5. Materializar la lista de resultados filtrados y representarlos en la grilla principal
+        // 5. Materializar resultados en la grilla y dejar el formulario limpio
         var filtrados = consulta.ToList();
         MostrarPropietariosEnGrilla(filtrados);
-
-        // 6. Sincronizar el panel de detalles: si hay coincidencias, auto-seleccionar el primer registro; de lo contrario, limpiar los campos
-        if (filtrados.Count > 0)
-        {
-            _ = SeleccionarPropietarioAsync(filtrados[0]);
-        }
-        else
-        {
-            LimpiarDetalles();
-        }
+        dgvPropietarios.ClearSelection();
+        dgvPropietarios.CurrentCell = null;
+        LimpiarDetalles();
     }
 
     /// <summary>
@@ -488,7 +470,6 @@ public partial class FormPropietarios : Form
         txtDireccion.Text = propietario.Direccion ?? string.Empty;
 
         // 4. Actualizar visualmente la habilitación y colores de los botones Activar / Desactivar
-        ActualizarEstadoBotonesAccion(propietario.Activo);
 
         // 5. Cargar en cascada la grilla inferior con las mascotas registradas a cargo de este propietario
         await CargarMascotasDelPropietarioAsync(propietario.Id);
@@ -534,7 +515,6 @@ public partial class FormPropietarios : Form
         txtTelefono.Clear();
         txtCorreoElectronico.Clear();
         txtDireccion.Clear();
-        ActualizarEstadoBotonesAccion(null);
         dgvMascotasPropietario.Rows.Clear();
     }
 
@@ -677,14 +657,12 @@ public partial class FormPropietarios : Form
 
         var filtrados = consulta.ToList();
         MostrarPropietariosEnGrilla(filtrados);
+        dgvPropietarios.ClearSelection();
+        dgvPropietarios.CurrentCell = null;
+        LimpiarDetalles();
 
-        if (filtrados.Count > 0)
+        if (filtrados.Count == 0)
         {
-            _ = SeleccionarPropietarioAsync(filtrados[0]);
-        }
-        else
-        {
-            LimpiarDetalles();
             MessageBox.Show(
                 $"No se encontraron propietarios que coincidan{Environment.NewLine}con los criterios de búsqueda.",
                 "Búsqueda de Propietario",
@@ -713,14 +691,12 @@ public partial class FormPropietarios : Form
     {
         if (dgvPropietarios.CurrentRow == null || dgvPropietarios.CurrentRow.Index < 0)
         {
-            ActualizarEstadoBotonesAccion(null);
             return;
         }
 
         var fila = dgvPropietarios.CurrentRow;
         if (fila.Cells[0].Value is null)
         {
-            ActualizarEstadoBotonesAccion(null);
             return;
         }
 
@@ -728,113 +704,6 @@ public partial class FormPropietarios : Form
         var propietario = _propietarios.FirstOrDefault(p => p.Id == id);
         if (propietario is not null)
         {
-            ActualizarEstadoBotonesAccion(propietario.Activo);
-        }
-    }
-
-    /// <summary>
-    /// Actualiza de forma reactiva el estado y colores de los botones de estado (Activar / Desactivar).
-    /// null = sin selección (ambos deshabilitados).
-    /// true = registro activo (Desactivar habilitado).
-    /// false = registro inactivo (Activar habilitado).
-    /// </summary>
-    private void ActualizarEstadoBotonesAccion(bool? activo)
-    {
-        if (!activo.HasValue)
-        {
-            btnActivar.Enabled = false;
-            btnActivar.BackColor = ColorBotonDeshabilitado;
-            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
-
-            btnDesactivar.Enabled = false;
-            btnDesactivar.BackColor = ColorBotonDeshabilitado;
-            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
-        }
-        else if (activo.Value)
-        {
-            // Registro Activo: Desactivar habilitado, Activar deshabilitado
-            btnActivar.Enabled = false;
-            btnActivar.BackColor = ColorBotonDeshabilitado;
-            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
-
-            btnDesactivar.Enabled = true;
-            btnDesactivar.BackColor = ColorBotonDesactivarHabilitado;
-            btnDesactivar.ForeColor = Color.White;
-        }
-        else
-        {
-            // Registro Inactivo: Activar habilitado, Desactivar deshabilitado
-            btnActivar.Enabled = true;
-            btnActivar.BackColor = ColorBotonActivarHabilitado;
-            btnActivar.ForeColor = Color.White;
-
-            btnDesactivar.Enabled = false;
-            btnDesactivar.BackColor = ColorBotonDeshabilitado;
-            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
-        }
-    }
-
-    private async void btnActivar_Click(object? sender, EventArgs e)
-    {
-        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
-        {
-            MessageBox.Show("Debe seleccionar un propietario de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        var confirmacion = MessageBox.Show(
-            "¿Desea reactivar este registro?",
-            "Confirmar Activación",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        if (confirmacion != DialogResult.Yes)
-            return;
-
-        if (_propietarioControlador is null)
-            return;
-
-        var resultado = await _propietarioControlador.CambiarEstadoAsync(_idSeleccionado.Value, true);
-        if (resultado.EsExitoso)
-        {
-            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            await CargarPropietariosAsync();
-        }
-        else
-        {
-            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
-    }
-
-    private async void btnDesactivar_Click(object? sender, EventArgs e)
-    {
-        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
-        {
-            MessageBox.Show("Debe seleccionar un propietario de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        var confirmacion = MessageBox.Show(
-            "¿Está seguro de que desea desactivar este registro?",
-            "Confirmar Desactivación",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        if (confirmacion != DialogResult.Yes)
-            return;
-
-        if (_propietarioControlador is null)
-            return;
-
-        var resultado = await _propietarioControlador.CambiarEstadoAsync(_idSeleccionado.Value, false);
-        if (resultado.EsExitoso)
-        {
-            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            await CargarPropietariosAsync();
-        }
-        else
-        {
-            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
@@ -843,3 +712,4 @@ public partial class FormPropietarios : Form
 
     }
 }
+

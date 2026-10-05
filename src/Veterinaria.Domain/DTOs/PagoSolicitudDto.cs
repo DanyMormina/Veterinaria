@@ -7,4 +7,5 @@ public class PagoSolicitudDto
     public DateTime Fecha { get; set; } = DateTime.Now;
     public decimal Importe { get; set; }
     public string Estado { get; set; } = "Completado";
+    public int? Cuotas { get; set; }
 }

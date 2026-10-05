@@ -92,6 +92,10 @@ public class EspecieControlador(ContextoVeterinaria context)
                 return Resultado.Falla($"Ya existe otra especie registrada con el nombre '{nombreNormalizado}'.");
 
             entidad.Nombre = nombreNormalizado;
+
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Especie actualizada exitosamente.");
         }
