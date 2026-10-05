@@ -12,6 +12,8 @@ public class Consulta : EntidadAuditable
     public decimal? Temperatura { get; set; }
     public string Diagnostico { get; set; } = string.Empty;
     public string? Observaciones { get; set; }
+    /// <summary>Importe base de la consulta clínica (sin tratamientos ni vacunas).</summary>
+    public decimal Importe { get; set; }
 
     public Usuario Usuario { get; set; } = null!;
     public Mascota Mascota { get; set; } = null!;

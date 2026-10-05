@@ -291,6 +291,14 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 entidad.HashContrasena = HasheadorContrasena.Hashear(solicitud.Contrasena);
             }
 
+            var entry = context.Entry(entidad);
+            var hayCambios = cambioContrasena || entry.Properties.Any(p =>
+                p.Metadata.Name != nameof(Usuario.HashContrasena) &&
+                !Equals(p.CurrentValue, p.OriginalValue));
+
+            if (!hayCambios)
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             // 9. Marcar modificaciones explícitas en EF Core
             context.Entry(entidad).State = EntityState.Modified;
             context.Entry(entidad).Property(u => u.HashContrasena).IsModified = cambioContrasena;

@@ -61,15 +61,15 @@ public partial class FormTratamientos : Form
 
         lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} — {DateTime.Now:dd/MM/yyyy}";
 
-        // 2. Grilla arranca completamente vacía
-        dgvTratamientosAplicados.Rows.Clear();
+        // 2. Formulario limpio; el listado se carga con todos los tratamientos aplicados
         lblTotal.Text = "Total: $ 0,00";
         txtSubtotal.Text = "$ 0,00";
         lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
 
-        // 3. Cargar catálogos iniciales
+        // 3. Cargar catálogos y listado (sin precargar selecciones del formulario)
         await CargarCatalogoMascotasAsync();
         await CargarCatalogoTratamientosAsync();
+        await CargarTodosTratamientosAplicadosAsync();
     }
 
     #region Carga de Datos y Catálogos
@@ -156,14 +156,16 @@ public partial class FormTratamientos : Form
 
             cboTratamientos.DataSource = items;
 
-            // Mantener selección previa si sigue existiendo y activa
+            // Mantener selección previa solo si el usuario ya había elegido una;
+            // al abrir o recargar el catálogo queda limpio (sin precargar el primero).
             if (idTratamientoActual.HasValue && items.Any(i => i.Id == idTratamientoActual.Value))
             {
                 cboTratamientos.SelectedValue = idTratamientoActual.Value;
             }
             else
             {
-                cboTratamientos.SelectedIndex = items.Count > 0 ? 0 : -1;
+                cboTratamientos.SelectedIndex = -1;
+                cboTratamientos.Text = string.Empty;
             }
 
             RecalcularSubtotal();
@@ -215,22 +217,61 @@ public partial class FormTratamientos : Form
             }).ToList();
 
             cboConsultas.DataSource = items;
+            cboConsultas.SelectedIndex = -1;
+            dgvTratamientosAplicados.Rows.Clear();
+            lblTotal.Text = "Total: $ 0,00";
 
-            if (items.Count > 0)
+            if (items.Count == 0)
             {
-                cboConsultas.SelectedIndex = 0;
-                await CargarTratamientosConsultaAsync(items[0].Id);
-            }
-            else
-            {
-                dgvTratamientosAplicados.Rows.Clear();
-                lblTotal.Text = "Total: $ 0,00";
                 lblInfoEstado.Text = "La mascota seleccionada no posee consultas clínicas activas registradas.";
             }
         }
         finally
         {
             _cargandoConsultas = false;
+        }
+    }
+
+    /// <summary>
+    /// Carga el listado general de tratamientos aplicados (formulario vacío, grilla con datos).
+    /// </summary>
+    private async Task CargarTodosTratamientosAplicadosAsync()
+    {
+        if (_tratamientoControlador is null) return;
+
+        try
+        {
+            var resultado = await _tratamientoControlador.ObtenerTodosAplicadosAsync();
+            dgvTratamientosAplicados.Rows.Clear();
+
+            if (!resultado.EsExitoso || resultado.Valor is null)
+            {
+                lblTotal.Text = "Total: $ 0,00";
+                return;
+            }
+
+            decimal totalAcumulado = 0;
+            foreach (var d in resultado.Valor)
+            {
+                totalAcumulado += d.Subtotal;
+                var idx = dgvTratamientosAplicados.Rows.Add(
+                    d.DescripcionTratamiento,
+                    d.TipoTratamiento,
+                    d.Cantidad,
+                    d.PrecioUnitario.ToString("C2", CulturaArgentina),
+                    d.Subtotal.ToString("C2", CulturaArgentina),
+                    d.Indicaciones ?? string.Empty);
+                dgvTratamientosAplicados.Rows[idx].Tag = d.Id;
+            }
+
+            dgvTratamientosAplicados.ClearSelection();
+            dgvTratamientosAplicados.CurrentCell = null;
+            lblTotal.Text = $"Total: {totalAcumulado.ToString("C2", CulturaArgentina)}";
+            lblInfoEstado.Text = $"Listado: {dgvTratamientosAplicados.Rows.Count} tratamiento(s) aplicado(s). Seleccione mascota y consulta para agregar.";
+        }
+        catch (Exception ex)
+        {
+            lblInfoEstado.Text = $"Error al cargar tratamientos aplicados: {ex.Message}";
         }
     }
 
@@ -261,14 +302,18 @@ public partial class FormTratamientos : Form
             foreach (var d in detalles)
             {
                 totalAcumulado += d.Subtotal;
-                dgvTratamientosAplicados.Rows.Add(
+                var idx = dgvTratamientosAplicados.Rows.Add(
                     d.DescripcionTratamiento,
                     d.TipoTratamiento,
                     d.Cantidad,
                     d.PrecioUnitario.ToString("C2", CulturaArgentina),
                     d.Subtotal.ToString("C2", CulturaArgentina),
                     d.Indicaciones ?? string.Empty);
+                dgvTratamientosAplicados.Rows[idx].Tag = d.Id;
             }
+
+            dgvTratamientosAplicados.ClearSelection();
+            dgvTratamientosAplicados.CurrentCell = null;
 
             // 3. Actualizar etiqueta de total ejecutivo
             lblTotal.Text = $"Total: {totalAcumulado.ToString("C2", CulturaArgentina)}";
@@ -508,12 +553,14 @@ public partial class FormTratamientos : Form
             // 4. Recargar la grilla con los detalles actualizados de la consulta activa y totalizar
             await CargarTratamientosConsultaAsync(idConsulta.Value);
 
-            // 5. Restablecer campos de detalle aplicado
+            // 5. Dejar listo para agregar otro tratamiento a la misma consulta
             numCantidad.Value = 1;
             txtIndicaciones.Clear();
+            cboTratamientos.SelectedIndex = -1;
             RecalcularSubtotal();
+            cboTratamientos.Focus();
 
-            lblInfoEstado.Text = $"Tratamiento aplicado con éxito a la consulta clínica. Id: {resultado.Valor}";
+            lblInfoEstado.Text = $"Tratamiento agregado. Puede agregar otro a la misma consulta. Total ítems: {dgvTratamientosAplicados.Rows.Count}";
         }
         catch (Exception ex)
         {
@@ -527,6 +574,43 @@ public partial class FormTratamientos : Form
         {
             btnAplicar.Enabled = true;
         }
+    }
+
+    private async void btnEliminar_Click(object? sender, EventArgs e)
+    {
+        if (_tratamientoControlador is null)
+            return;
+
+        if (dgvTratamientosAplicados.CurrentRow?.Tag is not long idDetalle || idDetalle <= 0)
+        {
+            MessageBox.Show(
+                "Seleccione en la grilla el tratamiento aplicado que desea eliminar.",
+                "Selección requerida",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmar = MessageBox.Show(
+            "¿Eliminar el tratamiento seleccionado de esta consulta?",
+            "Confirmar eliminación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+        if (confirmar != DialogResult.Yes)
+            return;
+
+        var resultado = await _tratamientoControlador.EliminarDetalleAplicadoAsync(idDetalle);
+        if (!resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Error al eliminar", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var idConsulta = ObtenerIdSeleccionado(cboConsultas);
+        if (idConsulta.HasValue && idConsulta.Value > 0)
+            await CargarTratamientosConsultaAsync(idConsulta.Value);
+
+        lblInfoEstado.Text = "Tratamiento eliminado de la consulta.";
     }
 
     /// <summary>
@@ -567,9 +651,9 @@ public partial class FormTratamientos : Form
         txtIndicaciones.Clear();
         txtSubtotal.Text = "$ 0,00";
 
-        // 5. Vaciar grilla de tratamientos aplicados y totalizador acumulado
-        dgvTratamientosAplicados.Rows.Clear();
+        // 5. Recargar listado general (formulario limpio, grilla con datos)
         lblTotal.Text = "Total: $ 0,00";
+        _ = CargarTodosTratamientosAplicadosAsync();
 
         // 6. Mensaje de estado y enfoque inicial en el buscador de mascotas
         lblInfoEstado.Text = "Formulario restablecido. Seleccione un paciente para comenzar.";

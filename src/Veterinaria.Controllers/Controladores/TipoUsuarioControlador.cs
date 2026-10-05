@@ -92,6 +92,10 @@ public class TipoUsuarioControlador(ContextoVeterinaria context)
                 return Resultado.Falla($"Ya existe otro tipo de usuario con el nombre '{nombreNormalizado}'.");
 
             entidad.Nombre = nombreNormalizado;
+
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Tipo de usuario actualizado exitosamente.");
         }

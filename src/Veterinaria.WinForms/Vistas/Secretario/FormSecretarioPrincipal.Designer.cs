@@ -5,6 +5,7 @@ partial class FormSecretarioPrincipal
     private PictureBox picPropietarios;
     private PictureBox picMascotas;
     private PictureBox picCobros;
+    private PictureBox picReportes;
     private System.ComponentModel.IContainer components = null;
     private System.Windows.Forms.Panel pnlEncabezado;
     private System.Windows.Forms.Label lblTitulo;
@@ -17,6 +18,7 @@ partial class FormSecretarioPrincipal
     private System.Windows.Forms.Button BTPROPIETARIOS;
     private System.Windows.Forms.Button BTMASCOTAS;
     private System.Windows.Forms.Button BTCOBROS;
+    private System.Windows.Forms.Button BTREPORTES;
 
     protected override void Dispose(bool disposing)
     {
@@ -38,6 +40,7 @@ partial class FormSecretarioPrincipal
         BTMASCOTAS = new Button();
         BTPROPIETARIOS = new Button();
         BTCOBROS = new Button();
+        BTREPORTES = new Button();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         pnlEncabezado.SuspendLayout();
@@ -49,6 +52,8 @@ partial class FormSecretarioPrincipal
         ((System.ComponentModel.ISupportInitialize)picMascotas).BeginInit();
         picCobros = new PictureBox();
         ((System.ComponentModel.ISupportInitialize)picCobros).BeginInit();
+        picReportes = new PictureBox();
+        ((System.ComponentModel.ISupportInitialize)picReportes).BeginInit();
         SuspendLayout();
         // 
         // pnlEncabezado
@@ -108,6 +113,7 @@ partial class FormSecretarioPrincipal
         // pnlContenido
         // 
         pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
+        pnlContenido.Controls.Add(BTREPORTES);
         pnlContenido.Controls.Add(BTCOBROS);
         pnlContenido.Controls.Add(BTMASCOTAS);
         pnlContenido.Controls.Add(BTPROPIETARIOS);
@@ -126,7 +132,7 @@ partial class FormSecretarioPrincipal
         BTMASCOTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold);
         BTMASCOTAS.ForeColor = Color.FromArgb(58, 53, 59);
         BTMASCOTAS.ImageAlign = ContentAlignment.TopCenter;
-        BTMASCOTAS.Location = new Point(178, 136);
+        BTMASCOTAS.Location = new Point(122, 160);
         BTMASCOTAS.Name = "BTMASCOTAS";
         BTMASCOTAS.Padding = new Padding(12, 8, 12, 10);
         BTMASCOTAS.Size = new Size(214, 277);
@@ -146,7 +152,7 @@ partial class FormSecretarioPrincipal
         BTPROPIETARIOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold);
         BTPROPIETARIOS.ForeColor = Color.FromArgb(58, 53, 59);
         BTPROPIETARIOS.ImageAlign = ContentAlignment.TopCenter;
-        BTPROPIETARIOS.Location = new Point(443, 136);
+        BTPROPIETARIOS.Location = new Point(356, 160);
         BTPROPIETARIOS.Name = "BTPROPIETARIOS";
         BTPROPIETARIOS.Padding = new Padding(12, 8, 12, 10);
         BTPROPIETARIOS.Size = new Size(214, 277);
@@ -166,7 +172,7 @@ partial class FormSecretarioPrincipal
         BTCOBROS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold);
         BTCOBROS.ForeColor = Color.FromArgb(58, 53, 59);
         BTCOBROS.ImageAlign = ContentAlignment.TopCenter;
-        BTCOBROS.Location = new Point(708, 136);
+        BTCOBROS.Location = new Point(590, 160);
         BTCOBROS.Name = "BTCOBROS";
         BTCOBROS.Padding = new Padding(12, 8, 12, 10);
         BTCOBROS.Size = new Size(214, 277);
@@ -176,6 +182,26 @@ partial class FormSecretarioPrincipal
         BTCOBROS.TextImageRelation = TextImageRelation.ImageAboveText;
         BTCOBROS.UseVisualStyleBackColor = false;
         BTCOBROS.Click += BTCOBROS_Click;
+        // 
+        // BTREPORTES
+        // 
+        BTREPORTES.BackColor = Color.White;
+        BTREPORTES.Cursor = Cursors.Hand;
+        BTREPORTES.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTREPORTES.FlatStyle = FlatStyle.Flat;
+        BTREPORTES.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        BTREPORTES.ForeColor = Color.FromArgb(58, 53, 59);
+        BTREPORTES.ImageAlign = ContentAlignment.TopCenter;
+        BTREPORTES.Location = new Point(824, 160);
+        BTREPORTES.Name = "BTREPORTES";
+        BTREPORTES.Padding = new Padding(12, 8, 12, 10);
+        BTREPORTES.Size = new Size(214, 277);
+        BTREPORTES.TabIndex = 3;
+        BTREPORTES.Text = "REPORTES DE COBROS";
+        BTREPORTES.TextAlign = ContentAlignment.BottomCenter;
+        BTREPORTES.TextImageRelation = TextImageRelation.ImageAboveText;
+        BTREPORTES.UseVisualStyleBackColor = false;
+        BTREPORTES.Click += BTREPORTES_Click;
         // 
         // barraEstado
         // 
@@ -226,6 +252,16 @@ partial class FormSecretarioPrincipal
         picCobros.TabStop = false;
         picCobros.Click += BTCOBROS_Click;
         BTCOBROS.Controls.Add(picCobros);
+        // picReportes
+        picReportes.BackColor = Color.Transparent;
+        picReportes.Image = (Image)resources.GetObject("picReportes.Image");
+        picReportes.Location = new Point(32, 12);
+        picReportes.Name = "picReportes";
+        picReportes.Size = new Size(150, 190);
+        picReportes.SizeMode = PictureBoxSizeMode.Zoom;
+        picReportes.TabStop = false;
+        picReportes.Click += BTREPORTES_Click;
+        BTREPORTES.Controls.Add(picReportes);
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
@@ -247,6 +283,7 @@ partial class FormSecretarioPrincipal
         ((System.ComponentModel.ISupportInitialize)picPropietarios).EndInit();
         ((System.ComponentModel.ISupportInitialize)picMascotas).EndInit();
         ((System.ComponentModel.ISupportInitialize)picCobros).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picReportes).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }

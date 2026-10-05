@@ -205,6 +205,9 @@ public partial class FormUsuarios : Form
                 usuario.Direccion ?? string.Empty,
                 usuario.Activo ? "Activo" : "Inactivo");
         }
+
+        dgvUsuarios.ClearSelection();
+        dgvUsuarios.CurrentCell = null;
     }
 
     // =========================================================================

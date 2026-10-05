@@ -41,8 +41,16 @@ public partial class FormSecretarioPrincipal : Form
 
     private void BTCOBROS_Click(object? sender, EventArgs e)
     {
-        using var vistaCobros = new FormCobros();
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaCobros = alcance.ServiceProvider.GetService<FormCobros>() ?? new FormCobros();
         vistaCobros.ShowDialog(this);
+    }
+
+    private void BTREPORTES_Click(object? sender, EventArgs e)
+    {
+        using var alcance = _serviceProvider.CreateScope();
+        var vista = alcance.ServiceProvider.GetRequiredService<FormReportes>();
+        vista.ShowDialog(this);
     }
 
     private void btnCerrarSesion_Click(object? sender, EventArgs e)

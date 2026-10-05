@@ -54,11 +54,14 @@ internal static class Program
         services.AddTransient<Veterinaria.WinForms.Vistas.Administrador.FormReportes>();
         services.AddTransient<Veterinaria.WinForms.Vistas.Secretario.FormPropietarios>();
         services.AddTransient<Veterinaria.WinForms.Vistas.Secretario.FormMascotas>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Secretario.FormCobros>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Secretario.FormReportes>();
         services.AddTransient<FormConsultas>();
         services.AddTransient<FormFichaMedica>();
         services.AddTransient<FormHistorialClinico>();
         services.AddTransient<FormTratamientos>();
         services.AddTransient<FormVacunasControles>();
+        services.AddTransient<Veterinaria.WinForms.Vistas.Veterinario.FormReportes>();
         services.AddTransient<FormVeterinarioPrincipal>();
         services.AddTransient<FormSecretarioPrincipal>();
 

@@ -29,7 +29,6 @@ partial class FormFichaMedica
         colTratamiento = new DataGridViewTextBoxColumn();
         colProximoControl = new DataGridViewTextBoxColumn();
         pnlBotones = new Panel();
-        btnVerHistorial = new Button();
         btnImprimirFicha = new Button();
         btnLimpiar = new Button();
         btnVolver = new Button();
@@ -187,7 +186,6 @@ partial class FormFichaMedica
         // 
         // pnlBotones
         // 
-        pnlBotones.Controls.Add(btnVerHistorial);
         pnlBotones.Controls.Add(btnImprimirFicha);
         pnlBotones.Controls.Add(btnLimpiar);
         pnlBotones.Controls.Add(btnVolver);
@@ -196,34 +194,18 @@ partial class FormFichaMedica
         pnlBotones.Size = new Size(1068, 40);
         pnlBotones.TabIndex = 1;
         // 
-        // btnVerHistorial
-        // 
-        btnVerHistorial.BackColor = Color.FromArgb(230, 196, 202);
-        btnVerHistorial.Cursor = Cursors.Hand;
-        btnVerHistorial.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
-        btnVerHistorial.FlatStyle = FlatStyle.Flat;
-        btnVerHistorial.Font = new Font("Segoe UI", 9F);
-        btnVerHistorial.ForeColor = Color.Black;
-        btnVerHistorial.Location = new Point(16, 3);
-        btnVerHistorial.Name = "btnVerHistorial";
-        btnVerHistorial.Size = new Size(140, 32);
-        btnVerHistorial.TabIndex = 0;
-        btnVerHistorial.Text = "Ver historial";
-        btnVerHistorial.UseVisualStyleBackColor = false;
-        btnVerHistorial.Click += btnVerHistorial_Click;
-        // 
         // btnImprimirFicha
         // 
-        btnImprimirFicha.BackColor = Color.Thistle;
+        btnImprimirFicha.BackColor = Color.FromArgb(200, 138, 150);
         btnImprimirFicha.Cursor = Cursors.Hand;
         btnImprimirFicha.FlatAppearance.BorderColor = Color.FromArgb(186, 162, 168);
         btnImprimirFicha.FlatStyle = FlatStyle.Flat;
         btnImprimirFicha.Font = new Font("Segoe UI", 9F);
-        btnImprimirFicha.ForeColor = Color.Black;
-        btnImprimirFicha.Location = new Point(164, 3);
+        btnImprimirFicha.ForeColor = Color.White;
+        btnImprimirFicha.Location = new Point(16, 3);
         btnImprimirFicha.Name = "btnImprimirFicha";
         btnImprimirFicha.Size = new Size(140, 32);
-        btnImprimirFicha.TabIndex = 1;
+        btnImprimirFicha.TabIndex = 0;
         btnImprimirFicha.Text = "Imprimir ficha";
         btnImprimirFicha.UseVisualStyleBackColor = false;
         btnImprimirFicha.Click += btnImprimirFicha_Click;
@@ -236,10 +218,10 @@ partial class FormFichaMedica
         btnLimpiar.FlatStyle = FlatStyle.Flat;
         btnLimpiar.Font = new Font("Segoe UI", 9F);
         btnLimpiar.ForeColor = Color.Black;
-        btnLimpiar.Location = new Point(312, 3);
+        btnLimpiar.Location = new Point(164, 3);
         btnLimpiar.Name = "btnLimpiar";
         btnLimpiar.Size = new Size(140, 32);
-        btnLimpiar.TabIndex = 2;
+        btnLimpiar.TabIndex = 1;
         btnLimpiar.Text = "Limpiar";
         btnLimpiar.UseVisualStyleBackColor = false;
         btnLimpiar.Click += btnLimpiar_Click;
@@ -251,10 +233,10 @@ partial class FormFichaMedica
         btnVolver.FlatStyle = FlatStyle.Flat;
         btnVolver.Font = new Font("Segoe UI", 9F);
         btnVolver.ForeColor = Color.Black;
-        btnVolver.Location = new Point(460, 3);
+        btnVolver.Location = new Point(312, 3);
         btnVolver.Name = "btnVolver";
         btnVolver.Size = new Size(140, 32);
-        btnVolver.TabIndex = 3;
+        btnVolver.TabIndex = 2;
         btnVolver.Text = "Volver al panel";
         btnVolver.UseVisualStyleBackColor = false;
         btnVolver.Click += btnVolver_Click;
@@ -545,7 +527,6 @@ partial class FormFichaMedica
     private Label lblColor;
     private TextBox txtColor;
     private Panel pnlBotones;
-    private Button btnVerHistorial;
     private Button btnImprimirFicha;
     private Button btnLimpiar;
     private Button btnVolver;

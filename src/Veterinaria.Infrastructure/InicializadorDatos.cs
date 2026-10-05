@@ -13,6 +13,7 @@ public static class InicializadorDatos
         // 1. Asegurar la creación del esquema de base de datos
         await context.Database.EnsureCreatedAsync();
         await AsegurarColumnasUsuarioAsync(context);
+        await CorregirMetodosPagoAsync(context);
 
         // 2. Sembrar Tipos de Usuario si la tabla está vacía
         if (!await context.TiposUsuario.IgnoreQueryFilters().AnyAsync())
@@ -86,6 +87,24 @@ public static class InicializadorDatos
                 ALTER TABLE dbo.AplicacionVacuna ADD PrecioUnitario DECIMAL(18,2) NULL;
             ELSE
                 ALTER TABLE dbo.AplicacionVacuna ALTER COLUMN PrecioUnitario DECIMAL(18,2) NULL;
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Consulta', 'Importe') IS NULL
+                ALTER TABLE dbo.Consulta ADD Importe DECIMAL(18,2) NOT NULL CONSTRAINT DF_Consulta_Importe DEFAULT(0);
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Pago', 'Cuotas') IS NULL
+                ALTER TABLE dbo.Pago ADD Cuotas INT NULL;
+            """);
+    }
+
+    public static async Task CorregirMetodosPagoAsync(ContextoVeterinaria context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            UPDATE dbo.MetodoPago SET Nombre = N'Efectivo' WHERE Id = 1;
+            UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Débito' WHERE Id = 2;
+            UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Crédito' WHERE Id = 3;
+            UPDATE dbo.MetodoPago SET Nombre = N'Transferencia Bancaria' WHERE Id = 4;
             """);
     }
 

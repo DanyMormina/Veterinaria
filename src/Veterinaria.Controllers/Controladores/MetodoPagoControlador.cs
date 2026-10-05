@@ -92,6 +92,10 @@ public class MetodoPagoControlador(ContextoVeterinaria context)
                 return Resultado.Falla($"Ya existe otro método de pago registrado con el nombre '{nombreNormalizado}'.");
 
             entidad.Nombre = nombreNormalizado;
+
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Método de pago actualizado exitosamente.");
         }

@@ -35,6 +35,11 @@ public partial class FormPropietarios : Form
     private static readonly Color ColorEtiquetaNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
 
+    private static readonly Color ColorBotonActivarHabilitado = ColorTranslator.FromHtml("#8FA89B");
+    private static readonly Color ColorBotonDesactivarHabilitado = ColorTranslator.FromHtml("#B85D69");
+    private static readonly Color ColorBotonDeshabilitado = ColorTranslator.FromHtml("#E2D9DC");
+    private static readonly Color ColorTextoBotonDeshabilitado = ColorTranslator.FromHtml("#888888");
+
     // =========================================================================
     // Dependencias y estado del formulario
     // =========================================================================
@@ -45,6 +50,21 @@ public partial class FormPropietarios : Form
     private long? _idPropietarioSeleccionado = null;
     private bool _cargandoDatos = false;
     private bool _limpiando = false;
+    private string? _snapshotEdicion;
+
+    /// <summary>
+    /// Si es true, el botón Volver indica retorno a mascotas (alta abierta desde FormMascotas).
+    /// </summary>
+    [System.ComponentModel.Browsable(false)]
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public bool RetornarAMascotas { get; set; }
+
+    /// <summary>
+    /// Id del último propietario creado en esta sesión del formulario (si hubo alta exitosa).
+    /// </summary>
+    [System.ComponentModel.Browsable(false)]
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public long? UltimoIdCreado { get; private set; }
 
     /// <summary>
     /// Constructor por defecto requerido por el diseñador de Windows Forms.
@@ -79,6 +99,8 @@ public partial class FormPropietarios : Form
         btnModificar.Click += async (_, _) => await ModificarPropietarioAsync();
         btnLimpiar.Click += (_, _) => LimpiarFormulario();
         btnBuscar.Click += async (_, _) => await BuscarPropietariosAsync();
+        btnActivar.Click += async (_, _) => await btnActivar_Click();
+        btnDesactivar.Click += async (_, _) => await btnDesactivar_Click();
 
         txtBuscar.KeyDown += async (_, e) =>
         {
@@ -164,11 +186,16 @@ public partial class FormPropietarios : Form
             ? $"Recepción: {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Recepción: Secretario";
 
+        if (RetornarAMascotas)
+            btnVolver.Text = "Volver a mascotas";
+
         // Estado inicial de los botones: Modo Creación
         btnGuardar.Enabled = true;
         btnModificar.Enabled = false;
+        ActualizarEstadoBotonesAccion(null);
 
         await CargarPropietariosGrillaAsync();
+        LimpiarFormulario();
     }
 
     /// <summary>
@@ -372,9 +399,11 @@ public partial class FormPropietarios : Form
 
             dgvPropietarios.ClearSelection();
             _idPropietarioSeleccionado = null;
+            _snapshotEdicion = null;
 
             btnGuardar.Enabled = true;
             btnModificar.Enabled = false;
+            ActualizarEstadoBotonesAccion(null);
 
             txtDNI.Focus();
         }
@@ -432,6 +461,7 @@ public partial class FormPropietarios : Form
 
             if (resultado.EsExitoso)
             {
+                UltimoIdCreado = resultado.Valor;
                 MessageBox.Show(resultado.Mensaje ?? "Propietario registrado exitosamente.", "Registro Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LimpiarFormulario();
                 await CargarPropietariosGrillaAsync();
@@ -472,6 +502,12 @@ public partial class FormPropietarios : Form
         {
             MarcarError(controlConError, validacion.Mensaje);
             MessageBox.Show(validacion.Mensaje, "Validación de Datos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (string.Equals(ObtenerSnapshotFormulario(), _snapshotEdicion, StringComparison.Ordinal))
+        {
+            MessageBox.Show("No se detectaron cambios para guardar.", "Sin cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
@@ -540,12 +576,12 @@ public partial class FormPropietarios : Form
 
             if (_propietarioService is not null)
             {
-                var res = await _propietarioService.BuscarPropietariosAsync(terminoBusqueda, soloActivos: true);
+                var res = await _propietarioService.BuscarPropietariosAsync(terminoBusqueda, soloActivos: false);
                 listado = res.EsExitoso && res.Valor is not null ? res.Valor : [];
             }
             else if (_propietarioControlador is not null)
             {
-                var res = await _propietarioControlador.ObtenerActivosAsync();
+                var res = await _propietarioControlador.ObtenerTodosAsync();
                 listado = res.EsExitoso && res.Valor is not null ? res.Valor : [];
 
                 if (!string.IsNullOrWhiteSpace(terminoBusqueda))
@@ -583,7 +619,9 @@ public partial class FormPropietarios : Form
                 dgvPropietarios.Rows[rowIndex].Tag = p;
             }
 
-            lblInfoEstado.Text = $"Se encontraron {dgvPropietarios.Rows.Count} propietarios activos en el sistema.";
+            dgvPropietarios.ClearSelection();
+            dgvPropietarios.CurrentCell = null;
+            lblInfoEstado.Text = $"Se encontraron {dgvPropietarios.Rows.Count} propietarios en el sistema.";
         }
         catch (Exception ex)
         {
@@ -645,9 +683,120 @@ public partial class FormPropietarios : Form
         // 3. Conmutar estado al Modo Edición
         btnGuardar.Enabled = false;
         btnModificar.Enabled = true;
+        _snapshotEdicion = ObtenerSnapshotFormulario();
+        ActualizarEstadoBotonesAccion(fila.Activo);
 
         // 4. Limpiar cualquier resaltado de error previo
         RestablecerBordes();
+    }
+
+    private string ObtenerSnapshotFormulario() =>
+        string.Join("|",
+            txtDNI.Text.Trim(),
+            txtNombre.Text.Trim(),
+            txtApellido.Text.Trim(),
+            txtTelefono.Text.Trim(),
+            txtCorreo.Text.Trim(),
+            txtDireccion.Text.Trim());
+
+    private void ActualizarEstadoBotonesAccion(bool? activo)
+    {
+        if (!activo.HasValue)
+        {
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+        else if (activo.Value)
+        {
+            btnActivar.Enabled = false;
+            btnActivar.BackColor = ColorBotonDeshabilitado;
+            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
+
+            btnDesactivar.Enabled = true;
+            btnDesactivar.BackColor = ColorBotonDesactivarHabilitado;
+            btnDesactivar.ForeColor = Color.White;
+        }
+        else
+        {
+            btnActivar.Enabled = true;
+            btnActivar.BackColor = ColorBotonActivarHabilitado;
+            btnActivar.ForeColor = Color.White;
+
+            btnDesactivar.Enabled = false;
+            btnDesactivar.BackColor = ColorBotonDeshabilitado;
+            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
+        }
+    }
+
+    private async Task btnActivar_Click()
+    {
+        if (!_idPropietarioSeleccionado.HasValue || _idPropietarioSeleccionado.Value <= 0)
+        {
+            MessageBox.Show("Debe seleccionar un propietario de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Desea reactivar este registro?",
+            "Confirmar Activación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_propietarioControlador is null)
+            return;
+
+        var resultado = await _propietarioControlador.CambiarEstadoAsync(_idPropietarioSeleccionado.Value, true);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            LimpiarFormulario();
+            await CargarPropietariosGrillaAsync();
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    private async Task btnDesactivar_Click()
+    {
+        if (!_idPropietarioSeleccionado.HasValue || _idPropietarioSeleccionado.Value <= 0)
+        {
+            MessageBox.Show("Debe seleccionar un propietario de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmacion = MessageBox.Show(
+            "¿Está seguro de que desea desactivar este registro?",
+            "Confirmar Desactivación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmacion != DialogResult.Yes)
+            return;
+
+        if (_propietarioControlador is null)
+            return;
+
+        var resultado = await _propietarioControlador.CambiarEstadoAsync(_idPropietarioSeleccionado.Value, false);
+        if (resultado.EsExitoso)
+        {
+            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            LimpiarFormulario();
+            await CargarPropietariosGrillaAsync();
+        }
+        else
+        {
+            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     private void btnVolver_Click(object? sender, EventArgs e)

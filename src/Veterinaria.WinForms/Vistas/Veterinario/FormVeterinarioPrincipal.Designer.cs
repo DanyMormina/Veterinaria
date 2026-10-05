@@ -6,6 +6,7 @@ partial class FormVeterinarioPrincipal
     private PictureBox picFichaMedica;
     private PictureBox picTratamientos;
     private PictureBox picVacunas;
+    private PictureBox picReportes;
     private System.ComponentModel.IContainer components = null;
     private System.Windows.Forms.Panel pnlEncabezado;
     private System.Windows.Forms.Label lblTitulo;
@@ -36,10 +37,12 @@ partial class FormVeterinarioPrincipal
         picTratamientos = new PictureBox();
         picConsultas = new PictureBox();
         picFichaMedica = new PictureBox();
+        picReportes = new PictureBox();
         BTVACUNAS = new Button();
         BTTRATAMIENTOS = new Button();
         BTFICHAMEDICA = new Button();
         BTCONSULTAS = new Button();
+        BTREPORTES = new Button();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         pnlEncabezado.SuspendLayout();
@@ -48,6 +51,7 @@ partial class FormVeterinarioPrincipal
         ((System.ComponentModel.ISupportInitialize)picTratamientos).BeginInit();
         ((System.ComponentModel.ISupportInitialize)picConsultas).BeginInit();
         ((System.ComponentModel.ISupportInitialize)picFichaMedica).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)picReportes).BeginInit();
         barraEstado.SuspendLayout();
         SuspendLayout();
         // 
@@ -112,6 +116,7 @@ partial class FormVeterinarioPrincipal
         pnlContenido.Controls.Add(picTratamientos);
         pnlContenido.Controls.Add(picConsultas);
         pnlContenido.Controls.Add(picFichaMedica);
+        pnlContenido.Controls.Add(BTREPORTES);
         pnlContenido.Controls.Add(BTVACUNAS);
         pnlContenido.Controls.Add(BTTRATAMIENTOS);
         pnlContenido.Controls.Add(BTFICHAMEDICA);
@@ -126,7 +131,7 @@ partial class FormVeterinarioPrincipal
         // 
         picVacunas.BackColor = Color.Transparent;
         picVacunas.Image = (Image)resources.GetObject("picVacunas.Image");
-        picVacunas.Location = new Point(854, 162);
+        picVacunas.Location = new Point(359, 367);
         picVacunas.Name = "picVacunas";
         picVacunas.Size = new Size(125, 186);
         picVacunas.SizeMode = PictureBoxSizeMode.Zoom;
@@ -138,7 +143,7 @@ partial class FormVeterinarioPrincipal
         // 
         picTratamientos.BackColor = Color.Transparent;
         picTratamientos.Image = (Image)resources.GetObject("picTratamientos.Image");
-        picTratamientos.Location = new Point(615, 162);
+        picTratamientos.Location = new Point(741, 70);
         picTratamientos.Name = "picTratamientos";
         picTratamientos.Size = new Size(128, 186);
         picTratamientos.SizeMode = PictureBoxSizeMode.Zoom;
@@ -150,7 +155,7 @@ partial class FormVeterinarioPrincipal
         // 
         picConsultas.BackColor = Color.Transparent;
         picConsultas.Image = (Image)resources.GetObject("picConsultas.Image");
-        picConsultas.Location = new Point(107, 162);
+        picConsultas.Location = new Point(231, 70);
         picConsultas.Name = "picConsultas";
         picConsultas.Size = new Size(125, 186);
         picConsultas.SizeMode = PictureBoxSizeMode.Zoom;
@@ -162,7 +167,7 @@ partial class FormVeterinarioPrincipal
         // 
         picFichaMedica.BackColor = Color.Transparent;
         picFichaMedica.Image = (Image)resources.GetObject("picFichaMedica.Image");
-        picFichaMedica.Location = new Point(367, 162);
+        picFichaMedica.Location = new Point(491, 70);
         picFichaMedica.Name = "picFichaMedica";
         picFichaMedica.Size = new Size(129, 186);
         picFichaMedica.SizeMode = PictureBoxSizeMode.Zoom;
@@ -177,7 +182,7 @@ partial class FormVeterinarioPrincipal
         BTVACUNAS.FlatStyle = FlatStyle.Flat;
         BTVACUNAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTVACUNAS.ImageAlign = ContentAlignment.TopCenter;
-        BTVACUNAS.Location = new Point(811, 143);
+        BTVACUNAS.Location = new Point(316, 348);
         BTVACUNAS.Name = "BTVACUNAS";
         BTVACUNAS.Padding = new Padding(12, 8, 12, 10);
         BTVACUNAS.Size = new Size(214, 277);
@@ -195,7 +200,7 @@ partial class FormVeterinarioPrincipal
         BTTRATAMIENTOS.FlatStyle = FlatStyle.Flat;
         BTTRATAMIENTOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTTRATAMIENTOS.ImageAlign = ContentAlignment.TopCenter;
-        BTTRATAMIENTOS.Location = new Point(568, 143);
+        BTTRATAMIENTOS.Location = new Point(698, 51);
         BTTRATAMIENTOS.Name = "BTTRATAMIENTOS";
         BTTRATAMIENTOS.Padding = new Padding(12, 8, 12, 10);
         BTTRATAMIENTOS.Size = new Size(214, 277);
@@ -213,7 +218,7 @@ partial class FormVeterinarioPrincipal
         BTFICHAMEDICA.FlatStyle = FlatStyle.Flat;
         BTFICHAMEDICA.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTFICHAMEDICA.ImageAlign = ContentAlignment.TopCenter;
-        BTFICHAMEDICA.Location = new Point(319, 143);
+        BTFICHAMEDICA.Location = new Point(443, 51);
         BTFICHAMEDICA.Name = "BTFICHAMEDICA";
         BTFICHAMEDICA.Padding = new Padding(12, 8, 12, 10);
         BTFICHAMEDICA.Size = new Size(214, 277);
@@ -231,7 +236,7 @@ partial class FormVeterinarioPrincipal
         BTCONSULTAS.FlatStyle = FlatStyle.Flat;
         BTCONSULTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTCONSULTAS.ImageAlign = ContentAlignment.TopCenter;
-        BTCONSULTAS.Location = new Point(64, 143);
+        BTCONSULTAS.Location = new Point(188, 51);
         BTCONSULTAS.Name = "BTCONSULTAS";
         BTCONSULTAS.Padding = new Padding(12, 8, 12, 10);
         BTCONSULTAS.Size = new Size(214, 277);
@@ -241,6 +246,38 @@ partial class FormVeterinarioPrincipal
         BTCONSULTAS.TextImageRelation = TextImageRelation.ImageAboveText;
         BTCONSULTAS.UseVisualStyleBackColor = false;
         BTCONSULTAS.Click += BTCONSULTAS_Click;
+        // 
+        // BTREPORTES
+        // 
+        BTREPORTES.BackColor = Color.White;
+        BTREPORTES.Cursor = Cursors.Hand;
+        BTREPORTES.FlatAppearance.BorderColor = Color.FromArgb(210, 186, 190);
+        BTREPORTES.FlatStyle = FlatStyle.Flat;
+        BTREPORTES.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        BTREPORTES.ForeColor = Color.FromArgb(58, 53, 59);
+        BTREPORTES.ImageAlign = ContentAlignment.TopCenter;
+        BTREPORTES.Location = new Point(571, 348);
+        BTREPORTES.Name = "BTREPORTES";
+        BTREPORTES.Padding = new Padding(12, 8, 12, 10);
+        BTREPORTES.Size = new Size(214, 277);
+        BTREPORTES.TabIndex = 4;
+        BTREPORTES.Text = "REPORTES DE CONSULTAS";
+        BTREPORTES.TextAlign = ContentAlignment.BottomCenter;
+        BTREPORTES.TextImageRelation = TextImageRelation.ImageAboveText;
+        BTREPORTES.UseVisualStyleBackColor = false;
+        BTREPORTES.Click += BTREPORTES_Click;
+        // 
+        // picReportes
+        // 
+        picReportes.BackColor = Color.Transparent;
+        picReportes.Image = (Image)resources.GetObject("picReportes.Image");
+        picReportes.Location = new Point(32, 12);
+        picReportes.Name = "picReportes";
+        picReportes.Size = new Size(150, 190);
+        picReportes.SizeMode = PictureBoxSizeMode.Zoom;
+        picReportes.TabStop = false;
+        picReportes.Click += BTREPORTES_Click;
+        BTREPORTES.Controls.Add(picReportes);
         // 
         // barraEstado
         // 
@@ -282,6 +319,7 @@ partial class FormVeterinarioPrincipal
         ((System.ComponentModel.ISupportInitialize)picTratamientos).EndInit();
         ((System.ComponentModel.ISupportInitialize)picConsultas).EndInit();
         ((System.ComponentModel.ISupportInitialize)picFichaMedica).EndInit();
+        ((System.ComponentModel.ISupportInitialize)picReportes).EndInit();
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
         ResumeLayout(false);
@@ -292,4 +330,5 @@ partial class FormVeterinarioPrincipal
     private Button BTFICHAMEDICA;
     private Button BTTRATAMIENTOS;
     private Button BTVACUNAS;
+    private Button BTREPORTES;
 }

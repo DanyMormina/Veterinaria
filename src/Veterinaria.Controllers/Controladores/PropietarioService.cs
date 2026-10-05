@@ -24,8 +24,9 @@ public class PropietarioService(ContextoVeterinaria context) : PropietarioContro
     {
         try
         {
-            // Paso 1: Configurar consulta optimizada de solo lectura sin seguimiento de entidades
+            // Paso 1: Incluir activos e inactivos (soft-delete) para listados de gestión
             var consulta = Context.Propietarios
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .AsQueryable();
 

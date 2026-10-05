@@ -23,10 +23,6 @@ public partial class FormMascotas : Form
     private static readonly Color ColorEtiquetaNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
 
-    private static readonly Color ColorBotonActivarHabilitado = ColorTranslator.FromHtml("#8FA89B");
-    private static readonly Color ColorBotonDesactivarHabilitado = ColorTranslator.FromHtml("#B85D69");
-    private static readonly Color ColorBotonDeshabilitado = ColorTranslator.FromHtml("#E2D9DC");
-    private static readonly Color ColorTextoBotonDeshabilitado = ColorTranslator.FromHtml("#888888");
 
     private readonly ErrorProvider _errores = new();
     private readonly MascotaService? _mascotaService;
@@ -172,10 +168,15 @@ public partial class FormMascotas : Form
             ? $"Usuario: {SesionActual.NombreCompleto} | Rol: {SesionActual.Rol}"
             : "Usuario: Administrador";
 
-        ActualizarEstadoBotonesAccion(null);
 
         await InicializarCombosAsync();
         await CargarMascotasAsync();
+        dgvMascotas.ClearSelection();
+        dgvMascotas.CurrentCell = null;
+        txtNombre.Clear();
+        txtPropietario.Clear();
+        txtColor.Clear();
+        _idSeleccionado = null;
     }
 
     /// <summary>
@@ -410,6 +411,11 @@ public partial class FormMascotas : Form
                 m.Color ?? string.Empty,
                 m.Activo ? "Activo" : "Inactivo");
         }
+
+        dgvMascotas.ClearSelection();
+        dgvMascotas.CurrentCell = null;
+        _idSeleccionado = null;
+        // El listado queda cargado; no precargar campos del formulario
     }
 
     /// <summary>
@@ -551,7 +557,6 @@ public partial class FormMascotas : Form
             txtColor.Clear();
 
             _idSeleccionado = null;
-            ActualizarEstadoBotonesAccion(null);
 
             txtBuscar.Clear();
 
@@ -608,7 +613,6 @@ public partial class FormMascotas : Form
         cboSexo.SelectedItem = !string.IsNullOrWhiteSpace(mascota.Sexo) ? mascota.Sexo : "(Todos)";
         txtColor.Text = mascota.Color ?? string.Empty;
         _idSeleccionado = mascota.Id;
-        ActualizarEstadoBotonesAccion(mascota.Activo);
     }
 
     private void btnVolver_Click(object? sender, EventArgs e)
@@ -626,7 +630,6 @@ public partial class FormMascotas : Form
         if (dgvMascotas.CurrentRow == null || dgvMascotas.CurrentRow.Index < 0)
         {
             _idSeleccionado = null;
-            ActualizarEstadoBotonesAccion(null);
             return;
         }
 
@@ -634,7 +637,6 @@ public partial class FormMascotas : Form
         if (fila.Cells[0].Value is null)
         {
             _idSeleccionado = null;
-            ActualizarEstadoBotonesAccion(null);
             return;
         }
 
@@ -643,113 +645,6 @@ public partial class FormMascotas : Form
         if (mascota is not null)
         {
             _idSeleccionado = mascota.Id;
-            ActualizarEstadoBotonesAccion(mascota.Activo);
-        }
-    }
-
-    /// <summary>
-    /// Actualiza de forma reactiva el estado y colores de los botones de estado (Activar / Desactivar).
-    /// null = sin selección (ambos deshabilitados).
-    /// true = registro activo (Desactivar habilitado).
-    /// false = registro inactivo (Activar habilitado).
-    /// </summary>
-    private void ActualizarEstadoBotonesAccion(bool? activo)
-    {
-        if (!activo.HasValue)
-        {
-            btnActivar.Enabled = false;
-            btnActivar.BackColor = ColorBotonDeshabilitado;
-            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
-
-            btnDesactivar.Enabled = false;
-            btnDesactivar.BackColor = ColorBotonDeshabilitado;
-            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
-        }
-        else if (activo.Value)
-        {
-            // Registro Activo: Desactivar habilitado, Activar deshabilitado
-            btnActivar.Enabled = false;
-            btnActivar.BackColor = ColorBotonDeshabilitado;
-            btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
-
-            btnDesactivar.Enabled = true;
-            btnDesactivar.BackColor = ColorBotonDesactivarHabilitado;
-            btnDesactivar.ForeColor = Color.White;
-        }
-        else
-        {
-            // Registro Inactivo: Activar habilitado, Desactivar deshabilitado
-            btnActivar.Enabled = true;
-            btnActivar.BackColor = ColorBotonActivarHabilitado;
-            btnActivar.ForeColor = Color.White;
-
-            btnDesactivar.Enabled = false;
-            btnDesactivar.BackColor = ColorBotonDeshabilitado;
-            btnDesactivar.ForeColor = ColorTextoBotonDeshabilitado;
-        }
-    }
-
-    private async void btnActivar_Click(object? sender, EventArgs e)
-    {
-        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
-        {
-            MessageBox.Show("Debe seleccionar una mascota de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        var confirmacion = MessageBox.Show(
-            "¿Desea reactivar este registro?",
-            "Confirmar Activación",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        if (confirmacion != DialogResult.Yes)
-            return;
-
-        if (_mascotaService is null)
-            return;
-
-        var resultado = await _mascotaService.CambiarEstadoAsync(_idSeleccionado.Value, true);
-        if (resultado.EsExitoso)
-        {
-            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            await CargarMascotasAsync();
-        }
-        else
-        {
-            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
-    }
-
-    private async void btnDesactivar_Click(object? sender, EventArgs e)
-    {
-        if (!_idSeleccionado.HasValue || _idSeleccionado.Value <= 0)
-        {
-            MessageBox.Show("Debe seleccionar una mascota de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        var confirmacion = MessageBox.Show(
-            "¿Está seguro de que desea desactivar este registro?",
-            "Confirmar Desactivación",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        if (confirmacion != DialogResult.Yes)
-            return;
-
-        if (_mascotaService is null)
-            return;
-
-        var resultado = await _mascotaService.CambiarEstadoAsync(_idSeleccionado.Value, false);
-        if (resultado.EsExitoso)
-        {
-            MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            await CargarMascotasAsync();
-        }
-        else
-        {
-            MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
@@ -761,3 +656,4 @@ public partial class FormMascotas : Form
         public override string ToString() => Texto;
     }
 }
+

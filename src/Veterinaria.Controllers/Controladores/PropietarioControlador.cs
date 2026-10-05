@@ -163,6 +163,9 @@ public class PropietarioControlador(ContextoVeterinaria context)
             entidad.CorreoElectronico = correoNormalizado;
             entidad.Direccion = solicitud.Direccion?.Trim();
 
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
             return Resultado.Exito("Propietario actualizado exitosamente.");
         }

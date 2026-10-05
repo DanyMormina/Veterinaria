@@ -26,6 +26,7 @@ partial class FormTratamientos
         btnLimpiar = new Button();
         btnVolver = new Button();
         btnAplicar = new Button();
+        btnEliminar = new Button();
         grpTratamientosAplicados = new GroupBox();
         dgvTratamientosAplicados = new DataGridView();
         colTratamiento = new DataGridViewTextBoxColumn();
@@ -116,6 +117,7 @@ partial class FormTratamientos
         pnlBotones.Controls.Add(btnLimpiar);
         pnlBotones.Controls.Add(btnVolver);
         pnlBotones.Controls.Add(btnAplicar);
+        pnlBotones.Controls.Add(btnEliminar);
         pnlBotones.Location = new Point(16, 207);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1068, 40);
@@ -123,14 +125,13 @@ partial class FormTratamientos
         // 
         // btnLimpiar
         // 
-        btnLimpiar.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         btnLimpiar.BackColor = Color.FromArgb(226, 217, 220);
         btnLimpiar.Cursor = Cursors.Hand;
         btnLimpiar.FlatAppearance.BorderSize = 0;
         btnLimpiar.FlatStyle = FlatStyle.Flat;
         btnLimpiar.Font = new Font("Segoe UI", 9F);
         btnLimpiar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnLimpiar.Location = new Point(159, 3);
+        btnLimpiar.Location = new Point(298, 3);
         btnLimpiar.Name = "btnLimpiar";
         btnLimpiar.Size = new Size(120, 32);
         btnLimpiar.TabIndex = 16;
@@ -140,14 +141,13 @@ partial class FormTratamientos
         // 
         // btnVolver
         // 
-        btnVolver.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         btnVolver.BackColor = Color.FromArgb(220, 200, 204);
         btnVolver.Cursor = Cursors.Hand;
         btnVolver.FlatAppearance.BorderSize = 0;
         btnVolver.FlatStyle = FlatStyle.Flat;
         btnVolver.Font = new Font("Segoe UI", 9F);
         btnVolver.ForeColor = Color.Black;
-        btnVolver.Location = new Point(297, 3);
+        btnVolver.Location = new Point(436, 3);
         btnVolver.Name = "btnVolver";
         btnVolver.Size = new Size(140, 32);
         btnVolver.TabIndex = 2;
@@ -157,7 +157,6 @@ partial class FormTratamientos
         // 
         // btnAplicar
         // 
-        btnAplicar.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         btnAplicar.BackColor = Color.FromArgb(200, 138, 150);
         btnAplicar.Cursor = Cursors.Hand;
         btnAplicar.FlatAppearance.BorderSize = 0;
@@ -168,9 +167,25 @@ partial class FormTratamientos
         btnAplicar.Name = "btnAplicar";
         btnAplicar.Size = new Size(120, 32);
         btnAplicar.TabIndex = 17;
-        btnAplicar.Text = "Aplicar";
+        btnAplicar.Text = "Agregar";
         btnAplicar.UseVisualStyleBackColor = false;
         btnAplicar.Click += btnAplicar_Click;
+        // 
+        // btnEliminar
+        // 
+        btnEliminar.BackColor = Color.FromArgb(184, 93, 105);
+        btnEliminar.Cursor = Cursors.Hand;
+        btnEliminar.FlatAppearance.BorderSize = 0;
+        btnEliminar.FlatStyle = FlatStyle.Flat;
+        btnEliminar.Font = new Font("Segoe UI", 9F);
+        btnEliminar.ForeColor = Color.White;
+        btnEliminar.Location = new Point(158, 3);
+        btnEliminar.Name = "btnEliminar";
+        btnEliminar.Size = new Size(120, 32);
+        btnEliminar.TabIndex = 18;
+        btnEliminar.Text = "Eliminar";
+        btnEliminar.UseVisualStyleBackColor = false;
+        btnEliminar.Click += btnEliminar_Click;
         // 
         // grpTratamientosAplicados
         // 
@@ -575,6 +590,7 @@ partial class FormTratamientos
     private Label lblTotal;
     private Button btnLimpiar;
     private Button btnAplicar;
+    private Button btnEliminar;
     private GroupBox grpTratamientosAplicados;
     private DataGridView dgvTratamientosAplicados;
     private DataGridViewTextBoxColumn colTratamiento;

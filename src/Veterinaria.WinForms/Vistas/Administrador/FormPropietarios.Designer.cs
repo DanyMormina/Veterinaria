@@ -22,15 +22,12 @@ partial class FormPropietarios
         lblUsuarioSesion = new Label();
         pnlContenido = new Panel();
         grpDatos = new GroupBox();
-        lbEstado = new Label();
         lblNombre = new Label();
-        btnActivar = new Button();
         txtNombre = new TextBox();
         lblApellido = new Label();
         txtApellido = new TextBox();
         lblDni = new Label();
         txtDni = new TextBox();
-        btnDesactivar = new Button();
         lblTelefono = new Label();
         txtTelefono = new TextBox();
         lblCorreoElectronico = new Label();
@@ -124,15 +121,12 @@ partial class FormPropietarios
         // 
         // grpDatos
         // 
-        grpDatos.Controls.Add(lbEstado);
         grpDatos.Controls.Add(lblNombre);
-        grpDatos.Controls.Add(btnActivar);
         grpDatos.Controls.Add(txtNombre);
         grpDatos.Controls.Add(lblApellido);
         grpDatos.Controls.Add(txtApellido);
         grpDatos.Controls.Add(lblDni);
         grpDatos.Controls.Add(txtDni);
-        grpDatos.Controls.Add(btnDesactivar);
         grpDatos.Controls.Add(lblTelefono);
         grpDatos.Controls.Add(txtTelefono);
         grpDatos.Controls.Add(lblCorreoElectronico);
@@ -149,15 +143,6 @@ partial class FormPropietarios
         grpDatos.Text = "Datos del propietario";
         grpDatos.Enter += grpDatos_Enter;
         // 
-        // lbEstado
-        // 
-        lbEstado.AutoSize = true;
-        lbEstado.Location = new Point(16, 252);
-        lbEstado.Name = "lbEstado";
-        lbEstado.Size = new Size(42, 15);
-        lbEstado.TabIndex = 12;
-        lbEstado.Text = "Estado";
-        // 
         // lblNombre
         // 
         lblNombre.Location = new Point(16, 28);
@@ -166,24 +151,6 @@ partial class FormPropietarios
         lblNombre.TabIndex = 0;
         lblNombre.Text = "Nombre";
         lblNombre.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // btnActivar
-        // 
-        btnActivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        btnActivar.BackColor = Color.Thistle;
-        btnActivar.Cursor = Cursors.Hand;
-        btnActivar.Enabled = false;
-        btnActivar.FlatAppearance.BorderSize = 0;
-        btnActivar.FlatStyle = FlatStyle.Flat;
-        btnActivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnActivar.ForeColor = Color.FromArgb(136, 136, 136);
-        btnActivar.Location = new Point(128, 243);
-        btnActivar.Name = "btnActivar";
-        btnActivar.Size = new Size(124, 32);
-        btnActivar.TabIndex = 5;
-        btnActivar.Text = "Activar";
-        btnActivar.UseVisualStyleBackColor = false;
-        btnActivar.Click += btnActivar_Click;
         // 
         // txtNombre
         // 
@@ -232,24 +199,6 @@ partial class FormPropietarios
         txtDni.Name = "txtDni";
         txtDni.Size = new Size(266, 23);
         txtDni.TabIndex = 5;
-        // 
-        // btnDesactivar
-        // 
-        btnDesactivar.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        btnDesactivar.BackColor = Color.MistyRose;
-        btnDesactivar.Cursor = Cursors.Hand;
-        btnDesactivar.Enabled = false;
-        btnDesactivar.FlatAppearance.BorderSize = 0;
-        btnDesactivar.FlatStyle = FlatStyle.Flat;
-        btnDesactivar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnDesactivar.ForeColor = Color.FromArgb(136, 136, 136);
-        btnDesactivar.Location = new Point(270, 243);
-        btnDesactivar.Name = "btnDesactivar";
-        btnDesactivar.Size = new Size(124, 32);
-        btnDesactivar.TabIndex = 6;
-        btnDesactivar.Text = "Desactivar";
-        btnDesactivar.UseVisualStyleBackColor = false;
-        btnDesactivar.Click += btnDesactivar_Click;
         // 
         // lblTelefono
         // 
@@ -628,8 +577,6 @@ partial class FormPropietarios
     private TextBox txtCorreoElectronico;
     private Label lblDireccion;
     private TextBox txtDireccion;
-    private Button btnActivar;
-    private Button btnDesactivar;
     private GroupBox grpMascotas;
     private DataGridView dgvMascotasPropietario;
     private DataGridViewTextBoxColumn colMascotaId;
@@ -655,6 +602,5 @@ partial class FormPropietarios
     private DataGridViewTextBoxColumn colCorreoElectronico;
     private DataGridViewTextBoxColumn colDireccion;
     private DataGridViewTextBoxColumn colEstado;
-    private Label lbEstado;
 }
 

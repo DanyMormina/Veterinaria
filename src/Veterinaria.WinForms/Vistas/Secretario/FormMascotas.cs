@@ -39,6 +39,7 @@ public partial class FormMascotas : Form
 
     private bool _cargandoDatos = false;
     private long _idMascotaSeleccionada = 0;
+    private string? _snapshotEdicion;
 
     /// <summary>
     /// Constructor por defecto para soporte del Diseñador de Windows Forms.
@@ -208,9 +209,10 @@ public partial class FormMascotas : Form
 
         ActualizarEstadoBotonesAccion(null);
 
-        // Carga inicial de catálogos y grilla
+        // Carga inicial de catálogos y grilla (sin precargar el formulario)
         await InicializarCatalogosAsync();
         await CargarMascotasGrillaAsync();
+        LimpiarFormulario();
     }
 
     /// <summary>
@@ -259,6 +261,12 @@ public partial class FormMascotas : Form
             // 3. Razas: Spec 5: cboRaza must NOT be preloaded on form startup (Enabled = false or empty)
             cboRaza.Items.Clear();
             cboRaza.Enabled = false;
+
+            // Ningún valor de alta precargado en los combos del formulario
+            cboPropietario.SelectedIndex = -1;
+            cboPropietario.Text = string.Empty;
+            cboEspecie.SelectedIndex = -1;
+            cboEspecie.Text = string.Empty;
         }
         finally
         {
@@ -372,16 +380,13 @@ public partial class FormMascotas : Form
             return false;
         }
 
-        // Paso 7: Color (opcional, pero si fue ingresado debe tener al menos 3 caracteres alfabéticos)
+        // Paso 7: Color (obligatorio; solo letras, entre 3 y 50 caracteres)
         var color = txtColor.Text.Trim();
-        if (!string.IsNullOrWhiteSpace(color))
+        if (string.IsNullOrWhiteSpace(color) || color.Length < 3 || color.Length > 50 || !RegexSoloTexto.IsMatch(color))
         {
-            if (color.Length < 3 || color.Length > 50 || !RegexSoloTexto.IsMatch(color))
-            {
-                MarcarError(txtColor, lblColor, "El color debe contener solo letras y tener al menos 3 caracteres.");
-                mensajeError = "El color debe contener solo letras y tener al menos 3 caracteres.";
-                return false;
-            }
+            MarcarError(txtColor, lblColor, "El color es obligatorio y debe contener solo letras (mínimo 3 caracteres).");
+            mensajeError = "El color es obligatorio y debe contener solo letras (mínimo 3 caracteres).";
+            return false;
         }
 
         mensajeError = string.Empty;
@@ -459,6 +464,12 @@ public partial class FormMascotas : Form
             return;
         }
 
+        if (string.Equals(ObtenerSnapshotFormulario(), _snapshotEdicion, StringComparison.Ordinal))
+        {
+            MessageBox.Show("No se detectaron cambios para guardar.", "Sin cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         var propItem = (ItemCombo)cboPropietario.SelectedItem!;
         var razaItem = (ItemCombo)cboRaza.SelectedItem!;
 
@@ -525,6 +536,7 @@ public partial class FormMascotas : Form
             txtColor.Clear();
 
             _idMascotaSeleccionada = 0;
+            _snapshotEdicion = null;
 
             // Transición a Modo Creación
             btnGuardar.Enabled = true;
@@ -615,6 +627,7 @@ public partial class FormMascotas : Form
             // Modo Edición: Guardar desactivado, Modificar activado
             btnGuardar.Enabled = false;
             btnModificar.Enabled = true;
+            _snapshotEdicion = ObtenerSnapshotFormulario();
 
             ActualizarEstadoBotonesAccion(mascota.Activo);
 
@@ -624,6 +637,20 @@ public partial class FormMascotas : Form
         {
             _cargandoDatos = false;
         }
+    }
+
+    private string ObtenerSnapshotFormulario()
+    {
+        var propId = (cboPropietario.SelectedItem as ItemCombo)?.Id ?? 0;
+        var razaId = (cboRaza.SelectedItem as ItemCombo)?.Id ?? 0;
+        var sexo = rbMacho.Checked ? "Macho" : rbHembra.Checked ? "Hembra" : "";
+        return string.Join("|",
+            txtNombre.Text.Trim(),
+            propId,
+            razaId,
+            sexo,
+            dtpFechaNacimiento.Value.Date.ToString("yyyy-MM-dd"),
+            txtColor.Text.Trim());
     }
 
     /// <summary>
@@ -637,6 +664,7 @@ public partial class FormMascotas : Form
 
         try
         {
+            _cargandoDatos = true;
             btnBuscar.Enabled = false;
             Cursor = Cursors.WaitCursor;
 
@@ -693,12 +721,15 @@ public partial class FormMascotas : Form
                     m.Activo ? "Activo" : "Inactivo");
             }
 
+            dgvMascotas.ClearSelection();
+            dgvMascotas.CurrentCell = null;
             ActualizarTotalRegistros();
         }
         finally
         {
             btnBuscar.Enabled = true;
             Cursor = Cursors.Default;
+            _cargandoDatos = false;
         }
     }
 
@@ -734,30 +765,62 @@ public partial class FormMascotas : Form
     }
 
     /// <summary>
-    /// Abre la vista de gestión de propietarios y cierra la ventana actual de mascotas (Spec 8).
+    /// Abre la vista de propietarios para alta rápida y vuelve a mascotas sin perder los datos en carga.
     /// </summary>
-    private void btnNuevoPropietario_Click(object? sender, EventArgs e)
+    private async void btnNuevoPropietario_Click(object? sender, EventArgs e)
     {
-        var duenio = this.Owner;
+        long? idPropietarioCreado = null;
 
-        // Ocultar la ventana actual para una transición limpia
-        Hide();
-
-        // Resolver y mostrar FormPropietarios manteniendo el alcance activo durante todo su ciclo de vida
         if (_serviceProvider is not null)
         {
             using var alcance = _serviceProvider.CreateScope();
             using var vistaPropietarios = alcance.ServiceProvider.GetService<FormPropietarios>() ?? new FormPropietarios();
-            vistaPropietarios.ShowDialog(duenio);
+            vistaPropietarios.RetornarAMascotas = true;
+            vistaPropietarios.ShowDialog(this);
+            idPropietarioCreado = vistaPropietarios.UltimoIdCreado;
         }
         else
         {
             using var vistaPropietarios = new FormPropietarios();
-            vistaPropietarios.ShowDialog(duenio);
+            vistaPropietarios.RetornarAMascotas = true;
+            vistaPropietarios.ShowDialog(this);
+            idPropietarioCreado = vistaPropietarios.UltimoIdCreado;
         }
 
-        // Cerrar definitivamente la ventana actual de mascotas
-        Close();
+        await RecargarPropietariosAsync(idPropietarioCreado);
+    }
+
+    /// <summary>
+    /// Recarga el combo de propietarios sin tocar el resto del formulario en edición/alta.
+    /// </summary>
+    private async Task RecargarPropietariosAsync(long? seleccionarId = null)
+    {
+        var idPrevio = (cboPropietario.SelectedItem as ItemCombo)?.Id;
+        var idASeleccionar = seleccionarId ?? idPrevio;
+
+        _cargandoDatos = true;
+        try
+        {
+            cboPropietario.Items.Clear();
+            if (_propietarioControlador is not null)
+            {
+                var resProp = await _propietarioControlador.ObtenerTodosAsync();
+                if (resProp.EsExitoso && resProp.Valor is not null)
+                {
+                    foreach (var p in resProp.Valor.Where(x => x.Activo).OrderBy(x => x.Nombre))
+                    {
+                        cboPropietario.Items.Add(new ItemCombo(p.Id, $"{p.Nombre} {p.Apellido} - DNI: {p.DNI}"));
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _cargandoDatos = false;
+        }
+
+        if (idASeleccionar.HasValue && idASeleccionar.Value > 0)
+            SeleccionarEnComboPorId(cboPropietario, idASeleccionar.Value);
     }
 
     /// <summary>

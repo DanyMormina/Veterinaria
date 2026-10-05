@@ -4,10 +4,12 @@ public class PagoRespuestaDto
 {
     public long Id { get; set; }
     public long IdConsulta { get; set; }
+    public string DescripcionConsulta { get; set; } = string.Empty;
     public long IdMetodoPago { get; set; }
     public string NombreMetodoPago { get; set; } = string.Empty;
     public DateTime Fecha { get; set; }
     public decimal Importe { get; set; }
     public string Estado { get; set; } = string.Empty;
+    public int? Cuotas { get; set; }
     public bool Activo { get; set; }
 }

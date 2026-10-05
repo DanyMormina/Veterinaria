@@ -153,6 +153,40 @@ public class TratamientoControlador(ContextoVeterinaria context)
         }
     }
 
+    /// <summary>
+    /// Obtiene todos los tratamientos aplicados activos (listado general del módulo).
+    /// </summary>
+    public async Task<Resultado<IEnumerable<DetalleConsultaRespuestaDto>>> ObtenerTodosAplicadosAsync()
+    {
+        try
+        {
+            var detalles = await context.DetalleConsultas
+                .AsNoTracking()
+                .Where(d => d.Activo)
+                .OrderByDescending(d => d.Id)
+                .Select(d => new DetalleConsultaRespuestaDto
+                {
+                    Id = d.Id,
+                    IdConsulta = d.IdConsulta,
+                    IdTratamiento = d.IdTratamiento,
+                    TipoTratamiento = d.Tratamiento != null ? d.Tratamiento.TipoTratamiento : string.Empty,
+                    DescripcionTratamiento = d.Tratamiento != null ? d.Tratamiento.Descripcion : string.Empty,
+                    Cantidad = d.Cantidad,
+                    PrecioUnitario = d.PrecioUnitario,
+                    Subtotal = d.Subtotal,
+                    Indicaciones = d.Indicaciones,
+                    Activo = d.Activo
+                })
+                .ToListAsync();
+
+            return Resultado<IEnumerable<DetalleConsultaRespuestaDto>>.Exito(detalles);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<DetalleConsultaRespuestaDto>>.Falla($"Error al obtener tratamientos aplicados: {ex.Message}");
+        }
+    }
+
     public async Task<Resultado> ActualizarAsync(long id, TratamientoSolicitudDto solicitud)
     {
         try
@@ -171,6 +205,9 @@ public class TratamientoControlador(ContextoVeterinaria context)
             entidad.Descripcion = solicitud.Descripcion.Trim();
             entidad.Dosis = string.IsNullOrWhiteSpace(solicitud.Dosis) ? null : solicitud.Dosis.Trim();
             entidad.Precio = solicitud.Precio;
+
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
 
             await context.SaveChangesAsync();
             return Resultado.Exito("Tratamiento actualizado exitosamente.");
@@ -199,6 +236,30 @@ public class TratamientoControlador(ContextoVeterinaria context)
         catch (Exception ex)
         {
             return Resultado.Falla($"Error interno al eliminar el tratamiento: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Elimina (baja lógica) un tratamiento aplicado a una consulta clínica.
+    /// </summary>
+    public async Task<Resultado> EliminarDetalleAplicadoAsync(long idDetalle)
+    {
+        try
+        {
+            if (idDetalle <= 0)
+                return Resultado.Falla("Debe seleccionar un tratamiento aplicado válido.");
+
+            var entidad = await context.DetalleConsultas.FirstOrDefaultAsync(d => d.Id == idDetalle);
+            if (entidad is null)
+                return Resultado.Falla($"No se encontró el tratamiento aplicado con ID {idDetalle}.");
+
+            entidad.Activo = false;
+            await context.SaveChangesAsync();
+            return Resultado.Exito("Tratamiento eliminado de la consulta.");
+        }
+        catch (Exception ex)
+        {
+            return Resultado.Falla($"Error al eliminar el tratamiento aplicado: {ex.Message}");
         }
     }
 

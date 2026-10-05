@@ -59,6 +59,13 @@ public partial class FormVeterinarioPrincipal : Form
         vista.ShowDialog(this);
     }
 
+    private void BTREPORTES_Click(object? sender, EventArgs e)
+    {
+        using var alcance = _serviceProvider.CreateScope();
+        var vista = alcance.ServiceProvider.GetRequiredService<FormReportes>();
+        vista.ShowDialog(this);
+    }
+
     private void btnCerrarSesion_Click(object? sender, EventArgs e)
     {
         Close();

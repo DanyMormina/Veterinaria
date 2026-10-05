@@ -10,6 +10,7 @@ public class ConsultaSolicitudDto
     public decimal? Temperatura { get; set; }
     public string Diagnostico { get; set; } = string.Empty;
     public string? Observaciones { get; set; }
+    public decimal Importe { get; set; }
 
     // Compatibilidad si se enviaba como IdVeterinario
     public long IdVeterinario

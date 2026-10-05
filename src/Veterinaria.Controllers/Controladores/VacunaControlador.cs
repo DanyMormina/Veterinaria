@@ -130,6 +130,10 @@ public class VacunaControlador(ContextoVeterinaria context)
             entidad.Nombre = nombreNormalizado;
             entidad.PeriodoMesesRecomendado = solicitud.PeriodoMesesRecomendado;
             entidad.Precio = solicitud.Precio;
+
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
+
             await context.SaveChangesAsync();
 
             return Resultado.Exito("Vacuna actualizada exitosamente.");

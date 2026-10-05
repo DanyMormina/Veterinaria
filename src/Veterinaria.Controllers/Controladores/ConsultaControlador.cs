@@ -67,6 +67,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 Temperatura = c.Temperatura,
                 Diagnostico = c.Diagnostico,
                 Observaciones = c.Observaciones,
+                Importe = c.Importe,
                 Activo = c.Activo,
                 CantidadTratamientos = c.DetallesConsulta.Count,
                 CantidadVacunas = c.AplicacionesVacuna.Count,
@@ -130,6 +131,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 Temperatura = solicitud.Temperatura,
                 Diagnostico = solicitud.Diagnostico.Trim(),
                 Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim(),
+                Importe = decimal.Round(solicitud.Importe, 2),
                 Activo = true
             };
 
@@ -174,6 +176,10 @@ public class ConsultaControlador(ContextoVeterinaria context)
             entidad.Temperatura = solicitud.Temperatura;
             entidad.Diagnostico = solicitud.Diagnostico.Trim();
             entidad.Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim();
+            entidad.Importe = decimal.Round(solicitud.Importe, 2);
+
+            if (!context.ChangeTracker.HasChanges())
+                return Resultado.Falla("No se detectaron cambios para guardar.");
 
             await context.SaveChangesAsync();
             return Resultado.Exito("Consulta actualizada exitosamente.");
@@ -226,6 +232,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 Temperatura = c.Temperatura,
                 Diagnostico = c.Diagnostico,
                 Observaciones = c.Observaciones,
+                Importe = c.Importe,
                 Activo = c.Activo,
                 CantidadTratamientos = c.DetallesConsulta.Count,
                 CantidadVacunas = c.AplicacionesVacuna.Count,
@@ -242,6 +249,9 @@ public class ConsultaControlador(ContextoVeterinaria context)
 
         if (string.IsNullOrWhiteSpace(solicitud.Diagnostico))
             return "El diagnóstico clínico es obligatorio.";
+
+        if (solicitud.Importe <= 0)
+            return "El importe base de la consulta debe ser mayor a cero.";
 
         return null;
     }

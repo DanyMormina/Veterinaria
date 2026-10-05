@@ -79,6 +79,7 @@ public class ReporteControlador(ContextoVeterinaria context)
                     Raza = c.Mascota.Raza.Nombre,
                     Propietario = c.Mascota.Propietario.Nombre + " " + c.Mascota.Propietario.Apellido,
                     Veterinario = c.Usuario.Nombre + " " + c.Usuario.Apellido,
+                    Motivo = c.Motivo ?? string.Empty,
                     Diagnostico = c.Diagnostico
                 })
                 .ToListAsync();
@@ -88,6 +89,53 @@ public class ReporteControlador(ContextoVeterinaria context)
         catch (Exception ex)
         {
             return Resultado<IEnumerable<ReporteConsultaClinicaDto>>.Falla($"Error al generar reporte de consultas clínicas: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Genera el reporte de cobros (pagos) en un rango de fechas, incluyendo anulados.
+    /// </summary>
+    public async Task<Resultado<IEnumerable<ReporteCobroDto>>> ObtenerReporteCobrosAsync(FiltroReporteCobroDto filtro)
+    {
+        try
+        {
+            var fechaFin = filtro.FechaHasta.Date.AddDays(1).AddTicks(-1);
+
+            var query = context.Pagos
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(p => p.Fecha >= filtro.FechaDesde.Date && p.Fecha <= fechaFin);
+
+            if (!string.IsNullOrWhiteSpace(filtro.Estado) &&
+                !filtro.Estado.Equals("(Todos)", StringComparison.OrdinalIgnoreCase))
+            {
+                var estado = filtro.Estado.Trim();
+                if (estado.Equals("Pagado", StringComparison.OrdinalIgnoreCase))
+                    estado = "Completado";
+                query = query.Where(p => p.Estado == estado);
+            }
+
+            var resultados = await query
+                .OrderByDescending(p => p.Fecha)
+                .ThenByDescending(p => p.Id)
+                .Select(p => new ReporteCobroDto
+                {
+                    Fecha = p.Fecha,
+                    IdConsulta = p.IdConsulta,
+                    Mascota = p.Consulta.Mascota.Nombre,
+                    Propietario = p.Consulta.Mascota.Propietario.Nombre + " " + p.Consulta.Mascota.Propietario.Apellido,
+                    MetodoPago = p.MetodoPago != null ? p.MetodoPago.Nombre : string.Empty,
+                    Cuotas = p.Cuotas,
+                    Importe = p.Importe,
+                    Estado = p.Estado
+                })
+                .ToListAsync();
+
+            return Resultado<IEnumerable<ReporteCobroDto>>.Exito(resultados);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<ReporteCobroDto>>.Falla($"Error al generar reporte de cobros: {ex.Message}");
         }
     }
 
