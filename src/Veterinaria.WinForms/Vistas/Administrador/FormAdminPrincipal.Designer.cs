@@ -28,21 +28,29 @@ partial class FormAdminPrincipal
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         BTUSUARIOS = new Button();
+        picUsuarios = new PictureBox();
         BTPROPIETARIOS = new Button();
+        picPropietarios = new PictureBox();
         BTMASCOTAS = new Button();
+        picMascotas = new PictureBox();
         BTREPORTES = new Button();
+        picReportes = new PictureBox();
         pnlContenido = new Panel();
+        BTBACKUP = new Button();
+        pictureBox1 = new PictureBox();
         pnlEncabezado.SuspendLayout();
         barraEstado.SuspendLayout();
-        pnlContenido.SuspendLayout();
-        picReportes = new PictureBox();
-        ((System.ComponentModel.ISupportInitialize)picReportes).BeginInit();
-        picPropietarios = new PictureBox();
-        ((System.ComponentModel.ISupportInitialize)picPropietarios).BeginInit();
-        picUsuarios = new PictureBox();
+        BTUSUARIOS.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)picUsuarios).BeginInit();
-        picMascotas = new PictureBox();
+        BTPROPIETARIOS.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)picPropietarios).BeginInit();
+        BTMASCOTAS.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)picMascotas).BeginInit();
+        BTREPORTES.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)picReportes).BeginInit();
+        pnlContenido.SuspendLayout();
+        BTBACKUP.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
         SuspendLayout();
         // 
         // pnlEncabezado
@@ -118,9 +126,10 @@ partial class FormAdminPrincipal
         // 
         // BTUSUARIOS
         // 
+        BTUSUARIOS.Controls.Add(picUsuarios);
         BTUSUARIOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTUSUARIOS.ImageAlign = ContentAlignment.TopCenter;
-        BTUSUARIOS.Location = new Point(60, 160);
+        BTUSUARIOS.Location = new Point(25, 158);
         BTUSUARIOS.Name = "BTUSUARIOS";
         BTUSUARIOS.Padding = new Padding(8, 8, 8, 12);
         BTUSUARIOS.Size = new Size(230, 290);
@@ -130,11 +139,24 @@ partial class FormAdminPrincipal
         BTUSUARIOS.UseVisualStyleBackColor = true;
         BTUSUARIOS.Click += BTUSUARIOS_Click;
         // 
+        // picUsuarios
+        // 
+        picUsuarios.BackColor = Color.Transparent;
+        picUsuarios.Image = (Image)resources.GetObject("picUsuarios.Image");
+        picUsuarios.Location = new Point(40, 12);
+        picUsuarios.Name = "picUsuarios";
+        picUsuarios.Size = new Size(150, 190);
+        picUsuarios.SizeMode = PictureBoxSizeMode.Zoom;
+        picUsuarios.TabIndex = 0;
+        picUsuarios.TabStop = false;
+        picUsuarios.Click += BTUSUARIOS_Click;
+        // 
         // BTPROPIETARIOS
         // 
+        BTPROPIETARIOS.Controls.Add(picPropietarios);
         BTPROPIETARIOS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTPROPIETARIOS.ImageAlign = ContentAlignment.TopCenter;
-        BTPROPIETARIOS.Location = new Point(350, 160);
+        BTPROPIETARIOS.Location = new Point(261, 158);
         BTPROPIETARIOS.Name = "BTPROPIETARIOS";
         BTPROPIETARIOS.Padding = new Padding(8, 8, 8, 12);
         BTPROPIETARIOS.Size = new Size(230, 290);
@@ -144,11 +166,24 @@ partial class FormAdminPrincipal
         BTPROPIETARIOS.UseVisualStyleBackColor = true;
         BTPROPIETARIOS.Click += button1_Click;
         // 
+        // picPropietarios
+        // 
+        picPropietarios.BackColor = Color.Transparent;
+        picPropietarios.Image = (Image)resources.GetObject("picPropietarios.Image");
+        picPropietarios.Location = new Point(40, 12);
+        picPropietarios.Name = "picPropietarios";
+        picPropietarios.Size = new Size(150, 190);
+        picPropietarios.SizeMode = PictureBoxSizeMode.Zoom;
+        picPropietarios.TabIndex = 0;
+        picPropietarios.TabStop = false;
+        picPropietarios.Click += button1_Click;
+        // 
         // BTMASCOTAS
         // 
+        BTMASCOTAS.Controls.Add(picMascotas);
         BTMASCOTAS.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTMASCOTAS.ImageAlign = ContentAlignment.TopCenter;
-        BTMASCOTAS.Location = new Point(640, 160);
+        BTMASCOTAS.Location = new Point(497, 158);
         BTMASCOTAS.Name = "BTMASCOTAS";
         BTMASCOTAS.Padding = new Padding(8, 8, 8, 12);
         BTMASCOTAS.Size = new Size(230, 290);
@@ -158,11 +193,24 @@ partial class FormAdminPrincipal
         BTMASCOTAS.UseVisualStyleBackColor = true;
         BTMASCOTAS.Click += BTMASCOTAS_Click;
         // 
+        // picMascotas
+        // 
+        picMascotas.BackColor = Color.Transparent;
+        picMascotas.Image = (Image)resources.GetObject("picMascotas.Image");
+        picMascotas.Location = new Point(40, 12);
+        picMascotas.Name = "picMascotas";
+        picMascotas.Size = new Size(150, 190);
+        picMascotas.SizeMode = PictureBoxSizeMode.Zoom;
+        picMascotas.TabIndex = 0;
+        picMascotas.TabStop = false;
+        picMascotas.Click += BTMASCOTAS_Click;
+        // 
         // BTREPORTES
         // 
+        BTREPORTES.Controls.Add(picReportes);
         BTREPORTES.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
         BTREPORTES.ImageAlign = ContentAlignment.TopCenter;
-        BTREPORTES.Location = new Point(930, 160);
+        BTREPORTES.Location = new Point(733, 158);
         BTREPORTES.Name = "BTREPORTES";
         BTREPORTES.Padding = new Padding(8, 8, 8, 12);
         BTREPORTES.Size = new Size(230, 290);
@@ -172,9 +220,22 @@ partial class FormAdminPrincipal
         BTREPORTES.UseVisualStyleBackColor = true;
         BTREPORTES.Click += BTREPORTES_Click;
         // 
+        // picReportes
+        // 
+        picReportes.BackColor = Color.Transparent;
+        picReportes.Image = (Image)resources.GetObject("picReportes.Image");
+        picReportes.Location = new Point(40, 12);
+        picReportes.Name = "picReportes";
+        picReportes.Size = new Size(150, 190);
+        picReportes.SizeMode = PictureBoxSizeMode.Zoom;
+        picReportes.TabIndex = 0;
+        picReportes.TabStop = false;
+        picReportes.Click += BTREPORTES_Click;
+        // 
         // pnlContenido
         // 
         pnlContenido.BackColor = Color.FromArgb(250, 244, 244);
+        pnlContenido.Controls.Add(BTBACKUP);
         pnlContenido.Controls.Add(BTREPORTES);
         pnlContenido.Controls.Add(BTMASCOTAS);
         pnlContenido.Controls.Add(BTPROPIETARIOS);
@@ -186,48 +247,35 @@ partial class FormAdminPrincipal
         pnlContenido.TabIndex = 1;
         pnlContenido.Paint += pnlContenido_Paint;
         // 
+        // BTBACKUP
+        // 
+        BTBACKUP.Controls.Add(pictureBox1);
+        BTBACKUP.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        BTBACKUP.ImageAlign = ContentAlignment.TopCenter;
+        BTBACKUP.Location = new Point(969, 158);
+        BTBACKUP.Name = "BTBACKUP";
+        BTBACKUP.Padding = new Padding(8, 8, 8, 12);
+        BTBACKUP.Size = new Size(230, 290);
+        BTBACKUP.TabIndex = 3;
+        BTBACKUP.Text = "BACKUP";
+        BTBACKUP.TextAlign = ContentAlignment.BottomCenter;
+        BTBACKUP.UseVisualStyleBackColor = true;
+        BTBACKUP.Click += BTBACKUP_Click;
+        // 
+        // pictureBox1
+        // 
+        pictureBox1.BackColor = Color.Transparent;
+        pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
+        pictureBox1.Location = new Point(40, 12);
+        pictureBox1.Name = "pictureBox1";
+        pictureBox1.Size = new Size(150, 190);
+        pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+        pictureBox1.TabIndex = 0;
+        pictureBox1.TabStop = false;
+        pictureBox1.Click += BTBACKUP_Click;
+        // 
         // FormAdminPrincipal
         // 
-        // picReportes
-        picReportes.BackColor = Color.Transparent;
-        picReportes.Image = (Image)resources.GetObject("picReportes.Image");
-        picReportes.Location = new Point(40, 12);
-        picReportes.Name = "picReportes";
-        picReportes.Size = new Size(150, 190);
-        picReportes.SizeMode = PictureBoxSizeMode.Zoom;
-        picReportes.TabStop = false;
-        picReportes.Click += BTREPORTES_Click;
-        BTREPORTES.Controls.Add(picReportes);
-        // picPropietarios
-        picPropietarios.BackColor = Color.Transparent;
-        picPropietarios.Image = (Image)resources.GetObject("picPropietarios.Image");
-        picPropietarios.Location = new Point(40, 12);
-        picPropietarios.Name = "picPropietarios";
-        picPropietarios.Size = new Size(150, 190);
-        picPropietarios.SizeMode = PictureBoxSizeMode.Zoom;
-        picPropietarios.TabStop = false;
-        picPropietarios.Click += button1_Click;
-        BTPROPIETARIOS.Controls.Add(picPropietarios);
-        // picUsuarios
-        picUsuarios.BackColor = Color.Transparent;
-        picUsuarios.Image = (Image)resources.GetObject("picUsuarios.Image");
-        picUsuarios.Location = new Point(40, 12);
-        picUsuarios.Name = "picUsuarios";
-        picUsuarios.Size = new Size(150, 190);
-        picUsuarios.SizeMode = PictureBoxSizeMode.Zoom;
-        picUsuarios.TabStop = false;
-        picUsuarios.Click += BTUSUARIOS_Click;
-        BTUSUARIOS.Controls.Add(picUsuarios);
-        // picMascotas
-        picMascotas.BackColor = Color.Transparent;
-        picMascotas.Image = (Image)resources.GetObject("picMascotas.Image");
-        picMascotas.Location = new Point(40, 12);
-        picMascotas.Name = "picMascotas";
-        picMascotas.Size = new Size(150, 190);
-        picMascotas.SizeMode = PictureBoxSizeMode.Zoom;
-        picMascotas.TabStop = false;
-        picMascotas.Click += BTMASCOTAS_Click;
-        BTMASCOTAS.Controls.Add(picMascotas);
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
@@ -245,11 +293,17 @@ partial class FormAdminPrincipal
         pnlEncabezado.ResumeLayout(false);
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
-        pnlContenido.ResumeLayout(false);
-        ((System.ComponentModel.ISupportInitialize)picReportes).EndInit();
-        ((System.ComponentModel.ISupportInitialize)picPropietarios).EndInit();
+        BTUSUARIOS.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)picUsuarios).EndInit();
+        BTPROPIETARIOS.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)picPropietarios).EndInit();
+        BTMASCOTAS.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)picMascotas).EndInit();
+        BTREPORTES.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)picReportes).EndInit();
+        pnlContenido.ResumeLayout(false);
+        BTBACKUP.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -264,4 +318,6 @@ partial class FormAdminPrincipal
     private PictureBox picUsuarios;
     private PictureBox picMascotas;
     private Panel pnlContenido;
+    private Button BTBACKUP;
+    private PictureBox pictureBox1;
 }

@@ -49,6 +49,7 @@ internal static class Program
         services.AddTransient<FormInicioSesion>();
         services.AddTransient<FormAdminPrincipal>();
         services.AddTransient<FormUsuarios>();
+        services.AddTransient<FormBackup>();
         services.AddTransient<Veterinaria.WinForms.Vistas.Administrador.FormPropietarios>();
         services.AddTransient<Veterinaria.WinForms.Vistas.Administrador.FormMascotas>();
         services.AddTransient<Veterinaria.WinForms.Vistas.Administrador.FormReportes>();

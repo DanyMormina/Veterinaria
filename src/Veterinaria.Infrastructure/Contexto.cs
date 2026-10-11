@@ -44,20 +44,25 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
     // =========================================================================
     public DbSet<Pago> Pagos => Set<Pago>();
 
+    // =========================================================================
+    // 6. Sistema y Copias de Seguridad
+    // =========================================================================
+    public DbSet<Backup> Backups => Set<Backup>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ContextoVeterinaria).Assembly);
 
         // ---------------------------------------------------------------------
-        // Filtro Global de Soft Delete: Toda entidad EntidadAuditable filtra por Activo == true
+        // Filtro Global de Soft Delete: Toda entidad ISoftDeletable filtra por Activo == true
         // ---------------------------------------------------------------------
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (typeof(EntidadAuditable).IsAssignableFrom(entityType.ClrType))
+            if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
             {
                 var parameter = Expression.Parameter(entityType.ClrType, "e");
-                var property = Expression.Property(parameter, nameof(EntidadAuditable.Activo));
+                var property = Expression.Property(parameter, nameof(ISoftDeletable.Activo));
                 var condition = Expression.Equal(property, Expression.Constant(true));
                 var lambda = Expression.Lambda(condition, parameter);
 
@@ -73,6 +78,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
         ConfigurarClientesPacientes(modelBuilder);
         ConfigurarClinicaConsultas(modelBuilder);
         ConfigurarPagos(modelBuilder);
+        ConfigurarSistema(modelBuilder);
     }
 
     /// <summary>
@@ -413,11 +419,38 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
     }
 
     /// <summary>
+    /// Mapeo de entidades de Sistema y Copias de Seguridad.
+    /// </summary>
+    private static void ConfigurarSistema(ModelBuilder builder)
+    {
+        // Backup
+        builder.Entity<Backup>(b =>
+        {
+            b.ToTable("Backup", "dbo");
+            b.HasKey(x => x.IdBackup);
+            b.Property(x => x.IdBackup).ValueGeneratedOnAdd();
+            b.Property(x => x.IdUsuario).IsRequired();
+            b.Property(x => x.NombreArchivo).HasMaxLength(260).IsRequired();
+            b.Property(x => x.FechaCreacion).HasColumnType("datetime2(0)").HasDefaultValueSql("SYSDATETIME()").IsRequired();
+            b.Property(x => x.RutaDestino).HasMaxLength(500).IsRequired();
+            b.Property(x => x.Activo).HasDefaultValue(true).IsRequired();
+
+            b.HasOne(x => x.Usuario)
+                .WithMany()
+                .HasForeignKey(x => x.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasIndex(x => x.IdUsuario).HasDatabaseName("IX_Backup_IdUsuario");
+            b.HasIndex(x => x.FechaCreacion).HasDatabaseName("IX_Backup_FechaCreacion");
+        });
+    }
+
+    /// <summary>
     /// Intercepta el guardado de cambios para aplicar soft delete defensivo.
     /// </summary>
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var entry in ChangeTracker.Entries<EntidadAuditable>())
+        foreach (var entry in ChangeTracker.Entries<ISoftDeletable>())
         {
             switch (entry.State)
             {

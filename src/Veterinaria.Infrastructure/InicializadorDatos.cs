@@ -14,6 +14,7 @@ public static class InicializadorDatos
         await context.Database.EnsureCreatedAsync();
         await AsegurarColumnasUsuarioAsync(context);
         await CorregirMetodosPagoAsync(context);
+        await AsegurarTablaBackupAsync(context);
 
         // 2. Sembrar Tipos de Usuario si la tabla está vacía
         if (!await context.TiposUsuario.IgnoreQueryFilters().AnyAsync())
@@ -105,6 +106,27 @@ public static class InicializadorDatos
             UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Débito' WHERE Id = 2;
             UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Crédito' WHERE Id = 3;
             UPDATE dbo.MetodoPago SET Nombre = N'Transferencia Bancaria' WHERE Id = 4;
+            """);
+    }
+
+    public static async Task AsegurarTablaBackupAsync(ContextoVeterinaria context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            IF OBJECT_ID('dbo.[Backup]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE dbo.[Backup] (
+                    IdBackup INT IDENTITY(1,1) NOT NULL,
+                    IdUsuario BIGINT NOT NULL,
+                    NombreArchivo NVARCHAR(260) NOT NULL,
+                    FechaCreacion DATETIME2(0) NOT NULL CONSTRAINT DF_Backup_FechaCreacion DEFAULT (SYSDATETIME()),
+                    RutaDestino NVARCHAR(500) NOT NULL,
+                    Activo BIT NOT NULL CONSTRAINT DF_Backup_Activo DEFAULT (1),
+                    CONSTRAINT PK_Backup PRIMARY KEY CLUSTERED (IdBackup ASC),
+                    CONSTRAINT FK_Backup_Usuario FOREIGN KEY (IdUsuario) REFERENCES dbo.Usuario (Id)
+                );
+                CREATE NONCLUSTERED INDEX IX_Backup_IdUsuario ON dbo.[Backup] (IdUsuario);
+                CREATE NONCLUSTERED INDEX IX_Backup_FechaCreacion ON dbo.[Backup] (FechaCreacion);
+            END
             """);
     }
 
