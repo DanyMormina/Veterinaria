@@ -1,10 +1,10 @@
 {
-  "UltimoUsuario": "lLOPEZ.ADM",
+  "UltimoUsuario": "admin",
   "Cuentas": [
     {
       "Usuario": "admin",
       "Contrasena": "admin123",
-      "UltimoAcceso": "2026-10-05T21:31:48.9071891Z"
+      "UltimoAcceso": "2026-10-11T23:53:30.8170526Z"
     },
     {
       "Usuario": "vet",
@@ -29,7 +29,7 @@
     {
       "Usuario": "lLOPEZ.ADM",
       "Contrasena": "123456",
-      "UltimoAcceso": "2026-10-11T14:32:20.6754992Z"
+      "UltimoAcceso": "2026-10-11T23:50:08.3418864Z"
     },
     {
       "Usuario": "MROGRIGUEZ.VET",

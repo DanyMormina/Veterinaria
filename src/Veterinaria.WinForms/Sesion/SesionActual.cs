@@ -1,39 +1,38 @@
 using Veterinaria.Domain.Dtos;
+using Veterinaria.Domain.Entidades;
+using CoreSesion = Veterinaria.CrossCutting.Session.SesionActual;
 
 namespace Veterinaria.WinForms.Sesion;
 
+/// <summary>
+/// Fachada de sesión para la capa de presentación Windows Forms sincronizada con Veterinaria.CrossCutting.Session.
+/// </summary>
 public static class SesionActual
 {
-    public static long? IdUsuario { get; private set; }
-    public static string NombreUsuario { get; private set; } = string.Empty;
-    public static string NombreCompleto { get; private set; } = string.Empty;
-    public static string TipoUsuario { get; private set; } = string.Empty;
-    public static string Rol => TipoUsuario;
-    public static bool EstaAutenticado => IdUsuario.HasValue && IdUsuario.Value > 0;
+    public static long? IdUsuario => CoreSesion.IdUsuario;
+    public static string NombreUsuario => CoreSesion.NombreUsuario;
+    public static string NombreCompleto => CoreSesion.NombreCompleto;
+    public static string TipoUsuario => CoreSesion.TipoUsuario;
+    public static string Rol => CoreSesion.Rol;
+    public static bool EstaAutenticado => CoreSesion.EstaAutenticado;
+
+    public static void IniciarSesion(Usuario usuario)
+    {
+        CoreSesion.IniciarSesion(usuario);
+    }
 
     public static void IniciarSesion(UsuarioRespuestaDto usuario)
     {
-        ArgumentNullException.ThrowIfNull(usuario);
-
-        IdUsuario = usuario.Id;
-        NombreUsuario = usuario.NombreUsuario;
-        NombreCompleto = $"{usuario.Nombre} {usuario.Apellido}".Trim();
-        TipoUsuario = usuario.NombreTipoUsuario;
+        CoreSesion.IniciarSesion(usuario);
     }
 
     public static void IniciarSesion(long idUsuario, string nombreUsuario, string nombreCompleto, string tipoUsuario)
     {
-        IdUsuario = idUsuario;
-        NombreUsuario = nombreUsuario;
-        NombreCompleto = nombreCompleto;
-        TipoUsuario = tipoUsuario;
+        CoreSesion.IniciarSesion(idUsuario, nombreUsuario, nombreCompleto, tipoUsuario);
     }
 
     public static void CerrarSesion()
     {
-        IdUsuario = null;
-        NombreUsuario = string.Empty;
-        NombreCompleto = string.Empty;
-        TipoUsuario = string.Empty;
+        CoreSesion.CerrarSesion();
     }
 }

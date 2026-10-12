@@ -213,6 +213,10 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
             b.Property(u => u.Matricula)
                 .HasMaxLength(50);
 
+            b.Property(u => u.PuedeRestaurarBD)
+                .HasDefaultValue(false)
+                .IsRequired();
+
             b.HasOne(u => u.TipoUsuario)
                 .WithMany(t => t.Usuarios)
                 .HasForeignKey(u => u.IdTipoUsuario)

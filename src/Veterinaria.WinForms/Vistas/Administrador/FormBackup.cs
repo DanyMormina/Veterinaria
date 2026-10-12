@@ -24,8 +24,11 @@ public partial class FormBackup : Form
         // Enlace de eventos del ciclo de vida del formulario
         Load += FormBackup_Load;
         btnGenerarBackup.Click += btnGenerarBackup_Click;
+        btnRestaurarCopia.Click += btnRestaurarCopia_Click;
+        btnExaminarRestaurar.Click += btnExaminarRestaurar_Click;
         btnVolver.Click += (s, e) => Close();
     }
+
 
     /// <summary>
     /// Inicializa la sesión, la ruta configurada, la sugerencia del nombre de archivo y la grilla de historial.
@@ -157,8 +160,137 @@ public partial class FormBackup : Form
         {
             // 4. Restauración de controles y cursor
             btnGenerarBackup.Enabled = true;
+            btnRestaurarCopia.Enabled = true;
+            btnExaminarRestaurar.Enabled = true;
             btnVolver.Enabled = true;
             Cursor = Cursors.Default;
         }
     }
+
+    /// <summary>
+    /// Inicia el flujo de restauración tomando el archivo seleccionado en la grilla histórica.
+    /// Si no hay fila seleccionada, ofrece examinar el directorio de respaldos.
+    /// </summary>
+    private async void btnRestaurarCopia_Click(object? sender, EventArgs e)
+    {
+        string archivoSeleccionado = string.Empty;
+
+        if (dgvBackups.SelectedRows.Count > 0 && dgvBackups.SelectedRows[0].DataBoundItem is BackupHistorialDto dto)
+        {
+            archivoSeleccionado = dto.NombreArchivo;
+        }
+
+        if (string.IsNullOrWhiteSpace(archivoSeleccionado))
+        {
+            var respuesta = MessageBox.Show(
+                "No ha seleccionado ninguna copia de seguridad de la lista.\n¿Desea examinar un archivo .bak desde el explorador?",
+                "Seleccionar Copia de Seguridad",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (respuesta == DialogResult.Yes)
+            {
+                btnExaminarRestaurar_Click(sender, e);
+            }
+            return;
+        }
+
+        await EjecutarFlujoRestauracionAsync(archivoSeleccionado);
+    }
+
+    /// <summary>
+    /// Permite al usuario buscar y seleccionar manualmente un archivo .bak en el sistema de archivos.
+    /// </summary>
+    private async void btnExaminarRestaurar_Click(object? sender, EventArgs e)
+    {
+        using var ofd = new OpenFileDialog
+        {
+            InitialDirectory = _backupController.ObtenerDirectorioDestino(),
+            Filter = "Copias de seguridad SQL Server (*.bak)|*.bak|Todos los archivos (*.*)|*.*",
+            Title = "Seleccionar archivo de respaldo para restaurar"
+        };
+
+        if (ofd.ShowDialog(this) == DialogResult.OK)
+        {
+            string nombreArchivo = Path.GetFileName(ofd.FileName);
+            await EjecutarFlujoRestauracionAsync(nombreArchivo);
+        }
+    }
+
+    /// <summary>
+    /// Orquesta el flujo completo de restauración: solicitud de doble factor mediante modal,
+    /// ejecución del restore y cierre forzado de sesión en caso de éxito.
+    /// </summary>
+    private async Task EjecutarFlujoRestauracionAsync(string nombreArchivo)
+    {
+        // 1. Mostrar diálogo modal de confirmación y solicitud de contraseña administrativa
+        using var formConfirmacion = new FormConfirmarRestore(nombreArchivo);
+        if (formConfirmacion.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        string passwordConfirmacion = formConfirmacion.PasswordConfirmacion;
+
+        // 2. Bloqueo defensivo de la interfaz y cursor de espera
+        btnGenerarBackup.Enabled = false;
+        btnRestaurarCopia.Enabled = false;
+        btnExaminarRestaurar.Enabled = false;
+        btnVolver.Enabled = false;
+        Cursor = Cursors.WaitCursor;
+
+        try
+        {
+            // 3. Invocar al controlador con doble factor de verificación
+            var resultado = await _backupController.SolicitarRestauracionAsync(
+                nombreArchivo,
+                passwordConfirmacion);
+
+            if (resultado.EsExitoso)
+            {
+                // 4. Notificación de éxito
+                MessageBox.Show(
+                    $"{resultado.Mensaje}\n\nPor razones de integridad y consistencia de datos, la sesión actual finalizará inmediatamente.",
+                    "Restauración Completada",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                // 5. Cierre forzoso de sesión y retorno a la pantalla de login
+                SesionActual.CerrarSesion();
+                var parentOwner = Owner;
+                Close();
+                parentOwner?.Close();
+            }
+            else
+            {
+                // Fallo de validación, autorización o ejecución técnica
+                MessageBox.Show(
+                    resultado.Mensaje,
+                    "Error al Restaurar Base de Datos",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Ocurrió un error inesperado durante el proceso de restauración:\n{ex.Message}",
+                "Error Crítico",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        finally
+        {
+            // 6. Restaurar estado de controles si el formulario sigue abierto
+            if (!IsDisposed)
+            {
+                btnGenerarBackup.Enabled = true;
+                btnRestaurarCopia.Enabled = true;
+                btnExaminarRestaurar.Enabled = true;
+                btnVolver.Enabled = true;
+                Cursor = Cursors.Default;
+            }
+        }
+    }
 }
+

@@ -46,8 +46,11 @@ partial class FormBackup
         colUsuario = new DataGridViewTextBoxColumn();
         pnlInferior = new Panel();
         btnVolver = new Button();
+        btnRestaurarCopia = new Button();
+        btnExaminarRestaurar = new Button();
         lblTotalBackups = new Label();
         pnlEncabezado.SuspendLayout();
+
         pnlContenido.SuspendLayout();
         grpConfiguracion.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvBackups).BeginInit();
@@ -242,6 +245,8 @@ partial class FormBackup
         // 
         pnlInferior.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         pnlInferior.Controls.Add(btnVolver);
+        pnlInferior.Controls.Add(btnRestaurarCopia);
+        pnlInferior.Controls.Add(btnExaminarRestaurar);
         pnlInferior.Controls.Add(lblTotalBackups);
         pnlInferior.Location = new Point(16, 620);
         pnlInferior.Name = "pnlInferior";
@@ -258,10 +263,40 @@ partial class FormBackup
         btnVolver.ForeColor = Color.FromArgb(58, 53, 59);
         btnVolver.Location = new Point(0, 3);
         btnVolver.Name = "btnVolver";
-        btnVolver.Size = new Size(160, 32);
+        btnVolver.Size = new Size(140, 32);
         btnVolver.TabIndex = 0;
         btnVolver.Text = "Volver al panel";
         btnVolver.UseVisualStyleBackColor = false;
+        // 
+        // btnRestaurarCopia
+        // 
+        btnRestaurarCopia.BackColor = Color.FromArgb(200, 138, 150);
+        btnRestaurarCopia.Cursor = Cursors.Hand;
+        btnRestaurarCopia.FlatAppearance.BorderSize = 0;
+        btnRestaurarCopia.FlatStyle = FlatStyle.Flat;
+        btnRestaurarCopia.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnRestaurarCopia.ForeColor = Color.White;
+        btnRestaurarCopia.Location = new Point(150, 3);
+        btnRestaurarCopia.Name = "btnRestaurarCopia";
+        btnRestaurarCopia.Size = new Size(170, 32);
+        btnRestaurarCopia.TabIndex = 1;
+        btnRestaurarCopia.Text = "Restaurar Copia";
+        btnRestaurarCopia.UseVisualStyleBackColor = false;
+        // 
+        // btnExaminarRestaurar
+        // 
+        btnExaminarRestaurar.BackColor = Color.FromArgb(226, 217, 220);
+        btnExaminarRestaurar.Cursor = Cursors.Hand;
+        btnExaminarRestaurar.FlatAppearance.BorderSize = 0;
+        btnExaminarRestaurar.FlatStyle = FlatStyle.Flat;
+        btnExaminarRestaurar.Font = new Font("Segoe UI", 9F);
+        btnExaminarRestaurar.ForeColor = Color.FromArgb(58, 53, 59);
+        btnExaminarRestaurar.Location = new Point(330, 3);
+        btnExaminarRestaurar.Name = "btnExaminarRestaurar";
+        btnExaminarRestaurar.Size = new Size(180, 32);
+        btnExaminarRestaurar.TabIndex = 2;
+        btnExaminarRestaurar.Text = "Examinar archivo .bak...";
+        btnExaminarRestaurar.UseVisualStyleBackColor = false;
         // 
         // lblTotalBackups
         // 
@@ -271,8 +306,9 @@ partial class FormBackup
         lblTotalBackups.Location = new Point(788, 3);
         lblTotalBackups.Name = "lblTotalBackups";
         lblTotalBackups.Size = new Size(400, 32);
-        lblTotalBackups.TabIndex = 1;
+        lblTotalBackups.TabIndex = 3;
         lblTotalBackups.Text = "Total de copias registradas: 0";
+
         lblTotalBackups.TextAlign = ContentAlignment.MiddleRight;
         // 
         // FormBackup
@@ -315,5 +351,7 @@ partial class FormBackup
     private DataGridViewTextBoxColumn colUsuario;
     private Panel pnlInferior;
     private Button btnVolver;
+    private Button btnRestaurarCopia;
+    private Button btnExaminarRestaurar;
     private Label lblTotalBackups;
 }

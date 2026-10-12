@@ -77,22 +77,29 @@ public class BackupService : IBackupService
 
             if (esLinux)
             {
-                // Escenario Docker / Linux: El motor SQL Server no conoce discos 'C:\'.
-                // Se genera en el almacenamiento interno de SQL Server y se transmite a Windows.
-                string rutaLinuxInterna = $"/var/opt/mssql/data/{nombreLimpio}";
+                // Escenario Docker / Linux: El volumen bind mount mapea C:\Backup_Veterinaria a /var/opt/mssql/backup
+                string rutaLinuxBind = $"/var/opt/mssql/backup/{nombreLimpio}";
 
                 string comandoSql = $@"
                     BACKUP DATABASE [{nombreBd}]
                     TO DISK = @ruta
                     WITH FORMAT, INIT, NAME = @nombre;";
 
-                var paramRuta = new SqlParameter("@ruta", rutaLinuxInterna);
+                var paramRuta = new SqlParameter("@ruta", rutaLinuxBind);
                 var paramNombre = new SqlParameter("@nombre", $"Respaldo_{nombreLimpio}");
 
-                await _contexto.Database.ExecuteSqlRawAsync(comandoSql, paramRuta, paramNombre);
-
-                // Transmitir y guardar el archivo .bak desde SQL Server a la carpeta local de Windows
-                await ExtraerArchivoBackupDesdeServidorAsync(rutaLinuxInterna, rutaCompletaWindows);
+                try
+                {
+                    await _contexto.Database.ExecuteSqlRawAsync(comandoSql, paramRuta, paramNombre);
+                }
+                catch
+                {
+                    // Fallback mediante almacenamiento interno /var/opt/mssql/data y streaming OPENROWSET
+                    string rutaLinuxInterna = $"/var/opt/mssql/data/{nombreLimpio}";
+                    var paramRutaInterna = new SqlParameter("@ruta", rutaLinuxInterna);
+                    await _contexto.Database.ExecuteSqlRawAsync(comandoSql, paramRutaInterna, paramNombre);
+                    await ExtraerArchivoBackupDesdeServidorAsync(rutaLinuxInterna, rutaCompletaWindows);
+                }
             }
             else
             {
@@ -172,6 +179,119 @@ public class BackupService : IBackupService
                 ? $"{ex.Message} ({ex.InnerException.Message})"
                 : ex.Message;
             return Result.Falla($"Error al generar el backup: {mensaje}");
+        }
+    }
+
+    /// <summary>
+    /// Restaura una copia de seguridad física (.bak) sobre la base de datos SQL Server.
+    /// Establece la base de datos en modo SINGLE_USER, ejecuta el restore con REPLACE y la restablece en MULTI_USER.
+    /// </summary>
+    public async Task<Result> RestaurarBaseDatosAsync(string nombreArchivoBak, long idUsuarioResponsable)
+    {
+        try
+        {
+            // 1. Validación de nombre de archivo no vacío
+            if (string.IsNullOrWhiteSpace(nombreArchivoBak))
+            {
+                return Result.Falla("El nombre del archivo de copia de seguridad no puede estar vacío.");
+            }
+
+            string nombreLimpio = nombreArchivoBak.Trim();
+            if (!nombreLimpio.EndsWith(".bak", StringComparison.OrdinalIgnoreCase))
+            {
+                nombreLimpio += ".bak";
+            }
+
+            // 2. Verificación de existencia del archivo en el host Windows
+            string directorio = ObtenerRutaDestinoPorDefecto();
+            string rutaCompletaWindows = Path.Combine(directorio, nombreLimpio);
+
+            if (!File.Exists(rutaCompletaWindows))
+            {
+                return Result.Falla($"El archivo de copia de seguridad '{nombreLimpio}' no existe en la ruta '{directorio}'.");
+            }
+
+            // 3. Determinar nombre de la base de datos destino
+            var conexion = _contexto.Database.GetDbConnection();
+            string nombreBd = !string.IsNullOrWhiteSpace(conexion.Database)
+                ? conexion.Database
+                : "VeterinariaDb";
+
+            // 4. Determinar la ruta de acceso al archivo según el entorno del motor
+            bool esLinux = await EsMotorLinuxAsync();
+            string rutaServidor = esLinux
+                ? $"/var/opt/mssql/backup/{nombreLimpio}"
+                : rutaCompletaWindows;
+
+            // 5. Configurar conexión apuntando directamente a 'master'
+            var cadenaOriginal = _contexto.Database.GetConnectionString();
+            if (string.IsNullOrWhiteSpace(cadenaOriginal))
+            {
+                return Result.Falla("No se pudo obtener la cadena de conexión de la base de datos.");
+            }
+
+            var csb = new SqlConnectionStringBuilder(cadenaOriginal)
+            {
+                InitialCatalog = "master",
+                ConnectTimeout = 60
+            };
+
+            // Invalida conexiones previas en el pool para permitir el modo SINGLE_USER sin contención
+            SqlConnection.ClearAllPools();
+
+            await using var connMaster = new SqlConnection(csb.ConnectionString);
+            await connMaster.OpenAsync();
+
+            try
+            {
+                // 6. Configurar la base de datos en SINGLE_USER desconectando otras sesiones activas
+                string sqlSingleUser = $"ALTER DATABASE [{nombreBd}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
+                await using (var cmdSingle = new SqlCommand(sqlSingleUser, connMaster))
+                {
+                    cmdSingle.CommandTimeout = 60;
+                    await cmdSingle.ExecuteNonQueryAsync();
+                }
+
+                // 7. Ejecutar RESTORE DATABASE con REPLACE
+                string sqlRestore = $"RESTORE DATABASE [{nombreBd}] FROM DISK = @rutaBak WITH REPLACE;";
+                await using (var cmdRestore = new SqlCommand(sqlRestore, connMaster))
+                {
+                    cmdRestore.CommandTimeout = 120;
+                    cmdRestore.Parameters.Add(new SqlParameter("@rutaBak", rutaServidor));
+                    await cmdRestore.ExecuteNonQueryAsync();
+                }
+            }
+            finally
+            {
+                // 8. Restablecer siempre la base de datos en MULTI_USER defensivamente
+                try
+                {
+                    string sqlMultiUser = $"ALTER DATABASE [{nombreBd}] SET MULTI_USER;";
+                    await using var cmdMulti = new SqlCommand(sqlMultiUser, connMaster);
+                    cmdMulti.CommandTimeout = 60;
+                    await cmdMulti.ExecuteNonQueryAsync();
+                }
+                catch
+                {
+                    // Ignorar defensivamente si ya se encuentra en MULTI_USER
+                }
+
+                // Renovar los pools de conexiones tras la restauración
+                SqlConnection.ClearAllPools();
+            }
+
+            return Result.Ok("Base de datos restaurada correctamente. La sesión debe reiniciarse.");
+        }
+        catch (SqlException sqlEx)
+        {
+            return Result.Falla($"Error del motor SQL Server ({sqlEx.Number}): {sqlEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            var mensaje = ex.InnerException != null
+                ? $"{ex.Message} ({ex.InnerException.Message})"
+                : ex.Message;
+            return Result.Falla($"Error al restaurar la base de datos: {mensaje}");
         }
     }
 

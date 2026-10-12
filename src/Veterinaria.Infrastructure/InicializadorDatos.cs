@@ -97,6 +97,13 @@ public static class InicializadorDatos
             IF COL_LENGTH('dbo.Pago', 'Cuotas') IS NULL
                 ALTER TABLE dbo.Pago ADD Cuotas INT NULL;
             """);
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Usuario', 'PuedeRestaurarBD') IS NULL
+            BEGIN
+                ALTER TABLE dbo.Usuario ADD PuedeRestaurarBD BIT NOT NULL CONSTRAINT DF_Usuario_PuedeRestaurarBD DEFAULT (0);
+                EXEC sp_executesql N'UPDATE dbo.Usuario SET PuedeRestaurarBD = 1 WHERE LOWER(NombreUsuario) = ''admin'';';
+            END
+            """);
     }
 
     public static async Task CorregirMetodosPagoAsync(ContextoVeterinaria context)
@@ -161,6 +168,7 @@ public static class InicializadorDatos
             Apellido = apellido,
             DNI = dni,
             Matricula = matricula,
+            PuedeRestaurarBD = nombreUsuario.Equals("admin", StringComparison.OrdinalIgnoreCase),
             Activo = true
         });
 

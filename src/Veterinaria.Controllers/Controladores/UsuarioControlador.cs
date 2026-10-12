@@ -365,6 +365,52 @@ public class UsuarioControlador(ContextoVeterinaria context)
         return await CambiarEstadoAsync(id, activo: false, idUsuarioSesion);
     }
 
+    /// <summary>
+    /// Alias en inglés para compatibilidad arquitectónica de consulta por username.
+    /// </summary>
+    public async Task<Resultado<UsuarioRespuestaDto>> ObtenerPorUsernameAsync(string username) =>
+        await ObtenerPorNombreUsuarioAsync(username);
+
+    /// <summary>
+    /// Valida que el usuario especificado exista, esté activo y posea privilegios exclusivos para restaurar la base de datos.
+    /// Realiza una consulta directa y en tiempo real a la base de datos proyectando únicamente las columnas requeridas.
+    /// </summary>
+    /// <param name="idUsuario">Identificador único del usuario.</param>
+    /// <returns>Resultado booleano indicando autorización.</returns>
+    public async Task<Resultado<bool>> ValidarAutorizacionRestoreAsync(long idUsuario)
+    {
+        if (idUsuario <= 0)
+            return Resultado<bool>.Falla("Identificador de usuario inválido.");
+
+        var usuario = await context.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Id == idUsuario && u.Activo)
+            .Select(u => new { u.Id, u.PuedeRestaurarBD })
+            .FirstOrDefaultAsync();
+
+        if (usuario == null)
+            return Resultado<bool>.Falla("Usuario no encontrado o inactivo.");
+
+        if (!usuario.PuedeRestaurarBD)
+            return Resultado<bool>.Falla("No cuenta con privilegios administrativos para realizar la restauración de la base de datos.");
+
+        return Resultado<bool>.Exito(true);
+    }
+
+    /// <summary>
+    /// Valida los privilegios de restauración para el usuario que mantiene la sesión activa actualmente.
+    /// </summary>
+    public async Task<Resultado<bool>> ValidarAutorizacionRestoreAsync()
+    {
+        var idSesion = Veterinaria.CrossCutting.Session.SesionActual.IdUsuario;
+        if (!idSesion.HasValue || idSesion.Value <= 0)
+        {
+            return Resultado<bool>.Falla("No se pudo identificar una sesión activa de usuario válida.");
+        }
+
+        return await ValidarAutorizacionRestoreAsync(idSesion.Value);
+    }
+
     private static string? ValidarDatosSolicitud(UsuarioSolicitudDto solicitud, bool esAlta)
     {
         if (solicitud.IdTipoUsuario <= 0)

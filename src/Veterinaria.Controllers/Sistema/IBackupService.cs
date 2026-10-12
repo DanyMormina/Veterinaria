@@ -23,8 +23,18 @@ public interface IBackupService
     Task<Result<IEnumerable<BackupHistorialDto>>> ObtenerHistorialAsync();
 
     /// <summary>
+    /// Restaura una copia de seguridad física (.bak) sobre la base de datos SQL Server.
+    /// Requiere privilegios administrativos exclusivos y desconexión de usuarios concurrentes.
+    /// </summary>
+    /// <param name="nombreArchivoBak">Nombre del archivo de respaldo ubicado en el directorio predeterminado.</param>
+    /// <param name="idUsuarioResponsable">Identificador del usuario con permisos que autorizó la operación.</param>
+    /// <returns>Resultado de la restauración.</returns>
+    Task<Result> RestaurarBaseDatosAsync(string nombreArchivoBak, long idUsuarioResponsable);
+
+    /// <summary>
     /// Retorna la ruta física por defecto configurada para el almacenamiento de respaldos.
     /// </summary>
     /// <returns>Ruta de directorio (ej. C:\Backup_Veterinaria).</returns>
     string ObtenerRutaDestinoPorDefecto();
 }
+
