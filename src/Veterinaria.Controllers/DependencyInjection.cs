@@ -1,5 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.Controllers.Controladores;
+using Veterinaria.Controllers.Sistema;
+using Veterinaria.Controllers.Seguridad;
+using Veterinaria.Interfaces.Services.Seguridad;
+using Veterinaria.Interfaces.Services.Sistema;
+using Veterinaria.Services.Seguridad;
+using Veterinaria.Services.Sistema;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +29,9 @@ public static class ExtensionesInyeccionControladores
         services.AddTransient<MetodoPagoControlador>();
 
         services.AddTransient<UsuarioControlador>();
+        services.AddTransient<IUsuarioService, UsuarioService>();
+        services.AddTransient<UsuarioService>();
+        services.AddTransient<UsuarioController>();
 
         services.AddTransient<PropietarioControlador>();
         services.AddTransient<PropietarioService>();
@@ -37,6 +46,10 @@ public static class ExtensionesInyeccionControladores
 
         services.AddTransient<PagoControlador>();
         services.AddTransient<ReporteControlador>();
+
+        // Módulo de Copias de Seguridad (Backup)
+        services.AddTransient<IBackupService, BackupService>();
+        services.AddTransient<BackupController>();
 
         return services;
     }

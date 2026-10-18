@@ -50,6 +50,7 @@ CREATE TABLE dbo.Usuario (
     FechaNacimiento DATE NULL,
     Sexo NVARCHAR(10) NULL,
     Matricula NVARCHAR(50) NULL,
+    PuedeRestaurarBD BIT NOT NULL CONSTRAINT DF_Usuario_PuedeRestaurarBD DEFAULT (0),
     Activo BIT NOT NULL CONSTRAINT DF_Usuario_Activo DEFAULT (1),
     CONSTRAINT PK_Usuario PRIMARY KEY CLUSTERED (Id ASC),
     CONSTRAINT FK_Usuario_TipoUsuario FOREIGN KEY (IdTipoUsuario) REFERENCES dbo.TipoUsuario (Id),
@@ -271,7 +272,28 @@ SET IDENTITY_INSERT dbo.MetodoPago OFF;
 GO
 
 SET IDENTITY_INSERT dbo.Usuario ON;
-INSERT INTO dbo.Usuario (Id, IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, Activo)
-VALUES (1, 1, 'admin', '$2a$11$q9hM1K9oA5F8VzE9hX2Hke0bT.G7j5Z8U1j.H7y1N8r9o1V7e8i9a', 'Administrador', 'Sistema', '12345678', 'ADM-001', 1);
+INSERT INTO dbo.Usuario (Id, IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+VALUES (1, 1, 'admin', '$2a$11$q9hM1K9oA5F8VzE9hX2Hke0bT.G7j5Z8U1j.H7y1N8r9o1V7e8i9a', 'Administrador', 'Sistema', '12345678', 'ADM-001', 1, 1);
 SET IDENTITY_INSERT dbo.Usuario OFF;
+GO
+
+-- ------------------------------------------------------------------------------
+-- 7. TABLA DE SISTEMA: BACKUPS Y COPIAS DE SEGURIDAD
+-- ------------------------------------------------------------------------------
+IF OBJECT_ID('dbo.[Backup]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[Backup] (
+        IdBackup INT IDENTITY(1,1) NOT NULL,
+        IdUsuario BIGINT NOT NULL,
+        NombreArchivo NVARCHAR(260) NOT NULL,
+        FechaCreacion DATETIME2(0) NOT NULL CONSTRAINT DF_Backup_FechaCreacion DEFAULT (SYSDATETIME()),
+        RutaDestino NVARCHAR(500) NOT NULL,
+        Activo BIT NOT NULL CONSTRAINT DF_Backup_Activo DEFAULT (1),
+        CONSTRAINT PK_Backup PRIMARY KEY CLUSTERED (IdBackup ASC),
+        CONSTRAINT FK_Backup_Usuario FOREIGN KEY (IdUsuario) REFERENCES dbo.Usuario (Id)
+    );
+
+    CREATE NONCLUSTERED INDEX IX_Backup_IdUsuario ON dbo.[Backup] (IdUsuario);
+    CREATE NONCLUSTERED INDEX IX_Backup_FechaCreacion ON dbo.[Backup] (FechaCreacion);
+END
 GO

@@ -1,0 +1,17 @@
+services:
+  sqlserver:
+    container_name: mssql2022_veterinaria
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    user: root
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Pass123456!
+    volumes:
+      - sqlserver_data:/var/opt/mssql/data
+      - C:/Backup_Veterinaria:/var/opt/mssql/backup
+
+volumes:
+  sqlserver_data:

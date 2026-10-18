@@ -16,6 +16,7 @@ public class Usuario : EntidadAuditable
     public DateTime? FechaNacimiento { get; set; }
     public string? Sexo { get; set; }
     public string? Matricula { get; set; }
+    public bool PuedeRestaurarBD { get; set; } = false;
 
     public TipoUsuario TipoUsuario { get; set; } = null!;
     public ICollection<Consulta> Consultas { get; set; } = [];

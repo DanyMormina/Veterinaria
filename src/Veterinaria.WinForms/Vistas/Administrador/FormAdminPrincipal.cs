@@ -53,6 +53,13 @@ public partial class FormAdminPrincipal : Form
         vistaReportes.ShowDialog(this);
     }
 
+    private void BTBACKUP_Click(object sender, EventArgs e)
+    {
+        using var alcance = _serviceProvider.CreateScope();
+        var vistaBackup = alcance.ServiceProvider.GetRequiredService<FormBackup>();
+        vistaBackup.ShowDialog(this);
+    }
+
     private void btnCerrarSesion_Click(object? sender, EventArgs e)
     {
         Close();
