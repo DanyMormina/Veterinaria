@@ -15,6 +15,7 @@ public static class InicializadorDatos
         await AsegurarColumnasUsuarioAsync(context);
         await CorregirMetodosPagoAsync(context);
         await AsegurarTablaBackupAsync(context);
+        await AsegurarTablaPrecioConsultaAsync(context);
 
         // 2. Sembrar Tipos de Usuario si la tabla está vacía
         if (!await context.TiposUsuario.IgnoreQueryFilters().AnyAsync())
@@ -40,6 +41,14 @@ public static class InicializadorDatos
 
             await context.SaveChangesAsync();
         }
+
+        // 3b. Precio fijo de consulta para cada especie que todavía no lo tenga (se ajusta luego en la base)
+        await context.Database.ExecuteSqlRawAsync("""
+            INSERT INTO dbo.PrecioConsulta (IdEspecie, Precio)
+            SELECT e.Id, 10000.00
+            FROM dbo.Especie e
+            WHERE NOT EXISTS (SELECT 1 FROM dbo.PrecioConsulta p WHERE p.IdEspecie = e.Id);
+            """);
 
         // 4. Sembrar Métodos de Pago iniciales
         if (!await context.MetodosPago.IgnoreQueryFilters().AnyAsync())
@@ -113,6 +122,23 @@ public static class InicializadorDatos
             UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Débito' WHERE Id = 2;
             UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Crédito' WHERE Id = 3;
             UPDATE dbo.MetodoPago SET Nombre = N'Transferencia Bancaria' WHERE Id = 4;
+            """);
+    }
+
+    public static async Task AsegurarTablaPrecioConsultaAsync(ContextoVeterinaria context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            IF OBJECT_ID('dbo.PrecioConsulta', 'U') IS NULL
+            BEGIN
+                CREATE TABLE dbo.PrecioConsulta (
+                    Id BIGINT IDENTITY(1,1) NOT NULL,
+                    IdEspecie BIGINT NOT NULL,
+                    Precio DECIMAL(18,2) NOT NULL,
+                    CONSTRAINT PK_PrecioConsulta PRIMARY KEY CLUSTERED (Id ASC),
+                    CONSTRAINT FK_PrecioConsulta_Especie FOREIGN KEY (IdEspecie) REFERENCES dbo.Especie (Id)
+                );
+                CREATE UNIQUE NONCLUSTERED INDEX IX_PrecioConsulta_IdEspecie ON dbo.PrecioConsulta (IdEspecie);
+            END
             """);
     }
 

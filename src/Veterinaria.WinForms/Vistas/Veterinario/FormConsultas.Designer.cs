@@ -244,18 +244,22 @@ partial class FormConsultas
         // 
         // lblImporte
         // 
-        lblImporte.Location = new Point(780, 104);
+        lblImporte.Location = new Point(760, 104);
         lblImporte.Name = "lblImporte";
-        lblImporte.Size = new Size(70, 23);
-        lblImporte.Text = "Importe $";
+        lblImporte.Size = new Size(92, 23);
+        lblImporte.Text = "Importe fijo $";
         lblImporte.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // txtImporte
         // 
-        txtImporte.BackColor = Color.White;
+        txtImporte.BackColor = Color.FromArgb(226, 217, 220);
         txtImporte.BorderStyle = BorderStyle.FixedSingle;
+        txtImporte.Cursor = Cursors.No;
         txtImporte.Location = new Point(854, 104);
         txtImporte.Name = "txtImporte";
+        txtImporte.PlaceholderText = "Elija la mascota";
+        txtImporte.ReadOnly = true;
+        txtImporte.TabStop = false;
         txtImporte.Size = new Size(190, 23);
         // 
         // lblDiagnostico

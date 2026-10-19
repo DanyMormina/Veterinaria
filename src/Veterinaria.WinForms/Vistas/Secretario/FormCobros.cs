@@ -23,6 +23,7 @@ public partial class FormCobros : Form
     private readonly MetodoPagoControlador? _metodoPagoControlador;
 
     private long? _idPagoSeleccionado;
+    private string? _estadoPagoSeleccionado;
     private bool _cargando;
     private string? _snapshotEdicion;
 
@@ -78,8 +79,6 @@ public partial class FormCobros : Form
             ? $"Recepción: {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Recepción: Secretario";
 
-        cboEstado.Items.Clear();
-        cboEstado.Items.AddRange(["Pendiente", "Completado", "Anulado"]);
         btnModificar.Enabled = false;
 
         await CargarCatalogosAsync();
@@ -124,7 +123,6 @@ public partial class FormCobros : Form
             }
 
             cboMetodoPago.SelectedIndex = 0;
-            cboEstado.SelectedIndex = -1;
         }
         finally
         {
@@ -156,8 +154,7 @@ public partial class FormCobros : Form
                     p.DescripcionConsulta,
                     metodo,
                     p.Fecha.ToString("dd/MM/yyyy"),
-                    $"$ {p.Importe:N2}",
-                    p.Estado);
+                    $"$ {p.Importe:N2}");
                 dgvCobros.Rows[idx].Tag = p;
             }
 
@@ -186,6 +183,22 @@ public partial class FormCobros : Form
         var (detalle, total) = await CalcularDetalleImporteAsync(item.Id.Value);
         txtDetalleImporte.Text = detalle;
         txtImporte.Text = total > 0 ? total.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
+
+        if (!_idPagoSeleccionado.HasValue && _pagoControlador is not null)
+        {
+            var yaCobrada = await _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value);
+            btnCobrar.Enabled = !yaCobrada;
+            if (yaCobrada)
+            {
+                lblInfoEstado.ForeColor = ColorEtiquetaError;
+                lblInfoEstado.Text = $"La consulta #{item.Id.Value} ya fue cobrada. No se puede volver a cobrar.";
+            }
+            else
+            {
+                lblInfoEstado.ForeColor = ColorTextoNormal;
+                lblInfoEstado.Text = "Módulo de cobros — recepción";
+            }
+        }
     }
 
     private async Task<(string Detalle, decimal Total)> CalcularDetalleImporteAsync(long idConsulta)
@@ -287,8 +300,15 @@ public partial class FormCobros : Form
             {
                 lblInfoEstado.ForeColor = ColorExito;
                 lblInfoEstado.Text = resultado.Mensaje;
+
+                var metodoTexto = (cboMetodoPago.SelectedItem as ItemCombo)?.Texto ?? string.Empty;
+                var ticket = await ArmarTicketAsync(resultado.Valor, dto, metodoTexto);
+
                 LimpiarFormulario();
                 await CargarCobrosAsync();
+
+                using var vistaTicket = new FormTicket(ticket);
+                vistaTicket.ShowDialog(this);
             }
             else
             {
@@ -300,6 +320,58 @@ public partial class FormCobros : Form
             btnCobrar.Enabled = true;
         }
     }
+
+    private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago)
+    {
+        const int ancho = 52;
+        var separador = new string('=', ancho);
+        var linea = new string('-', ancho);
+        var sb = new StringBuilder();
+
+        sb.AppendLine(Centrar("CLÍNICA VETERINARIA", ancho));
+        sb.AppendLine(Centrar("COMPROBANTE DE PAGO", ancho));
+        sb.AppendLine(separador);
+        sb.AppendLine($"Ticket N°: {idPago:D6}");
+        sb.AppendLine($"Fecha de pago: {pago.Fecha:dd/MM/yyyy}");
+        sb.AppendLine($"Emitido: {DateTime.Now:dd/MM/yyyy HH:mm}");
+        if (SesionActual.EstaAutenticado)
+            sb.AppendLine($"Atendió: {SesionActual.NombreCompleto}");
+        sb.AppendLine(linea);
+
+        if (_consultaControlador is not null)
+        {
+            var resConsulta = await _consultaControlador.ObtenerPorIdAsync(pago.IdConsulta);
+            if (resConsulta.EsExitoso && resConsulta.Valor is not null)
+            {
+                var c = resConsulta.Valor;
+                sb.AppendLine($"Consulta N°: {c.Id}  ({c.FechaHora:dd/MM/yyyy HH:mm})");
+                sb.AppendLine($"Propietario: {c.NombrePropietario}");
+                sb.AppendLine($"Mascota: {c.NombreMascota}");
+                if (!string.IsNullOrWhiteSpace(c.NombreUsuario))
+                    sb.AppendLine($"Veterinario: {c.NombreUsuario}");
+                if (!string.IsNullOrWhiteSpace(c.Motivo))
+                    sb.AppendLine($"Motivo: {c.Motivo}");
+                sb.AppendLine(linea);
+            }
+        }
+
+        sb.AppendLine("DETALLE");
+        var (detalle, _) = await CalcularDetalleImporteAsync(pago.IdConsulta);
+        sb.AppendLine(detalle);
+        sb.AppendLine(separador);
+
+        sb.AppendLine(FormatearLineaTicket("TOTAL ABONADO", pago.Importe, ancho));
+        sb.AppendLine($"Método de pago: {metodoPago}");
+        if (pago.Cuotas is > 1)
+            sb.AppendLine($"Cuotas: {pago.Cuotas} de $ {pago.Importe / pago.Cuotas.Value:N2}");
+        sb.AppendLine(separador);
+        sb.Append(Centrar("¡Gracias por su visita!", ancho));
+
+        return sb.ToString();
+    }
+
+    private static string Centrar(string texto, int ancho) =>
+        texto.Length >= ancho ? texto : texto.PadLeft((ancho + texto.Length) / 2).PadRight(ancho);
 
     private async Task ModificarAsync()
     {
@@ -367,13 +439,6 @@ public partial class FormCobros : Form
             return false;
         }
 
-        if (cboEstado.SelectedIndex < 0 || cboEstado.SelectedItem is null)
-        {
-            mensaje = "Debe seleccionar el estado del cobro.";
-            cboEstado.Focus();
-            return false;
-        }
-
         if (!ValidarImporte(out var importe))
         {
             mensaje = "El importe debe ser un número decimal mayor a 0.";
@@ -398,7 +463,7 @@ public partial class FormCobros : Form
             IdMetodoPago = metodo.Id.Value,
             Fecha = dtpFecha.Value,
             Importe = importe,
-            Estado = cboEstado.SelectedItem.ToString() ?? "Pendiente",
+            Estado = _estadoPagoSeleccionado ?? "Completado",
             Cuotas = cuotas
         };
         return true;
@@ -465,12 +530,7 @@ public partial class FormCobros : Form
             SeleccionarCuotas(pago.Cuotas);
             dtpFecha.Value = pago.Fecha.Date;
             txtImporte.Text = pago.Importe.ToString("0.00", CultureInfo.InvariantCulture);
-
-            var estadoUi = pago.Estado.Equals("Completado", StringComparison.OrdinalIgnoreCase) ? "Completado"
-                : pago.Estado.Equals("Anulado", StringComparison.OrdinalIgnoreCase) ? "Anulado"
-                : "Pendiente";
-            var idxEstado = cboEstado.Items.IndexOf(estadoUi);
-            cboEstado.SelectedIndex = idxEstado >= 0 ? idxEstado : 0;
+            _estadoPagoSeleccionado = pago.Estado;
 
             btnCobrar.Enabled = false;
             btnModificar.Enabled = true;
@@ -494,13 +554,13 @@ public partial class FormCobros : Form
             idMetodo,
             ObtenerCuotasSeleccionadas()?.ToString() ?? string.Empty,
             dtpFecha.Value.Date.ToString("yyyy-MM-dd"),
-            txtImporte.Text.Trim(),
-            cboEstado.SelectedItem?.ToString() ?? string.Empty);
+            txtImporte.Text.Trim());
     }
 
     private void LimpiarFormulario()
     {
         _idPagoSeleccionado = null;
+        _estadoPagoSeleccionado = null;
         _snapshotEdicion = null;
         if (cboConsultaClinica.Items.Count > 0)
             cboConsultaClinica.SelectedIndex = 0;
@@ -509,7 +569,6 @@ public partial class FormCobros : Form
         if (cboCuotas.Items.Count > 0)
             cboCuotas.SelectedIndex = 0;
         ActualizarVisibilidadCuotas();
-        cboEstado.SelectedIndex = -1;
         dtpFecha.Value = DateTime.Today;
         txtImporte.Clear();
         txtDetalleImporte.Clear();

@@ -143,6 +143,17 @@ CREATE TABLE dbo.Tratamiento (
 );
 GO
 
+-- Tabla: PrecioConsulta (precio fijo de la consulta por especie; se modifica solo en la base)
+CREATE TABLE dbo.PrecioConsulta (
+    Id BIGINT IDENTITY(1,1) NOT NULL,
+    IdEspecie BIGINT NOT NULL,
+    Precio DECIMAL(18,2) NOT NULL,
+    CONSTRAINT PK_PrecioConsulta PRIMARY KEY CLUSTERED (Id ASC),
+    CONSTRAINT FK_PrecioConsulta_Especie FOREIGN KEY (IdEspecie) REFERENCES dbo.Especie (Id)
+);
+CREATE UNIQUE NONCLUSTERED INDEX IX_PrecioConsulta_IdEspecie ON dbo.PrecioConsulta (IdEspecie);
+GO
+
 -- ------------------------------------------------------------------------------
 -- 3. TABLAS TRANSACCIONALES CLÍNICAS Y PAGOS
 -- ------------------------------------------------------------------------------
@@ -248,6 +259,13 @@ INSERT INTO dbo.Especie (Id, Nombre, Activo) VALUES
 (3, 'Ave', 1),
 (4, 'Roedor', 1);
 SET IDENTITY_INSERT dbo.Especie OFF;
+GO
+
+INSERT INTO dbo.PrecioConsulta (IdEspecie, Precio) VALUES
+(1, 10000.00),
+(2, 10000.00),
+(3, 10000.00),
+(4, 10000.00);
 GO
 
 SET IDENTITY_INSERT dbo.Raza ON;

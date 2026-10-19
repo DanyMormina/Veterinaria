@@ -42,8 +42,6 @@ partial class FormCobros
         pnlImporte = new Panel();
         lblSimboloPeso = new Label();
         txtImporte = new TextBox();
-        lblEstado = new Label();
-        cboEstado = new ComboBox();
         pnlListado = new Panel();
         dgvCobros = new DataGridView();
         colId = new DataGridViewTextBoxColumn();
@@ -51,7 +49,6 @@ partial class FormCobros
         colMetodoPago = new DataGridViewTextBoxColumn();
         colFecha = new DataGridViewTextBoxColumn();
         colImporte = new DataGridViewTextBoxColumn();
-        colEstado = new DataGridViewTextBoxColumn();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         pnlEncabezado.SuspendLayout();
@@ -182,8 +179,6 @@ partial class FormCobros
         grpPago.Controls.Add(lblCuotas);
         grpPago.Controls.Add(cboCuotas);
         grpPago.Controls.Add(lblImporte);
-        grpPago.Controls.Add(lblEstado);
-        grpPago.Controls.Add(cboEstado);
         grpPago.Font = new Font("Segoe UI", 9F);
         grpPago.ForeColor = Color.FromArgb(58, 53, 59);
         grpPago.Controls.Add(pnlImporte);
@@ -293,25 +288,6 @@ partial class FormCobros
         txtImporte.TabIndex = 1;
         txtImporte.TabStop = false;
         // 
-        // lblEstado
-        // 
-        lblEstado.Location = new Point(380, 68);
-        lblEstado.Name = "lblEstado";
-        lblEstado.Size = new Size(118, 23);
-        lblEstado.TabIndex = 6;
-        lblEstado.Text = "Estado";
-        lblEstado.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // cboEstado
-        // 
-        cboEstado.BackColor = Color.White;
-        cboEstado.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboEstado.FlatStyle = FlatStyle.Flat;
-        cboEstado.Location = new Point(504, 68);
-        cboEstado.Name = "cboEstado";
-        cboEstado.Size = new Size(200, 23);
-        cboEstado.TabIndex = 7;
-        // 
         // pnlBotones
         // 
         pnlBotones.Controls.Add(btnLimpiar);
@@ -409,7 +385,7 @@ partial class FormCobros
         encabezadoGrilla.WrapMode = DataGridViewTriState.True;
         dgvCobros.ColumnHeadersDefaultCellStyle = encabezadoGrilla;
         dgvCobros.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dgvCobros.Columns.AddRange(new DataGridViewColumn[] { colId, colConsulta, colMetodoPago, colFecha, colImporte, colEstado });
+        dgvCobros.Columns.AddRange(new DataGridViewColumn[] { colId, colConsulta, colMetodoPago, colFecha, colImporte });
         celdasGrilla.Alignment = DataGridViewContentAlignment.MiddleLeft;
         celdasGrilla.BackColor = Color.White;
         celdasGrilla.Font = new Font("Segoe UI", 9F);
@@ -462,13 +438,6 @@ partial class FormCobros
         colImporte.HeaderText = "Importe";
         colImporte.Name = "colImporte";
         colImporte.ReadOnly = true;
-        // 
-        // colEstado
-        // 
-        colEstado.FillWeight = 20F;
-        colEstado.HeaderText = "Estado";
-        colEstado.Name = "colEstado";
-        colEstado.ReadOnly = true;
         // 
         // barraEstado
         // 
@@ -538,8 +507,6 @@ partial class FormCobros
     private Panel pnlImporte;
     private Label lblSimboloPeso;
     private TextBox txtImporte;
-    private Label lblEstado;
-    private ComboBox cboEstado;
     private Panel pnlBotones;
     private Button btnLimpiar;
     private Button btnCobrar;
@@ -552,7 +519,6 @@ partial class FormCobros
     private DataGridViewTextBoxColumn colMetodoPago;
     private DataGridViewTextBoxColumn colFecha;
     private DataGridViewTextBoxColumn colImporte;
-    private DataGridViewTextBoxColumn colEstado;
     private StatusStrip barraEstado;
     private ToolStripStatusLabel lblInfoEstado;
 }

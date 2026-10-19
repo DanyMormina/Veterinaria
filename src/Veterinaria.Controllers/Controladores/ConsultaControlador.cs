@@ -121,6 +121,10 @@ public class ConsultaControlador(ContextoVeterinaria context)
             if (!usuarioExiste)
                 return Resultado<long>.Falla($"No existe un usuario registrado con ID {solicitud.IdUsuario}.");
 
+            var precio = await ObtenerPrecioPorMascotaAsync(solicitud.IdMascota);
+            if (precio is null)
+                return Resultado<long>.Falla("No hay un precio de consulta cargado para la especie de esta mascota.");
+
             var entidad = new Consulta
             {
                 IdMascota = solicitud.IdMascota,
@@ -131,7 +135,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 Temperatura = solicitud.Temperatura,
                 Diagnostico = solicitud.Diagnostico.Trim(),
                 Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim(),
-                Importe = decimal.Round(solicitud.Importe, 2),
+                Importe = precio.Value,
                 Activo = true
             };
 
@@ -168,6 +172,15 @@ public class ConsultaControlador(ContextoVeterinaria context)
             if (!usuarioExiste)
                 return Resultado.Falla($"No existe un usuario registrado con ID {solicitud.IdUsuario}.");
 
+            // El importe queda fijado al registrar la consulta; solo se recalcula si cambia la mascota.
+            if (entidad.IdMascota != solicitud.IdMascota)
+            {
+                var precio = await ObtenerPrecioPorMascotaAsync(solicitud.IdMascota);
+                if (precio is null)
+                    return Resultado.Falla("No hay un precio de consulta cargado para la especie de esta mascota.");
+                entidad.Importe = precio.Value;
+            }
+
             entidad.IdMascota = solicitud.IdMascota;
             entidad.IdUsuario = solicitud.IdUsuario;
             entidad.FechaHora = solicitud.FechaHora == default ? entidad.FechaHora : solicitud.FechaHora;
@@ -176,7 +189,6 @@ public class ConsultaControlador(ContextoVeterinaria context)
             entidad.Temperatura = solicitud.Temperatura;
             entidad.Diagnostico = solicitud.Diagnostico.Trim();
             entidad.Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim();
-            entidad.Importe = decimal.Round(solicitud.Importe, 2);
 
             if (!context.ChangeTracker.HasChanges())
                 return Resultado.Falla("No se detectaron cambios para guardar.");
@@ -250,10 +262,41 @@ public class ConsultaControlador(ContextoVeterinaria context)
         if (string.IsNullOrWhiteSpace(solicitud.Diagnostico))
             return "El diagnóstico clínico es obligatorio.";
 
-        if (solicitud.Importe <= 0)
-            return "El importe base de la consulta debe ser mayor a cero.";
-
         return null;
+    }
+
+    /// <summary>
+    /// Devuelve el precio fijo de la consulta según la especie de la mascota.
+    /// </summary>
+    public async Task<Resultado<decimal>> ObtenerPrecioConsultaAsync(long idMascota)
+    {
+        try
+        {
+            var precio = await ObtenerPrecioPorMascotaAsync(idMascota);
+            return precio is null
+                ? Resultado<decimal>.Falla("No hay un precio de consulta cargado para la especie de esta mascota.")
+                : Resultado<decimal>.Exito(precio.Value);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<decimal>.Falla($"Error interno al obtener el precio de la consulta: {ex.Message}");
+        }
+    }
+
+    private async Task<decimal?> ObtenerPrecioPorMascotaAsync(long idMascota)
+    {
+        var idEspecie = await context.Mascotas
+            .IgnoreQueryFilters()
+            .Where(m => m.Id == idMascota)
+            .Select(m => (long?)m.Raza.IdEspecie)
+            .FirstOrDefaultAsync();
+        if (idEspecie is null)
+            return null;
+
+        return await context.PreciosConsulta
+            .Where(p => p.IdEspecie == idEspecie.Value)
+            .Select(p => (decimal?)p.Precio)
+            .FirstOrDefaultAsync();
     }
 }
 

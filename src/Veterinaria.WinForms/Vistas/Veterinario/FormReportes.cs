@@ -2,19 +2,25 @@ using System.Drawing.Printing;
 using System.Text;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
+using Veterinaria.WinForms.Controles;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
 
 /// <summary>
-/// Reporte de mis consultas del periodo para el rol Veterinario.
+/// Reportes del periodo para el rol Veterinario: mis consultas, o vacunas y tratamientos aplicados juntos.
 /// </summary>
 public partial class FormReportes : Form
 {
+    private const string TipoConsultas = "Mis consultas";
+    private const string TipoVacunasTratamientos = "Vacunas y tratamientos";
+
     private readonly ReporteControlador _reporteControlador;
     private int _filaActualImpresion;
     private int _paginaActualImpresion;
     private string _filtrosActuales = string.Empty;
+    private string _tituloReporte = "REPORTES DE CONSULTAS";
+    private SelectorVistaReporte? _vista;
 
     public FormReportes(ReporteControlador reporteControlador)
     {
@@ -31,6 +37,12 @@ public partial class FormReportes : Form
         var hoy = DateTime.Today;
         dtpFechaDesde.Value = new DateTime(hoy.Year, hoy.Month, 1);
         dtpFechaHasta.Value = hoy;
+
+        _vista = SelectorVistaReporte.Configurar(dgvReporte);
+        cboTipoReporte.Items.AddRange([TipoConsultas, TipoVacunasTratamientos]);
+        cboTipoReporte.SelectedIndex = 0;
+        cboTipoReporte.SelectedIndexChanged += (_, _) => PrepararGrilla();
+        PrepararGrilla();
 
         btnGenerar.Click += async (_, _) => await GenerarAsync();
         btnImprimir.Click += (_, _) => ImprimirReporte();
@@ -60,39 +72,73 @@ public partial class FormReportes : Form
             btnGenerar.Enabled = false;
             Cursor = Cursors.WaitCursor;
 
+            var esVacunasTratamientos = EsVacunasTratamientos();
             var filtro = new FiltroReporteDto
             {
-                TipoReporte = "Consultas Clínicas",
+                TipoReporte = esVacunasTratamientos ? "Vacunas y Tratamientos" : "Consultas Clínicas",
                 FechaDesde = dtpFechaDesde.Value.Date,
                 FechaHasta = dtpFechaHasta.Value.Date,
                 IdVeterinario = SesionActual.IdUsuario.Value
             };
 
-            var resultado = await _reporteControlador.ObtenerReporteConsultasClinicasAsync(filtro);
-            dgvReporte.Rows.Clear();
+            PrepararGrilla();
 
-            if (!resultado.EsExitoso || resultado.Valor is null)
+            bool exito;
+            string mensaje;
+            if (esVacunasTratamientos)
             {
-                MessageBox.Show(resultado.Mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                lblTotal.Text = "Total de consultas: 0";
+                var resultado = await _reporteControlador.ObtenerReporteVacunasTratamientosAsync(filtro);
+                exito = resultado.EsExitoso && resultado.Valor is not null;
+                mensaje = resultado.Mensaje;
+                if (exito)
+                {
+                    var filas = resultado.Valor!.ToList();
+                    foreach (var r in filas)
+                        dgvReporte.Rows.Add(r.FechaFormateada, r.Mascota, r.Especie, r.TratamientoVacuna, r.Tipo, r.Dosis);
+
+                    var vacunas = filas.Count(r => r.Tipo == "Vacunación");
+                    lblTotal.Text = $"Total de registros: {filas.Count} ({vacunas} vacuna(s), {filas.Count - vacunas} tratamiento(s))";
+
+                    var porTipo = filas
+                        .GroupBy(r => r.Tipo)
+                        .OrderByDescending(gr => gr.Count())
+                        .ToList();
+                    _vista?.Grafico.MostrarDona(
+                        "Vacunas y tratamientos aplicados por tipo",
+                        porTipo.Select(gr => gr.Key).ToList(),
+                        porTipo.Select(gr => (decimal)gr.Count()).ToList());
+                }
+            }
+            else
+            {
+                var resultado = await _reporteControlador.ObtenerReporteConsultasClinicasAsync(filtro);
+                exito = resultado.EsExitoso && resultado.Valor is not null;
+                mensaje = resultado.Mensaje;
+                if (exito)
+                {
+                    var consultas = resultado.Valor!.ToList();
+                    foreach (var r in consultas)
+                        dgvReporte.Rows.Add(r.Fecha, r.Hora, r.Mascota, r.Propietario, r.Motivo, r.Diagnostico);
+
+                    lblTotal.Text = $"Total de consultas: {dgvReporte.Rows.Count}";
+
+                    var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta);
+                    _vista?.Grafico.MostrarColumnas(
+                        $"Mis consultas por {periodos.Unidad}",
+                        periodos.Etiquetas,
+                        [new SerieGrafico("Consultas", GraficoReporte.Paleta[0], periodos.Acumular(consultas, c => c.FechaHora, _ => 1))]);
+                }
+            }
+
+            if (!exito)
+            {
+                MessageBox.Show(mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 btnImprimir.Enabled = false;
                 btnExportarPdf.Enabled = false;
                 return;
             }
 
-            foreach (var r in resultado.Valor)
-            {
-                dgvReporte.Rows.Add(
-                    r.Fecha,
-                    r.Hora,
-                    r.Mascota,
-                    r.Propietario,
-                    r.Motivo,
-                    r.Diagnostico);
-            }
-
-            lblTotal.Text = $"Total de consultas: {dgvReporte.Rows.Count}";
-            _filtrosActuales = $"Desde {filtro.FechaDesde:dd/MM/yyyy} hasta {filtro.FechaHasta:dd/MM/yyyy}";
+            _filtrosActuales = $"{cboTipoReporte.SelectedItem} — Desde {filtro.FechaDesde:dd/MM/yyyy} hasta {filtro.FechaHasta:dd/MM/yyyy}";
             btnImprimir.Enabled = dgvReporte.Rows.Count > 0;
             btnExportarPdf.Enabled = dgvReporte.Rows.Count > 0;
         }
@@ -101,6 +147,38 @@ public partial class FormReportes : Form
             btnGenerar.Enabled = true;
             Cursor = Cursors.Default;
         }
+    }
+
+    private bool EsVacunasTratamientos() =>
+        Equals(cboTipoReporte.SelectedItem, TipoVacunasTratamientos);
+
+    /// <summary>
+    /// Vacía la grilla y ajusta los encabezados de columna según el tipo de reporte elegido.
+    /// </summary>
+    private void PrepararGrilla()
+    {
+        dgvReporte.Rows.Clear();
+        _vista?.Grafico.Limpiar();
+        btnImprimir.Enabled = false;
+        btnExportarPdf.Enabled = false;
+
+        string[] encabezados;
+        if (EsVacunasTratamientos())
+        {
+            encabezados = ["Fecha", "Mascota", "Especie", "Vacuna / Tratamiento", "Tipo", "Dosis"];
+            _tituloReporte = "REPORTES DE VACUNAS Y TRATAMIENTOS";
+            lblTotal.Text = "Total de registros: 0";
+        }
+        else
+        {
+            encabezados = ["Fecha", "Hora", "Mascota", "Propietario", "Motivo", "Diagnóstico"];
+            _tituloReporte = "REPORTES DE CONSULTAS";
+            lblTotal.Text = "Total de consultas: 0";
+        }
+
+        DataGridViewColumn[] columnas = [colFecha, colHora, colMascota, colPropietario, colMotivo, colDiagnostico];
+        for (var i = 0; i < columnas.Length; i++)
+            columnas[i].HeaderText = encabezados[i];
     }
 
     private void ImprimirReporte()
@@ -120,7 +198,7 @@ public partial class FormReportes : Form
                 Width = 1050,
                 Height = 720,
                 StartPosition = FormStartPosition.CenterScreen,
-                Text = "Vista previa — Reportes de consultas"
+                Text = $"Vista previa — {cboTipoReporte.SelectedItem}"
             };
             vista.ShowDialog(this);
         }
@@ -141,8 +219,8 @@ public partial class FormReportes : Form
         using var sfd = new SaveFileDialog
         {
             Filter = "Archivo PDF (*.pdf)|*.pdf|Archivo CSV (*.csv)|*.csv",
-            FileName = $"Reporte_Consultas_{DateTime.Now:yyyyMMdd_HHmm}.pdf",
-            Title = "Exportar reporte de consultas"
+            FileName = $"Reporte_{(EsVacunasTratamientos() ? "VacunasTratamientos" : "Consultas")}_{DateTime.Now:yyyyMMdd_HHmm}.pdf",
+            Title = "Exportar reporte"
         };
 
         if (sfd.ShowDialog(this) != DialogResult.OK)
@@ -248,7 +326,7 @@ public partial class FormReportes : Form
         float y = bounds.Top;
         if (_paginaActualImpresion == 1)
         {
-            g.DrawString("CLÍNICA VETERINARIA — REPORTES DE CONSULTAS", fontTitulo, brushRosa, bounds.Left, y);
+            g.DrawString($"CLÍNICA VETERINARIA — {_tituloReporte}", fontTitulo, brushRosa, bounds.Left, y);
             y += 22;
             g.DrawString(_filtrosActuales, fontInfo, brush, bounds.Left, y);
             y += 15;
@@ -260,10 +338,18 @@ public partial class FormReportes : Form
         }
         else
         {
-            g.DrawString($"REPORTES DE CONSULTAS (Pág. {_paginaActualImpresion})", fontSub, brushRosa, bounds.Left, y);
+            g.DrawString($"{_tituloReporte} (Pág. {_paginaActualImpresion})", fontSub, brushRosa, bounds.Left, y);
             y += 18;
             g.DrawLine(pen, bounds.Left, y, bounds.Right, y);
             y += 8;
+        }
+
+        if (_vista is { MostrandoGrafico: true })
+        {
+            _vista.Grafico.Dibujar(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 28));
+            e.HasMorePages = false;
+            g.DrawString($"Página {_paginaActualImpresion}", fontPie, brush, bounds.Left, bounds.Bottom - 18);
+            return;
         }
 
         var columnas = dgvReporte.Columns.Cast<DataGridViewColumn>().Where(c => c.Visible).OrderBy(c => c.DisplayIndex).ToList();

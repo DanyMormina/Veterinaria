@@ -26,6 +26,9 @@ public partial class FormTratamientos : Form
     private bool _cargandoConsultas = false;
     private bool _cargandoTratamientos = false;
 
+    private decimal _importeConsulta;
+    private decimal _totalAplicados;
+
     /// <summary>
     /// Constructor por defecto para compatibilidad con el diseñador de Windows Forms.
     /// </summary>
@@ -61,15 +64,16 @@ public partial class FormTratamientos : Form
 
         lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} — {DateTime.Now:dd/MM/yyyy}";
 
-        // 2. Formulario limpio; el listado se carga con todos los tratamientos aplicados
-        lblTotal.Text = "Total: $ 0,00";
+        // 2. Formulario y grilla limpios; el total corresponde solo a la consulta seleccionada
+        dgvTratamientosAplicados.Rows.Clear();
+        ReiniciarTotal();
         txtSubtotal.Text = "$ 0,00";
         lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
 
-        // 3. Cargar catálogos y listado (sin precargar selecciones del formulario)
+        // 3. Cargar catálogos (sin precargar selecciones del formulario)
         await CargarCatalogoMascotasAsync();
         await CargarCatalogoTratamientosAsync();
-        await CargarTodosTratamientosAplicadosAsync();
+        lblInfoEstado.Text = "Seleccione mascota y consulta para ver y agregar tratamientos.";
     }
 
     #region Carga de Datos y Catálogos
@@ -192,7 +196,7 @@ public partial class FormTratamientos : Form
             {
                 cboConsultas.DataSource = null;
                 dgvTratamientosAplicados.Rows.Clear();
-                lblTotal.Text = "Total: $ 0,00";
+                ReiniciarTotal();
                 return;
             }
 
@@ -219,7 +223,7 @@ public partial class FormTratamientos : Form
             cboConsultas.DataSource = items;
             cboConsultas.SelectedIndex = -1;
             dgvTratamientosAplicados.Rows.Clear();
-            lblTotal.Text = "Total: $ 0,00";
+            ReiniciarTotal();
 
             if (items.Count == 0)
             {
@@ -229,49 +233,6 @@ public partial class FormTratamientos : Form
         finally
         {
             _cargandoConsultas = false;
-        }
-    }
-
-    /// <summary>
-    /// Carga el listado general de tratamientos aplicados (formulario vacío, grilla con datos).
-    /// </summary>
-    private async Task CargarTodosTratamientosAplicadosAsync()
-    {
-        if (_tratamientoControlador is null) return;
-
-        try
-        {
-            var resultado = await _tratamientoControlador.ObtenerTodosAplicadosAsync();
-            dgvTratamientosAplicados.Rows.Clear();
-
-            if (!resultado.EsExitoso || resultado.Valor is null)
-            {
-                lblTotal.Text = "Total: $ 0,00";
-                return;
-            }
-
-            decimal totalAcumulado = 0;
-            foreach (var d in resultado.Valor)
-            {
-                totalAcumulado += d.Subtotal;
-                var idx = dgvTratamientosAplicados.Rows.Add(
-                    d.DescripcionTratamiento,
-                    d.TipoTratamiento,
-                    d.Cantidad,
-                    d.PrecioUnitario.ToString("C2", CulturaArgentina),
-                    d.Subtotal.ToString("C2", CulturaArgentina),
-                    d.Indicaciones ?? string.Empty);
-                dgvTratamientosAplicados.Rows[idx].Tag = d.Id;
-            }
-
-            dgvTratamientosAplicados.ClearSelection();
-            dgvTratamientosAplicados.CurrentCell = null;
-            lblTotal.Text = $"Total: {totalAcumulado.ToString("C2", CulturaArgentina)}";
-            lblInfoEstado.Text = $"Listado: {dgvTratamientosAplicados.Rows.Count} tratamiento(s) aplicado(s). Seleccione mascota y consulta para agregar.";
-        }
-        catch (Exception ex)
-        {
-            lblInfoEstado.Text = $"Error al cargar tratamientos aplicados: {ex.Message}";
         }
     }
 
@@ -288,10 +249,12 @@ public partial class FormTratamientos : Form
             // 1. Obtener tratamientos aplicados a la consulta específica
             var resultado = await _tratamientoControlador.ObtenerTratamientosAplicadosPorConsultaAsync(idConsulta);
             dgvTratamientosAplicados.Rows.Clear();
+            _importeConsulta = _listaConsultasMascota.FirstOrDefault(c => c.Id == idConsulta)?.Importe ?? 0;
+            _totalAplicados = 0;
 
             if (!resultado.EsExitoso || resultado.Valor is null)
             {
-                lblTotal.Text = "Total: $ 0,00";
+                ActualizarTotal();
                 return;
             }
 
@@ -315,9 +278,10 @@ public partial class FormTratamientos : Form
             dgvTratamientosAplicados.ClearSelection();
             dgvTratamientosAplicados.CurrentCell = null;
 
-            // 3. Actualizar etiqueta de total ejecutivo
-            lblTotal.Text = $"Total: {totalAcumulado.ToString("C2", CulturaArgentina)}";
-            lblInfoEstado.Text = $"Consulta cargada: {detalles.Count} tratamiento(s) aplicado(s). Total: {totalAcumulado.ToString("C2", CulturaArgentina)}";
+            // 3. Actualizar etiqueta de total ejecutivo (consulta + tratamientos aplicados + selección en curso)
+            _totalAplicados = totalAcumulado;
+            ActualizarTotal();
+            lblInfoEstado.Text = $"Consulta: {_importeConsulta.ToString("C2", CulturaArgentina)} + {detalles.Count} tratamiento(s) aplicado(s): {totalAcumulado.ToString("C2", CulturaArgentina)}";
         }
         catch (Exception ex)
         {
@@ -342,7 +306,7 @@ public partial class FormTratamientos : Form
             lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
             cboConsultas.DataSource = null;
             dgvTratamientosAplicados.Rows.Clear();
-            lblTotal.Text = "Total: $ 0,00";
+            ReiniciarTotal();
             return;
         }
 
@@ -374,7 +338,7 @@ public partial class FormTratamientos : Form
         else
         {
             dgvTratamientosAplicados.Rows.Clear();
-            lblTotal.Text = "Total: $ 0,00";
+            ReiniciarTotal();
         }
     }
 
@@ -414,6 +378,33 @@ public partial class FormTratamientos : Form
         {
             txtSubtotal.Text = "$ 0,00";
         }
+
+        ActualizarTotal();
+    }
+
+    /// <summary>
+    /// Total = importe de la consulta + tratamientos ya aplicados + tratamiento en curso (cantidad × precio).
+    /// </summary>
+    private void ActualizarTotal()
+    {
+        decimal subtotalEnCurso = 0;
+        var idTratamiento = ObtenerIdSeleccionado(cboTratamientos);
+        var idConsulta = ObtenerIdSeleccionado(cboConsultas);
+        if (idConsulta is > 0 && idTratamiento is > 0)
+        {
+            var precio = _listaTratamientos.FirstOrDefault(t => t.Id == idTratamiento.Value)?.Precio ?? 0;
+            subtotalEnCurso = (int)numCantidad.Value * precio;
+        }
+
+        var total = _importeConsulta + _totalAplicados + subtotalEnCurso;
+        lblTotal.Text = $"Total: {total.ToString("C2", CulturaArgentina)}";
+    }
+
+    private void ReiniciarTotal()
+    {
+        _importeConsulta = 0;
+        _totalAplicados = 0;
+        ActualizarTotal();
     }
 
     #endregion
@@ -651,9 +642,9 @@ public partial class FormTratamientos : Form
         txtIndicaciones.Clear();
         txtSubtotal.Text = "$ 0,00";
 
-        // 5. Recargar listado general (formulario limpio, grilla con datos)
-        lblTotal.Text = "Total: $ 0,00";
-        _ = CargarTodosTratamientosAplicadosAsync();
+        // 5. Vaciar la grilla y el total
+        dgvTratamientosAplicados.Rows.Clear();
+        ReiniciarTotal();
 
         // 6. Mensaje de estado y enfoque inicial en el buscador de mascotas
         lblInfoEstado.Text = "Formulario restablecido. Seleccione un paciente para comenzar.";
@@ -670,6 +661,9 @@ public partial class FormTratamientos : Form
     private void ConfigurarRestriccionesTeclado()
     {
         cboMascotas.KeyPress += ValidarSoloLetras_KeyPress;
+
+        // Leer Value valida el texto tipeado y dispara ValueChanged, así el total se actualiza al escribir.
+        numCantidad.KeyUp += (_, _) => _ = numCantidad.Value;
     }
 
     /// <summary>

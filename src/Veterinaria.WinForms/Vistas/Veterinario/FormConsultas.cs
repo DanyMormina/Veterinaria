@@ -59,7 +59,6 @@ public partial class FormConsultas : Form
         _mapaEtiquetas[txtMotivo] = lblMotivo;
         _mapaEtiquetas[txtPeso] = lblPeso;
         _mapaEtiquetas[txtTemperatura] = lblTemperatura;
-        _mapaEtiquetas[txtImporte] = lblImporte;
         _mapaEtiquetas[txtDiagnostico] = lblDiagnostico;
         _mapaEtiquetas[txtObservaciones] = lblObservaciones;
 
@@ -87,9 +86,11 @@ public partial class FormConsultas : Form
     /// </summary>
     private void ConfigurarRestriccionesTeclado()
     {
-        txtPeso.KeyPress += ValidarDecimal_KeyPress;
-        txtTemperatura.KeyPress += ValidarDecimal_KeyPress;
-        txtImporte.KeyPress += ValidarDecimal_KeyPress;
+        // Peso: hasta 150,00 kg (3 enteros, 2 decimales). Temperatura: 34,0 a 44,0 °C (2 enteros, 1 decimal).
+        txtPeso.MaxLength = 6;
+        txtTemperatura.MaxLength = 4;
+        txtPeso.KeyPress += (s, e) => ValidarDecimalLimitado_KeyPress(s, e, 3, 2);
+        txtTemperatura.KeyPress += (s, e) => ValidarDecimalLimitado_KeyPress(s, e, 2, 1);
         txtMotivo.KeyPress += ValidarTextoGeneral_KeyPress;
         cboMascota.KeyPress += ValidarSoloLetras_KeyPress;
         cboPropietario.KeyPress += ValidarSoloLetras_KeyPress;
@@ -135,6 +136,22 @@ public partial class FormConsultas : Form
         }
 
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// Igual que <see cref="ValidarDecimal_KeyPress"/>, pero limita la cantidad de dígitos enteros y decimales.
+    /// </summary>
+    private void ValidarDecimalLimitado_KeyPress(object? sender, KeyPressEventArgs e, int maxEnteros, int maxDecimales)
+    {
+        ValidarDecimal_KeyPress(sender, e);
+        if (e.Handled || char.IsControl(e.KeyChar) || sender is not TextBox tb)
+            return;
+
+        var resultado = tb.Text.Remove(tb.SelectionStart, tb.SelectionLength)
+            .Insert(tb.SelectionStart, e.KeyChar.ToString());
+        var partes = resultado.Split('.', ',');
+        if (partes[0].Length > maxEnteros || (partes.Length > 1 && partes[1].Length > maxDecimales))
+            e.Handled = true;
     }
 
     /// <summary>
@@ -287,6 +304,9 @@ public partial class FormConsultas : Form
         if (_sincronizandoCombos)
             return;
 
+        if (!_idConsultaSeleccionada.HasValue)
+            txtImporte.Clear();
+
         if (cboPropietario.SelectedValue is long idProp && idProp > 0)
         {
             _sincronizandoCombos = true;
@@ -315,7 +335,7 @@ public partial class FormConsultas : Form
     /// <summary>
     /// Sincroniza automáticamente el propietario correspondiente cuando se selecciona una mascota.
     /// </summary>
-    private void cboMascota_SelectedIndexChanged(object? sender, EventArgs e)
+    private async void cboMascota_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_sincronizandoCombos)
             return;
@@ -335,6 +355,34 @@ public partial class FormConsultas : Form
                 cboMascota.SelectedValue = idMascota;
                 _sincronizandoCombos = false;
             }
+
+            // En una consulta existente el importe queda el registrado, salvo que se cambie la mascota.
+            var consultaActual = _consultas.FirstOrDefault(c => c.Id == _idConsultaSeleccionada);
+            if (consultaActual is null || consultaActual.IdMascota != idMascota)
+                await MostrarPrecioConsultaAsync(idMascota);
+            else
+                txtImporte.Text = consultaActual.Importe.ToString("0.00", CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            txtImporte.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Muestra el precio fijo de la consulta según la especie de la mascota (no editable).
+    /// </summary>
+    private async Task MostrarPrecioConsultaAsync(long idMascota)
+    {
+        var res = await _consultaControlador.ObtenerPrecioConsultaAsync(idMascota);
+        if (res.EsExitoso)
+        {
+            txtImporte.Text = res.Valor.ToString("0.00", CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            txtImporte.Clear();
+            lblInfoEstado.Text = res.Mensaje;
         }
     }
 
@@ -396,12 +444,16 @@ public partial class FormConsultas : Form
             temp = t;
         }
 
+        // El precio fijo solo se exige al crear la consulta o al cambiarle la mascota;
+        // las consultas existentes conservan el importe con el que se registraron.
+        var consultaOriginal = _consultas.FirstOrDefault(c => c.Id == _idConsultaSeleccionada);
+        var requierePrecio = consultaOriginal is null || consultaOriginal.IdMascota != idMascota;
+
         var textoImporte = txtImporte.Text.Trim().Replace(',', '.');
-        if (string.IsNullOrWhiteSpace(textoImporte) ||
-            !decimal.TryParse(textoImporte, NumberStyles.Any, CultureInfo.InvariantCulture, out var importe) ||
-            importe <= 0)
+        decimal.TryParse(textoImporte, NumberStyles.Any, CultureInfo.InvariantCulture, out var importe);
+        if (requierePrecio && importe <= 0)
         {
-            MarcarControlConError(txtImporte, "El importe base de la consulta es obligatorio y debe ser mayor a 0.");
+            MarcarControlConError(cboMascota, "No hay un precio de consulta cargado para la especie de esta mascota.");
             return false;
         }
 

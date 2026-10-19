@@ -20,6 +20,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
     public DbSet<Vacuna> Vacunas => Set<Vacuna>();
     public DbSet<MetodoPago> MetodosPago => Set<MetodoPago>();
     public DbSet<Tratamiento> Tratamientos => Set<Tratamiento>();
+    public DbSet<PrecioConsulta> PreciosConsulta => Set<PrecioConsulta>();
 
     // =========================================================================
     // 2. Seguridad y Usuarios
@@ -163,6 +164,22 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
 
             b.Property(t => t.Precio)
                 .HasColumnType("decimal(18,2)");
+        });
+
+        // PrecioConsulta (precio fijo de la consulta por especie)
+        builder.Entity<PrecioConsulta>(b =>
+        {
+            b.ToTable("PrecioConsulta");
+            b.HasIndex(p => p.IdEspecie)
+                .IsUnique();
+
+            b.Property(p => p.Precio)
+                .HasColumnType("decimal(18,2)");
+
+            b.HasOne(p => p.Especie)
+                .WithMany()
+                .HasForeignKey(p => p.IdEspecie)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 

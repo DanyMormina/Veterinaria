@@ -2,6 +2,7 @@ using System.Drawing.Printing;
 using System.Text;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
+using Veterinaria.WinForms.Controles;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
@@ -15,6 +16,8 @@ public partial class FormReportes : Form
     private int _filaActualImpresion;
     private int _paginaActualImpresion;
     private string _filtrosActuales = string.Empty;
+    private SelectorVistaReporte? _vista;
+    private bool _reporteGenerado;
 
     public FormReportes(ReporteControlador reporteControlador)
     {
@@ -32,6 +35,9 @@ public partial class FormReportes : Form
         cboEstado.Items.AddRange(["(Todos)", "Completado", "Pendiente", "Anulado"]);
         cboEstado.SelectedIndex = 0;
 
+        _vista = SelectorVistaReporte.Configurar(dgvReporte);
+        _vista.VistaCambiada += async (_, _) => await AlCambiarVistaAsync();
+        ActualizarVisibilidadEstado();
         AplicarPeriodoMes();
         btnHoy.Click += (_, _) => AplicarPeriodoHoy();
         btnSemana.Click += (_, _) => AplicarPeriodoSemana();
@@ -43,6 +49,27 @@ public partial class FormReportes : Form
 
         btnImprimir.Enabled = false;
         btnExportarPdf.Enabled = false;
+    }
+
+    /// <summary>
+    /// El filtro de estado solo se ofrece en la vista Tabla; el gráfico siempre muestra lo cobrado.
+    /// </summary>
+    private void ActualizarVisibilidadEstado()
+    {
+        var verEstado = _vista is { MostrandoGrafico: false };
+        lblEstado.Visible = verEstado;
+        cboEstado.Visible = verEstado;
+    }
+
+    private async Task AlCambiarVistaAsync()
+    {
+        ActualizarVisibilidadEstado();
+        if (_vista is not { MostrandoGrafico: true } || cboEstado.SelectedIndex == 0)
+            return;
+
+        cboEstado.SelectedIndex = 0;
+        if (_reporteGenerado)
+            await GenerarAsync();
     }
 
     private void AplicarPeriodoHoy()
@@ -88,6 +115,7 @@ public partial class FormReportes : Form
 
             var resultado = await _reporteControlador.ObtenerReporteCobrosAsync(filtro);
             dgvReporte.Rows.Clear();
+            _vista?.Grafico.Limpiar();
 
             if (!resultado.EsExitoso || resultado.Valor is null)
             {
@@ -114,10 +142,23 @@ public partial class FormReportes : Form
                     r.Estado);
             }
 
-            var suma = string.Equals(filtro.Estado, "(Todos)", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(filtro.Estado)
-                ? resultado.Valor.Where(x => x.Estado.Equals("Completado", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Importe)
-                : resultado.Valor.Sum(x => x.Importe);
+            var todosLosEstados = string.Equals(filtro.Estado, "(Todos)", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(filtro.Estado);
+            var considerados = todosLosEstados
+                ? resultado.Valor.Where(x => x.Estado.Equals("Completado", StringComparison.OrdinalIgnoreCase)).ToList()
+                : resultado.Valor.ToList();
+            var suma = considerados.Sum(x => x.Importe);
 
+            var porMetodo = considerados
+                .GroupBy(x => string.IsNullOrWhiteSpace(x.MetodoPago) ? "Sin método" : x.MetodoPago)
+                .OrderByDescending(gr => gr.Sum(x => x.Importe))
+                .ToList();
+            _vista?.Grafico.MostrarDona(
+                todosLosEstados ? "Cobrado por método de pago" : $"Importe {filtro.Estado!.ToLowerInvariant()} por método de pago",
+                porMetodo.Select(gr => gr.Key).ToList(),
+                porMetodo.Select(gr => gr.Sum(x => x.Importe)).ToList(),
+                v => v.ToString("C0", new System.Globalization.CultureInfo("es-AR")));
+
+            _reporteGenerado = true;
             lblTotal.Text = $"Total: {dgvReporte.Rows.Count} registros | $ {suma:N2}";
             _filtrosActuales = $"Desde {filtro.FechaDesde:dd/MM/yyyy} hasta {filtro.FechaHasta:dd/MM/yyyy} | Estado: {filtro.Estado ?? "(Todos)"}";
             btnImprimir.Enabled = dgvReporte.Rows.Count > 0;
@@ -290,6 +331,14 @@ public partial class FormReportes : Form
             y += 18;
             g.DrawLine(pen, bounds.Left, y, bounds.Right, y);
             y += 8;
+        }
+
+        if (_vista is { MostrandoGrafico: true })
+        {
+            _vista.Grafico.Dibujar(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 28));
+            e.HasMorePages = false;
+            g.DrawString($"Página {_paginaActualImpresion}", fontPie, brush, bounds.Left, bounds.Bottom - 18);
+            return;
         }
 
         var columnas = dgvReporte.Columns.Cast<DataGridViewColumn>().Where(c => c.Visible).OrderBy(c => c.DisplayIndex).ToList();
