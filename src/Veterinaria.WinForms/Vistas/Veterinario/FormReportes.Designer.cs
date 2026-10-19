@@ -22,6 +22,8 @@ partial class FormReportes
         dtpFechaDesde = new DateTimePicker();
         lblFechaHasta = new Label();
         dtpFechaHasta = new DateTimePicker();
+        lblTipoReporte = new Label();
+        cboTipoReporte = new ComboBox();
         btnGenerar = new Button();
         btnImprimir = new Button();
         btnExportarPdf = new Button();
@@ -91,6 +93,8 @@ partial class FormReportes
         grpFiltros.Controls.Add(dtpFechaDesde);
         grpFiltros.Controls.Add(lblFechaHasta);
         grpFiltros.Controls.Add(dtpFechaHasta);
+        grpFiltros.Controls.Add(lblTipoReporte);
+        grpFiltros.Controls.Add(cboTipoReporte);
         grpFiltros.Controls.Add(btnGenerar);
         grpFiltros.Controls.Add(btnImprimir);
         grpFiltros.Controls.Add(btnExportarPdf);
@@ -102,7 +106,7 @@ partial class FormReportes
         grpFiltros.Name = "grpFiltros";
         grpFiltros.Size = new Size(1068, 70);
         grpFiltros.TabStop = false;
-        grpFiltros.Text = "Mis consultas del periodo";
+        grpFiltros.Text = "Mis reportes del período";
         // 
         // labels / pickers / buttons
         // 
@@ -120,16 +124,24 @@ partial class FormReportes
         dtpFechaHasta.Format = DateTimePickerFormat.Short;
         dtpFechaHasta.Location = new Point(258, 28);
         dtpFechaHasta.Size = new Size(120, 23);
+        lblTipoReporte.Location = new Point(392, 28);
+        lblTipoReporte.Size = new Size(36, 23);
+        lblTipoReporte.Text = "Tipo";
+        lblTipoReporte.TextAlign = ContentAlignment.MiddleLeft;
+        cboTipoReporte.DropDownStyle = ComboBoxStyle.DropDownList;
+        cboTipoReporte.Location = new Point(430, 28);
+        cboTipoReporte.Name = "cboTipoReporte";
+        cboTipoReporte.Size = new Size(176, 23);
         btnGenerar.BackColor = Color.FromArgb(152, 196, 164);
         btnGenerar.FlatStyle = FlatStyle.Flat;
-        btnGenerar.Location = new Point(420, 26);
+        btnGenerar.Location = new Point(620, 26);
         btnGenerar.Size = new Size(100, 28);
         btnGenerar.Text = "Generar";
         btnGenerar.UseVisualStyleBackColor = false;
         btnImprimir.BackColor = Color.FromArgb(200, 138, 150);
         btnImprimir.FlatStyle = FlatStyle.Flat;
         btnImprimir.ForeColor = Color.White;
-        btnImprimir.Location = new Point(530, 26);
+        btnImprimir.Location = new Point(728, 26);
         btnImprimir.Name = "btnImprimir";
         btnImprimir.Size = new Size(100, 28);
         btnImprimir.Text = "Imprimir";
@@ -137,14 +149,14 @@ partial class FormReportes
         btnExportarPdf.BackColor = Color.FromArgb(184, 93, 105);
         btnExportarPdf.FlatStyle = FlatStyle.Flat;
         btnExportarPdf.ForeColor = Color.White;
-        btnExportarPdf.Location = new Point(640, 26);
+        btnExportarPdf.Location = new Point(836, 26);
         btnExportarPdf.Name = "btnExportarPdf";
         btnExportarPdf.Size = new Size(110, 28);
         btnExportarPdf.Text = "Exportar PDF";
         btnExportarPdf.UseVisualStyleBackColor = false;
         btnVolver.BackColor = Color.FromArgb(220, 200, 204);
         btnVolver.FlatStyle = FlatStyle.Flat;
-        btnVolver.Location = new Point(760, 26);
+        btnVolver.Location = new Point(954, 26);
         btnVolver.Size = new Size(100, 28);
         btnVolver.Text = "Volver";
         btnVolver.UseVisualStyleBackColor = false;
@@ -208,6 +220,8 @@ partial class FormReportes
     private DateTimePicker dtpFechaDesde;
     private Label lblFechaHasta;
     private DateTimePicker dtpFechaHasta;
+    private Label lblTipoReporte;
+    private ComboBox cboTipoReporte;
     private Button btnGenerar;
     private Button btnImprimir;
     private Button btnExportarPdf;

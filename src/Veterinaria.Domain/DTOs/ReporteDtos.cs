@@ -30,6 +30,28 @@ public record ReporteConsultaClinicaDto
 }
 
 /// <summary>
+/// Modelo del reporte cruzado de consultas con sus tratamientos y vacunas aplicados
+/// (Consulta × Mascota × Propietario × Usuario × DetalleConsulta × AplicacionVacuna).
+/// </summary>
+public record ReporteConsultaDetalladaDto
+{
+    public long IdConsulta { get; init; }
+    public DateTime FechaHora { get; init; }
+    public string Fecha => FechaHora.ToString("dd/MM/yyyy");
+    public string Mascota { get; init; } = string.Empty;
+    public string Especie { get; init; } = string.Empty;
+    public string Propietario { get; init; } = string.Empty;
+    public string Veterinario { get; init; } = string.Empty;
+    public string Diagnostico { get; init; } = string.Empty;
+    public int CantidadTratamientos { get; init; }
+    public int CantidadVacunas { get; init; }
+    public decimal ImporteConsulta { get; init; }
+    public decimal ImporteTratamientos { get; init; }
+    public decimal ImporteVacunas { get; init; }
+    public decimal ImporteTotal => ImporteConsulta + ImporteTratamientos + ImporteVacunas;
+}
+
+/// <summary>
 /// Filtro para el reporte de cobros de recepción.
 /// </summary>
 public record FiltroReporteCobroDto
@@ -37,6 +59,8 @@ public record FiltroReporteCobroDto
     public DateTime FechaDesde { get; init; }
     public DateTime FechaHasta { get; init; }
     public string? Estado { get; init; }
+    public long? IdVeterinario { get; init; }
+    public long? IdEspecie { get; init; }
 }
 
 /// <summary>

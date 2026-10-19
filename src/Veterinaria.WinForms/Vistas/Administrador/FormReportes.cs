@@ -2,6 +2,7 @@ using System.Drawing.Printing;
 using System.Text;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
+using Veterinaria.WinForms.Controles;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Administrador;
@@ -12,8 +13,15 @@ namespace Veterinaria.WinForms.Vistas.Administrador;
 /// </summary>
 public partial class FormReportes : Form
 {
+    private const string TipoConsultas = "Consultas con tratamientos y vacunas";
+    private const string TipoCenso = "Censo de animales y propietarios";
+    private const string TipoPagos = "Total de pagos";
+
+    private static readonly System.Globalization.CultureInfo CulturaArgentina = new("es-AR");
+
     private readonly ReporteControlador _reporteControlador;
     private readonly EspecieControlador _especieControlador;
+    private SelectorVistaReporte _vista = null!;
 
     // Estado para renderizado y paginación en PrintDocument
     private int _filaActualImpresion = 0;
@@ -45,6 +53,7 @@ public partial class FormReportes : Form
         btnExportarPdf.Enabled = false;
 
         ConfigurarEstiloGrilla();
+        _vista = SelectorVistaReporte.Configurar(dgvReporte);
 
         // Limpieza de feedback visual en contenedor de fechas ante interacción
         dtpFechaDesde.ValueChanged += (s, ev) => RestaurarBordeFechas();
@@ -59,11 +68,7 @@ public partial class FormReportes : Form
 
         // Inicialización de tipos de reporte administrativo
         cboTipoReporte.Items.Clear();
-        cboTipoReporte.Items.AddRange(new object[]
-        {
-            "Consultas Clínicas",
-            "Censo de Pacientes (Mascotas)"
-        });
+        cboTipoReporte.Items.AddRange(new object[] { TipoConsultas, TipoCenso, TipoPagos });
         cboTipoReporte.SelectedIndex = 0;
 
         // Carga asíncrona de veterinarios y especies
@@ -160,21 +165,16 @@ public partial class FormReportes : Form
         dgvReporte.DataSource = null;
         dgvReporte.Columns.Clear();
         lblTotalRegistros.Text = "Total de registros: 0";
+        lblTotalFacturado.Visible = false;
         btnImprimir.Enabled = false;
         btnExportarPdf.Enabled = false;
+        _vista?.Grafico.Limpiar();
 
         string tipo = cboTipoReporte.SelectedItem?.ToString() ?? string.Empty;
 
         switch (tipo)
         {
-            case "Consultas Clínicas":
-                dtpFechaDesde.Enabled = true;
-                dtpFechaHasta.Enabled = true;
-                cboVeterinario.Enabled = true;
-                cboEspecie.Enabled = true;
-                break;
-
-            case "Censo de Pacientes (Mascotas)":
+            case TipoCenso:
                 dtpFechaDesde.Enabled = false; // El censo es sobre el padrón activo actual
                 dtpFechaHasta.Enabled = false;
                 cboVeterinario.Enabled = false;
@@ -206,7 +206,7 @@ public partial class FormReportes : Form
         string tipo = cboTipoReporte.SelectedItem?.ToString() ?? string.Empty;
 
         // Si el reporte actual requiere fechas, validar cronología
-        if (tipo != "Censo de Pacientes (Mascotas)")
+        if (tipo != TipoCenso)
         {
             if (dtpFechaDesde.Value.Date > dtpFechaHasta.Value.Date)
             {
@@ -253,17 +253,20 @@ public partial class FormReportes : Form
 
             // Metadatos para encabezados impresos y exportados
             _tituloReporteActual = tipo.ToUpperInvariant();
-            _filtrosReporteActual = tipo == "Censo de Pacientes (Mascotas)"
+            _filtrosReporteActual = tipo == TipoCenso
                 ? $"Especie: {(idEsp.HasValue ? cboEspecie.Text : "Todas")}"
                 : $"Rango: {filtro.FechaDesde:dd/MM/yyyy} al {filtro.FechaHasta:dd/MM/yyyy} | Profesional: {(idVet.HasValue ? cboVeterinario.Text : "Todos")} | Especie: {(idEsp.HasValue ? cboEspecie.Text : "Todas")}";
 
             switch (tipo)
             {
-                case "Consultas Clínicas":
-                    await GenerarReporteConsultasClinicasAsync(filtro);
+                case TipoConsultas:
+                    await GenerarReporteConsultasAsync(filtro);
                     break;
-                case "Censo de Pacientes (Mascotas)":
-                    await GenerarReporteCensoMascotasAsync(filtro);
+                case TipoCenso:
+                    await GenerarReporteCensoMascotasAsync(filtro, idEsp.HasValue ? cboEspecie.Text : null);
+                    break;
+                case TipoPagos:
+                    await GenerarReportePagosAsync(filtro);
                     break;
             }
         }
@@ -283,11 +286,11 @@ public partial class FormReportes : Form
     }
 
     /// <summary>
-    /// Configura y renderiza el reporte de Consultas Clínicas.
+    /// Reporte cruzado de consultas con sus tratamientos y vacunas. Gráfico: columnas agrupadas por período.
     /// </summary>
-    private async Task GenerarReporteConsultasClinicasAsync(FiltroReporteDto filtro)
+    private async Task GenerarReporteConsultasAsync(FiltroReporteDto filtro)
     {
-        var res = await _reporteControlador.ObtenerReporteConsultasClinicasAsync(filtro);
+        var res = await _reporteControlador.ObtenerReporteConsultasDetalladasAsync(filtro);
         if (!res.EsExitoso || res.Valor == null)
         {
             MessageBox.Show(res.Mensaje, "Error al generar reporte", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -297,25 +300,92 @@ public partial class FormReportes : Form
         dgvReporte.DataSource = null;
         dgvReporte.Columns.Clear();
 
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Fecha", HeaderText = "Fecha", Width = 95 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Hora", HeaderText = "Hora", Width = 65 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Mascota", HeaderText = "Mascota", Width = 130 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Especie", HeaderText = "Especie", Width = 110 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Raza", HeaderText = "Raza", Width = 120 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Propietario", HeaderText = "Propietario", Width = 160 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Veterinario", HeaderText = "Veterinario", Width = 160 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Diagnostico", HeaderText = "Diagnóstico / Motivo", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "IdConsulta", HeaderText = "N°", Width = 50 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Fecha", HeaderText = "Fecha", Width = 90 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Mascota", HeaderText = "Mascota", Width = 110 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Especie", HeaderText = "Especie", Width = 90 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Propietario", HeaderText = "Propietario", Width = 140 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Veterinario", HeaderText = "Veterinario", Width = 140 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "CantidadTratamientos", HeaderText = "Tratam.", Width = 70 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "CantidadVacunas", HeaderText = "Vacunas", Width = 70 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ImporteTotal", HeaderText = "Importe total", Width = 110, DefaultCellStyle = { Format = "C2", FormatProvider = CulturaArgentina } });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Diagnostico", HeaderText = "Diagnóstico", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
 
         var datos = res.Valor.ToList();
         dgvReporte.DataSource = datos;
+
+        var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta);
+        _vista.Grafico.MostrarColumnas(
+            $"Consultas, tratamientos y vacunas por {periodos.Unidad}",
+            periodos.Etiquetas,
+            [
+                new SerieGrafico("Consultas", GraficoReporte.Paleta[0], periodos.Acumular(datos, d => d.FechaHora, _ => 1)),
+                new SerieGrafico("Tratamientos", GraficoReporte.Paleta[1], periodos.Acumular(datos, d => d.FechaHora, d => d.CantidadTratamientos)),
+                new SerieGrafico("Vacunas", GraficoReporte.Paleta[2], periodos.Acumular(datos, d => d.FechaHora, d => d.CantidadVacunas))
+            ]);
+
         ActualizarResumen(datos.Count);
+        lblTotalRegistros.Text = $"Consultas: {datos.Count} | Tratamientos: {datos.Sum(d => d.CantidadTratamientos)} | Vacunas: {datos.Sum(d => d.CantidadVacunas)}";
+        MostrarTotalImporte("Total facturable", datos.Sum(d => d.ImporteTotal));
     }
 
+    /// <summary>
+    /// Reporte cruzado de pagos (Pago × Consulta × Mascota × Propietario × MetodoPago). Gráfico: línea de lo cobrado por período.
+    /// </summary>
+    private async Task GenerarReportePagosAsync(FiltroReporteDto filtro)
+    {
+        var res = await _reporteControlador.ObtenerReporteCobrosAsync(new FiltroReporteCobroDto
+        {
+            FechaDesde = filtro.FechaDesde,
+            FechaHasta = filtro.FechaHasta,
+            IdVeterinario = filtro.IdVeterinario,
+            IdEspecie = filtro.IdEspecie
+        });
+        if (!res.EsExitoso || res.Valor == null)
+        {
+            MessageBox.Show(res.Mensaje, "Error al generar reporte", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        dgvReporte.DataSource = null;
+        dgvReporte.Columns.Clear();
+
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "FechaFormateada", HeaderText = "Fecha", Width = 90 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "IdConsulta", HeaderText = "Consulta N°", Width = 80 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Mascota", HeaderText = "Mascota", Width = 120 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Propietario", HeaderText = "Propietario", Width = 160 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "MetodoPago", HeaderText = "Método de pago", Width = 140 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Cuotas", HeaderText = "Cuotas", Width = 60 });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Importe", HeaderText = "Importe", Width = 110, DefaultCellStyle = { Format = "C2", FormatProvider = CulturaArgentina } });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Estado", HeaderText = "Estado", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+
+        var datos = res.Valor.ToList();
+        dgvReporte.DataSource = datos;
+
+        var cobrados = datos.Where(p => p.Estado.Equals("Completado", StringComparison.OrdinalIgnoreCase)).ToList();
+        var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta);
+        _vista.Grafico.MostrarLinea(
+            $"Total cobrado por {periodos.Unidad}",
+            periodos.Etiquetas,
+            new SerieGrafico("Cobrado", GraficoReporte.Paleta[6], periodos.Acumular(cobrados, p => p.Fecha, p => p.Importe)),
+            v => v.ToString("C0", CulturaArgentina));
+
+        ActualizarResumen(datos.Count);
+        lblTotalRegistros.Text = $"Pagos: {datos.Count} (cobrados: {cobrados.Count})";
+        MostrarTotalImporte("Total cobrado", cobrados.Sum(p => p.Importe));
+    }
+
+    private void MostrarTotalImporte(string titulo, decimal importe)
+    {
+        lblTotalFacturado.Text = $"{titulo}: {importe.ToString("C2", CulturaArgentina)}";
+        lblTotalFacturado.Visible = true;
+    }
 
     /// <summary>
-    /// Configura y renderiza el Censo Demográfico de Mascotas registradas.
+    /// Censo de animales con sus propietarios (Mascota × Raza × Especie × Propietario).
+    /// Gráfico: dona por especie, o por raza si se filtró una especie.
     /// </summary>
-    private async Task GenerarReporteCensoMascotasAsync(FiltroReporteDto filtro)
+    private async Task GenerarReporteCensoMascotasAsync(FiltroReporteDto filtro, string? especieFiltrada)
     {
         var res = await _reporteControlador.ObtenerReporteCensoMascotasAsync(filtro);
         if (!res.EsExitoso || res.Valor == null)
@@ -338,7 +408,18 @@ public partial class FormReportes : Form
 
         var datos = res.Valor.ToList();
         dgvReporte.DataSource = datos;
+
+        var grupos = datos
+            .GroupBy(m => especieFiltrada is null ? m.Especie : m.Raza)
+            .OrderByDescending(g => g.Count())
+            .ToList();
+        _vista.Grafico.MostrarDona(
+            especieFiltrada is null ? "Mascotas por especie" : $"Mascotas de {especieFiltrada} por raza",
+            grupos.Select(g => g.Key).ToList(),
+            grupos.Select(g => (decimal)g.Count()).ToList());
+
         ActualizarResumen(datos.Count);
+        lblTotalRegistros.Text = $"Mascotas: {datos.Count} | Propietarios: {datos.Select(m => m.Propietario).Distinct().Count()}";
     }
 
     /// <summary>
@@ -585,6 +666,14 @@ public partial class FormReportes : Form
             y += 8;
         }
 
+        if (_vista.MostrandoGrafico)
+        {
+            _vista.Grafico.Dibujar(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 35));
+            e.HasMorePages = false;
+            DibujarPieDePagina(g, bounds, fontPie, brushTexto, penSeparador);
+            return;
+        }
+
         // Columnas visibles a imprimir
         var columnas = dgvReporte.Columns.Cast<DataGridViewColumn>()
             .Where(c => c.Visible)
@@ -684,7 +773,7 @@ public partial class FormReportes : Form
         float yPie = bounds.Bottom - 20;
         g.DrawLine(penSeparador, bounds.Left, yPie - 4, bounds.Right, yPie - 4);
 
-        g.DrawString($"Total de registros: {dgvReporte.Rows.Count}", fontPie, brushTexto, bounds.Left, yPie);
+        g.DrawString(lblTotalRegistros.Text, fontPie, brushTexto, bounds.Left, yPie);
 
         string textoPagina = $"Página {_paginaActual}";
         var sz = g.MeasureString(textoPagina, fontPie);

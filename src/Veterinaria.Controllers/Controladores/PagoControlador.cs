@@ -71,6 +71,9 @@ public class PagoControlador(ContextoVeterinaria context)
             if (!consultaExiste)
                 return Resultado<long>.Falla($"No existe la consulta con ID {solicitud.IdConsulta}.");
 
+            if (await ConsultaYaCobradaAsync(solicitud.IdConsulta))
+                return Resultado<long>.Falla($"La consulta #{solicitud.IdConsulta} ya fue cobrada. No se puede volver a cobrar.");
+
             var metodoExiste = await context.MetodosPago.AnyAsync(m => m.Id == solicitud.IdMetodoPago);
             if (!metodoExiste)
                 return Resultado<long>.Falla($"No existe el método de pago con ID {solicitud.IdMetodoPago}.");
@@ -111,6 +114,9 @@ public class PagoControlador(ContextoVeterinaria context)
             var entidad = await context.Pagos.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el pago con ID {id}.");
+
+            if (await ConsultaYaCobradaAsync(solicitud.IdConsulta, id))
+                return Resultado.Falla($"La consulta #{solicitud.IdConsulta} ya tiene otro cobro registrado.");
 
             var metodoExiste = await context.MetodosPago.AnyAsync(m => m.Id == solicitud.IdMetodoPago);
             if (!metodoExiste)
@@ -162,6 +168,17 @@ public class PagoControlador(ContextoVeterinaria context)
             return Resultado.Falla($"Error al anular el pago: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Indica si la consulta ya tiene un cobro vigente (no anulado), opcionalmente excluyendo un pago.
+    /// </summary>
+    public async Task<bool> ConsultaYaCobradaAsync(long idConsulta, long? idPagoExcluido = null) =>
+        await context.Pagos
+            .IgnoreQueryFilters()
+            .AnyAsync(p => p.IdConsulta == idConsulta &&
+                           p.Activo &&
+                           p.Estado != "Anulado" &&
+                           (!idPagoExcluido.HasValue || p.Id != idPagoExcluido.Value));
 
     private static string? Validar(PagoSolicitudDto solicitud)
     {

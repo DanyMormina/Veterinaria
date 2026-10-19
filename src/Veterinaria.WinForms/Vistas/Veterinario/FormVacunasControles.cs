@@ -655,7 +655,7 @@ public partial class FormVacunasControles : Form
             return;
         }
 
-        // 5. Capturar el importe de la vacuna (editable) o null si es vacuna previa / externa
+        // 5. Capturar el importe de la vacuna (precio del catálogo) o null si es vacuna previa / externa
         decimal? precioHistorico = null;
         if (!chkVacunaPrevia.Checked)
         {

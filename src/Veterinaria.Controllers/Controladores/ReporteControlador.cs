@@ -93,6 +93,52 @@ public class ReporteControlador(ContextoVeterinaria context)
     }
 
     /// <summary>
+    /// Reporte cruzado: cada consulta del período con la cantidad e importe de sus tratamientos y vacunas.
+    /// </summary>
+    public async Task<Resultado<IEnumerable<ReporteConsultaDetalladaDto>>> ObtenerReporteConsultasDetalladasAsync(FiltroReporteDto filtro)
+    {
+        try
+        {
+            var fechaFin = filtro.FechaHasta.Date.AddDays(1).AddTicks(-1);
+
+            var query = context.Consultas
+                .AsNoTracking()
+                .Where(c => c.FechaHora >= filtro.FechaDesde.Date && c.FechaHora <= fechaFin);
+
+            if (filtro.IdVeterinario.HasValue && filtro.IdVeterinario.Value > 0)
+                query = query.Where(c => c.IdUsuario == filtro.IdVeterinario.Value);
+
+            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
+                query = query.Where(c => c.Mascota.Raza.IdEspecie == filtro.IdEspecie.Value);
+
+            var resultados = await query
+                .OrderByDescending(c => c.FechaHora)
+                .Select(c => new ReporteConsultaDetalladaDto
+                {
+                    IdConsulta = c.Id,
+                    FechaHora = c.FechaHora,
+                    Mascota = c.Mascota.Nombre,
+                    Especie = c.Mascota.Raza.Especie.Nombre,
+                    Propietario = c.Mascota.Propietario.Nombre + " " + c.Mascota.Propietario.Apellido,
+                    Veterinario = c.Usuario.Nombre + " " + c.Usuario.Apellido,
+                    Diagnostico = c.Diagnostico,
+                    CantidadTratamientos = c.DetallesConsulta.Sum(d => (int?)d.Cantidad) ?? 0,
+                    CantidadVacunas = c.AplicacionesVacuna.Count(),
+                    ImporteConsulta = c.Importe,
+                    ImporteTratamientos = c.DetallesConsulta.Sum(d => (decimal?)d.Subtotal) ?? 0,
+                    ImporteVacunas = c.AplicacionesVacuna.Sum(v => v.PrecioUnitario) ?? 0
+                })
+                .ToListAsync();
+
+            return Resultado<IEnumerable<ReporteConsultaDetalladaDto>>.Exito(resultados);
+        }
+        catch (Exception ex)
+        {
+            return Resultado<IEnumerable<ReporteConsultaDetalladaDto>>.Falla($"Error al generar reporte de consultas con tratamientos y vacunas: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Genera el reporte de cobros (pagos) en un rango de fechas, incluyendo anulados.
     /// </summary>
     public async Task<Resultado<IEnumerable<ReporteCobroDto>>> ObtenerReporteCobrosAsync(FiltroReporteCobroDto filtro)
@@ -114,6 +160,12 @@ public class ReporteControlador(ContextoVeterinaria context)
                     estado = "Completado";
                 query = query.Where(p => p.Estado == estado);
             }
+
+            if (filtro.IdVeterinario.HasValue && filtro.IdVeterinario.Value > 0)
+                query = query.Where(p => p.Consulta.IdUsuario == filtro.IdVeterinario.Value);
+
+            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
+                query = query.Where(p => p.Consulta.Mascota.Raza.IdEspecie == filtro.IdEspecie.Value);
 
             var resultados = await query
                 .OrderByDescending(p => p.Fecha)

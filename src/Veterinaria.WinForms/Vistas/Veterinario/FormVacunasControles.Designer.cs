@@ -411,12 +411,15 @@ partial class FormVacunasControles
         // 
         // txtImporte
         // 
-        txtImporte.BackColor = Color.White;
+        txtImporte.BackColor = Color.FromArgb(226, 217, 220);
         txtImporte.BorderStyle = BorderStyle.FixedSingle;
+        txtImporte.Cursor = Cursors.No;
         txtImporte.Location = new Point(404, 104);
         txtImporte.Name = "txtImporte";
+        txtImporte.ReadOnly = true;
         txtImporte.Size = new Size(120, 23);
         txtImporte.TabIndex = 12;
+        txtImporte.TabStop = false;
         // 
         // lblProximaDosis
         // 
