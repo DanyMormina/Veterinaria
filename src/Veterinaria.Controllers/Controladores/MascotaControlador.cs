@@ -198,6 +198,17 @@ public class MascotaControlador(ContextoVeterinaria context)
         if (string.IsNullOrWhiteSpace(solicitud.Nombre))
             return "El nombre de la mascota es obligatorio.";
 
+        var nombre = solicitud.Nombre.Trim();
+        if (nombre.Length < 2 || nombre.Length > 80)
+            return "El nombre de la mascota debe tener entre 2 y 80 caracteres.";
+
+        var sexo = solicitud.Sexo?.Trim();
+        if (sexo is not ("Macho" or "Hembra"))
+            return "Debe seleccionar el sexo de la mascota (Macho o Hembra).";
+
+        if (solicitud.FechaNacimiento.HasValue && solicitud.FechaNacimiento.Value.Date > DateTime.Today)
+            return "La fecha de nacimiento no puede ser posterior a hoy.";
+
         if (solicitud.IdPropietario <= 0)
             return "Debe asociar un propietario válido.";
 
@@ -206,6 +217,9 @@ public class MascotaControlador(ContextoVeterinaria context)
 
         if (string.IsNullOrWhiteSpace(solicitud.Color))
             return "El color de la mascota es obligatorio.";
+
+        if (solicitud.Color.Trim().Length > 50)
+            return "El color de la mascota no puede superar los 50 caracteres.";
 
         return null;
     }

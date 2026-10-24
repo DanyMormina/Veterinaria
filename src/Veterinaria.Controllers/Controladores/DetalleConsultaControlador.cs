@@ -99,6 +99,15 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el detalle con ID {id}.");
 
+            if (solicitud.IdTratamiento <= 0)
+                return Resultado.Falla("Debe seleccionar un tratamiento válido del catálogo.");
+
+            if (solicitud.Cantidad <= 0)
+                return Resultado.Falla("La cantidad debe ser mayor a cero.");
+
+            if (!await context.Tratamientos.AnyAsync(t => t.Id == solicitud.IdTratamiento))
+                return Resultado.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
+
             var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : entidad.PrecioUnitario;
             var subtotal = solicitud.Subtotal > 0 ? solicitud.Subtotal : (precioUnitario * solicitud.Cantidad);
 

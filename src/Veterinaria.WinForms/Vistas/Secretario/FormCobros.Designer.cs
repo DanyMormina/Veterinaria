@@ -26,6 +26,7 @@ partial class FormCobros
         btnCobrar = new Button();
         btnModificar = new Button();
         btnCancelar = new Button();
+        btnImprimirTicket = new Button();
         grpConsulta = new GroupBox();
         lblConsultaClinica = new Label();
         cboConsultaClinica = new ComboBox();
@@ -294,6 +295,7 @@ partial class FormCobros
         pnlBotones.Controls.Add(btnCobrar);
         pnlBotones.Controls.Add(btnModificar);
         pnlBotones.Controls.Add(btnCancelar);
+        pnlBotones.Controls.Add(btnImprimirTicket);
         pnlBotones.Location = new Point(12, 332);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1076, 40);
@@ -357,6 +359,21 @@ partial class FormCobros
         btnCancelar.Text = "Cancelar";
         btnCancelar.UseVisualStyleBackColor = false;
         btnCancelar.Click += btnCancelar_Click;
+        // 
+        // btnImprimirTicket
+        // 
+        btnImprimirTicket.BackColor = Color.FromArgb(233, 214, 236);
+        btnImprimirTicket.Enabled = false;
+        btnImprimirTicket.FlatAppearance.BorderColor = Color.FromArgb(170, 140, 178);
+        btnImprimirTicket.FlatStyle = FlatStyle.Flat;
+        btnImprimirTicket.Font = new Font("Segoe UI", 9F);
+        btnImprimirTicket.ForeColor = Color.Black;
+        btnImprimirTicket.Location = new Point(443, 5);
+        btnImprimirTicket.Name = "btnImprimirTicket";
+        btnImprimirTicket.Size = new Size(130, 32);
+        btnImprimirTicket.TabIndex = 4;
+        btnImprimirTicket.Text = "Imprimir ticket";
+        btnImprimirTicket.UseVisualStyleBackColor = false;
         // 
         // pnlListado
         // 
@@ -512,6 +529,7 @@ partial class FormCobros
     private Button btnCobrar;
     private Button btnModificar;
     private Button btnCancelar;
+    private Button btnImprimirTicket;
     private Panel pnlListado;
     private DataGridView dgvCobros;
     private DataGridViewTextBoxColumn colId;

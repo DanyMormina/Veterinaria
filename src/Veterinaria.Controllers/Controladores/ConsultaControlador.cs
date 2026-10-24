@@ -262,6 +262,15 @@ public class ConsultaControlador(ContextoVeterinaria context)
         if (string.IsNullOrWhiteSpace(solicitud.Diagnostico))
             return "El diagnóstico clínico es obligatorio.";
 
+        if (solicitud.Motivo?.Trim().Length > 250)
+            return "El motivo de la consulta no puede superar los 250 caracteres.";
+
+        if (solicitud.PesoKg.HasValue && (solicitud.PesoKg.Value <= 0 || solicitud.PesoKg.Value > 150))
+            return "El peso debe ser mayor a 0 y no superar los 150 kg.";
+
+        if (solicitud.Temperatura.HasValue && (solicitud.Temperatura.Value < 34 || solicitud.Temperatura.Value > 44))
+            return "La temperatura debe estar entre 34 y 44 °C.";
+
         return null;
     }
 

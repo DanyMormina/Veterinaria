@@ -562,7 +562,8 @@ public partial class FormUsuarios : Form
             CorreoElectronico = txtCorreoElectronico.Text.Trim(),
             FechaNacimiento = dtpFechaNacimiento.Value.Date,
             Sexo = sexo,
-            Matricula = null,
+            // El formulario no edita la matrícula: se conserva la que ya tenía el usuario
+            Matricula = _idSeleccionado.HasValue ? _usuarios.FirstOrDefault(u => u.Id == _idSeleccionado.Value)?.Matricula : null,
             Activo = cboEstado.Visible ? string.Equals(cboEstado.SelectedItem?.ToString(), "Activo", StringComparison.OrdinalIgnoreCase) : true
         };
     }

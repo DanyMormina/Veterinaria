@@ -16,6 +16,18 @@ public partial class FormCobros : Form
     private static readonly Color ColorTextoNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorExito = ColorTranslator.FromHtml("#8FA89B");
 
+    // Datos fiscales del comercio (ficticios) impresos en el encabezado del ticket
+    private const string EmpresaNombreFantasia = "VETERINARIA PATITAS FELICES";
+    private const string EmpresaRazonSocial = "Patitas Felices S.R.L.";
+    private const string EmpresaCuit = "30-71234567-1";
+    private const string EmpresaCondicionIva = "IVA Responsable Inscripto";
+    private const string EmpresaIngresosBrutos = "901-712345-6 (Conv. Multilateral)";
+    private const string EmpresaInicioActividades = "01/03/2018";
+    private const string EmpresaDomicilio = "Av. Rivadavia 4521 - C1424CEK - CABA";
+    private const string EmpresaTelefono = "(011) 4567-8910";
+    private const string EmpresaCorreo = "contacto@patitasfelices.com.ar";
+    private const string EmpresaPuntoVenta = "0001";
+
     private readonly PagoControlador? _pagoControlador;
     private readonly ConsultaControlador? _consultaControlador;
     private readonly DetalleConsultaControlador? _detalleConsultaControlador;
@@ -50,6 +62,8 @@ public partial class FormCobros : Form
         _metodoPagoControlador = metodoPagoControlador;
 
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboConsultaClinica, cboMetodoPago);
+        dtpFecha.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
         ConfigurarEventos();
     }
 
@@ -62,6 +76,7 @@ public partial class FormCobros : Form
         btnCobrar.Click += async (_, _) => await CobrarAsync();
         btnModificar.Click += async (_, _) => await ModificarAsync();
         btnLimpiar.Click += (_, _) => LimpiarFormulario();
+        btnImprimirTicket.Click += async (_, _) => await ImprimirTicketSeleccionadoAsync();
         cboConsultaClinica.SelectedIndexChanged += async (_, _) => await OnConsultaSeleccionadaAsync();
         cboMetodoPago.SelectedIndexChanged += (_, _) => ActualizarVisibilidadCuotas();
         dgvCobros.CellClick += (_, _) => CargarPagoSeleccionado();
@@ -321,17 +336,52 @@ public partial class FormCobros : Form
         }
     }
 
-    private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago)
+    private async Task ImprimirTicketSeleccionadoAsync()
+    {
+        if (dgvCobros.CurrentRow?.Tag is not PagoRespuestaDto pago)
+        {
+            MessageBox.Show("Seleccione un cobro de la lista para imprimir su ticket.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var dto = new PagoSolicitudDto
+        {
+            IdConsulta = pago.IdConsulta,
+            IdMetodoPago = pago.IdMetodoPago,
+            Fecha = pago.Fecha,
+            Importe = pago.Importe,
+            Estado = pago.Estado,
+            Cuotas = pago.Cuotas
+        };
+
+        var ticket = await ArmarTicketAsync(pago.Id, dto, pago.NombreMetodoPago, reimpresion: true);
+        using var vistaTicket = new FormTicket(ticket);
+        vistaTicket.ShowDialog(this);
+    }
+
+    private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago, bool reimpresion = false)
     {
         const int ancho = 52;
         var separador = new string('=', ancho);
         var linea = new string('-', ancho);
         var sb = new StringBuilder();
 
-        sb.AppendLine(Centrar("CLÍNICA VETERINARIA", ancho));
-        sb.AppendLine(Centrar("COMPROBANTE DE PAGO", ancho));
+        sb.AppendLine(Centrar(EmpresaNombreFantasia, ancho));
+        sb.AppendLine(Centrar($"Razón social: {EmpresaRazonSocial}", ancho));
+        sb.AppendLine(Centrar($"CUIT: {EmpresaCuit}", ancho));
+        sb.AppendLine(Centrar(EmpresaCondicionIva, ancho));
+        sb.AppendLine(Centrar($"Ing. Brutos: {EmpresaIngresosBrutos}", ancho));
+        sb.AppendLine(Centrar($"Inicio de actividades: {EmpresaInicioActividades}", ancho));
+        sb.AppendLine(Centrar(EmpresaDomicilio, ancho));
+        sb.AppendLine(Centrar($"Tel.: {EmpresaTelefono}", ancho));
+        sb.AppendLine(Centrar(EmpresaCorreo, ancho));
         sb.AppendLine(separador);
-        sb.AppendLine($"Ticket N°: {idPago:D6}");
+        sb.AppendLine(Centrar("COMPROBANTE DE PAGO", ancho));
+        sb.AppendLine(Centrar("DOCUMENTO NO VÁLIDO COMO FACTURA", ancho));
+        if (reimpresion)
+            sb.AppendLine(Centrar("*** REIMPRESIÓN ***", ancho));
+        sb.AppendLine(separador);
+        sb.AppendLine($"P.V.: {EmpresaPuntoVenta}   Ticket N°: {EmpresaPuntoVenta}-{idPago:D8}");
         sb.AppendLine($"Fecha de pago: {pago.Fecha:dd/MM/yyyy}");
         sb.AppendLine($"Emitido: {DateTime.Now:dd/MM/yyyy HH:mm}");
         if (SesionActual.EstaAutenticado)
@@ -534,6 +584,7 @@ public partial class FormCobros : Form
 
             btnCobrar.Enabled = false;
             btnModificar.Enabled = true;
+            btnImprimirTicket.Enabled = true;
             _snapshotEdicion = ObtenerSnapshotFormulario();
             lblInfoEstado.Text = $"Cobro #{pago.Id} cargado para modificación.";
         }
@@ -574,6 +625,7 @@ public partial class FormCobros : Form
         txtDetalleImporte.Clear();
         btnCobrar.Enabled = true;
         btnModificar.Enabled = false;
+        btnImprimirTicket.Enabled = false;
         dgvCobros.ClearSelection();
         dgvCobros.CurrentCell = null;
         RestaurarEstiloImporte();

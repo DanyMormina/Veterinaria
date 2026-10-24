@@ -39,6 +39,11 @@ public partial class FormReportes : Form
         dtpFechaHasta.Value = hoy;
 
         _vista = SelectorVistaReporte.Configurar(dgvReporte);
+        _vista.AgrupacionCambiada += async (_, _) =>
+        {
+            if (btnImprimir.Enabled)
+                await GenerarAsync();
+        };
         cboTipoReporte.Items.AddRange([TipoConsultas, TipoVacunasTratamientos]);
         cboTipoReporte.SelectedIndex = 0;
         cboTipoReporte.SelectedIndexChanged += (_, _) => PrepararGrilla();
@@ -107,6 +112,17 @@ public partial class FormReportes : Form
                         "Vacunas y tratamientos aplicados por tipo",
                         porTipo.Select(gr => gr.Key).ToList(),
                         porTipo.Select(gr => (decimal)gr.Count()).ToList());
+
+                    // Resumen: evolución en el tiempo según la agrupación elegida
+                    var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista?.Agrupacion ?? AgrupacionPeriodo.Automatico);
+                    _vista?.UsarGraficoSecundario(true);
+                    _vista?.GraficoSecundario.MostrarEvolucion(
+                        $"Aplicaciones por {periodos.Unidad}",
+                        periodos.Etiquetas,
+                        [
+                            new SerieGrafico("Vacunas", GraficoReporte.Paleta[2], periodos.Acumular(filas.Where(r => r.Tipo == "Vacunación"), r => r.Fecha, _ => 1)),
+                            new SerieGrafico("Tratamientos", GraficoReporte.Paleta[1], periodos.Acumular(filas.Where(r => r.Tipo != "Vacunación"), r => r.Fecha, _ => 1))
+                        ]);
                 }
             }
             else
@@ -122,11 +138,22 @@ public partial class FormReportes : Form
 
                     lblTotal.Text = $"Total de consultas: {dgvReporte.Rows.Count}";
 
-                    var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta);
-                    _vista?.Grafico.MostrarColumnas(
+                    var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista?.Agrupacion ?? AgrupacionPeriodo.Automatico);
+                    _vista?.Grafico.MostrarEvolucion(
                         $"Mis consultas por {periodos.Unidad}",
                         periodos.Etiquetas,
                         [new SerieGrafico("Consultas", GraficoReporte.Paleta[0], periodos.Acumular(consultas, c => c.FechaHora, _ => 1))]);
+
+                    // Resumen: pacientes atendidos según especie
+                    var porEspecie = consultas
+                        .GroupBy(c => c.Especie)
+                        .OrderByDescending(gr => gr.Count())
+                        .ToList();
+                    _vista?.UsarGraficoSecundario(true);
+                    _vista?.GraficoSecundario.MostrarDona(
+                        "Consultas por especie",
+                        porEspecie.Select(gr => gr.Key).ToList(),
+                        porEspecie.Select(gr => (decimal)gr.Count()).ToList());
                 }
             }
 
@@ -158,7 +185,7 @@ public partial class FormReportes : Form
     private void PrepararGrilla()
     {
         dgvReporte.Rows.Clear();
-        _vista?.Grafico.Limpiar();
+        _vista?.LimpiarGraficos();
         btnImprimir.Enabled = false;
         btnExportarPdf.Enabled = false;
 
@@ -346,7 +373,7 @@ public partial class FormReportes : Form
 
         if (_vista is { MostrandoGrafico: true })
         {
-            _vista.Grafico.Dibujar(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 28));
+            _vista.DibujarGraficos(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 28));
             e.HasMorePages = false;
             g.DrawString($"Página {_paginaActualImpresion}", fontPie, brush, bounds.Left, bounds.Bottom - 18);
             return;

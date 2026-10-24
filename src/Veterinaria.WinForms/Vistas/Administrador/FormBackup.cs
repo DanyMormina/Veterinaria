@@ -232,6 +232,26 @@ public partial class FormBackup : Form
 
         string passwordConfirmacion = formConfirmacion.PasswordConfirmacion;
 
+        // 1b. Recién verificada la contraseña del administrador se solicita la del gerente, en otro formulario
+        var verificacionAdmin = await _backupController.VerificarAdministradorParaRestoreAsync(passwordConfirmacion);
+        if (!verificacionAdmin.EsExitoso)
+        {
+            MessageBox.Show(
+                verificacionAdmin.Mensaje,
+                "Autorización Denegada",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            return;
+        }
+
+        using var formGerente = new FormAutorizacionGerente();
+        if (formGerente.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        string passwordGerente = formGerente.PasswordGerente;
+
         // 2. Bloqueo defensivo de la interfaz y cursor de espera
         btnGenerarBackup.Enabled = false;
         btnRestaurarCopia.Enabled = false;
@@ -244,7 +264,8 @@ public partial class FormBackup : Form
             // 3. Invocar al controlador con doble factor de verificación
             var resultado = await _backupController.SolicitarRestauracionAsync(
                 nombreArchivo,
-                passwordConfirmacion);
+                passwordConfirmacion,
+                passwordGerente);
 
             if (resultado.EsExitoso)
             {

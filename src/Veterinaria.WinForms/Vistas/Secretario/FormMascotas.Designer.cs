@@ -246,6 +246,7 @@ partial class FormMascotas
         txtNombre.Font = new Font("Segoe UI", 9F);
         txtNombre.ForeColor = Color.FromArgb(58, 53, 59);
         txtNombre.Location = new Point(99, 27);
+        txtNombre.MaxLength = 80;
         txtNombre.Name = "txtNombre";
         txtNombre.Size = new Size(377, 23);
         txtNombre.TabIndex = 1;
@@ -472,6 +473,7 @@ partial class FormMascotas
         txtColor.Font = new Font("Segoe UI", 9F);
         txtColor.ForeColor = Color.FromArgb(58, 53, 59);
         txtColor.Location = new Point(594, 104);
+        txtColor.MaxLength = 50;
         txtColor.Name = "txtColor";
         txtColor.Size = new Size(157, 23);
         txtColor.TabIndex = 18;

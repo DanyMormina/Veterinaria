@@ -49,6 +49,7 @@ public partial class FormVacunasControles : Form
         AplicacionVacunaControlador? aplicacionVacunaControlador)
     {
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboConsulta);
         _mascotaControlador = mascotaControlador;
         _consultaControlador = consultaControlador;
         _vacunaControlador = vacunaControlador;
@@ -71,6 +72,7 @@ public partial class FormVacunasControles : Form
         lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} — {DateTime.Now:dd/MM/yyyy}";
 
         // 2. Establecer fechas predeterminadas
+        dtpFechaAplicacion.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
         dtpFechaAplicacion.Value = DateTime.Today;
         dtpProximaDosis.Value = DateTime.Today.AddMonths(12);
 
@@ -769,6 +771,17 @@ public partial class FormVacunasControles : Form
                 "Vacuna Requerida",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (dtpProximaDosis.Value.Date < dtpFechaAplicacion.Value.Date)
+        {
+            MessageBox.Show(
+                "La fecha de la próxima dosis no puede ser anterior a la fecha de aplicación actual.",
+                "Fechas Incoherentes",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            dtpProximaDosis.Focus();
             return;
         }
 

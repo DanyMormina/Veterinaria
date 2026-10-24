@@ -67,16 +67,20 @@ public class PagoControlador(ContextoVeterinaria context)
             if (error is not null)
                 return Resultado<long>.Falla(error);
 
-            var consultaExiste = await context.Consultas.AnyAsync(c => c.Id == solicitud.IdConsulta);
-            if (!consultaExiste)
+            var consulta = await context.Consultas.FirstOrDefaultAsync(c => c.Id == solicitud.IdConsulta);
+            if (consulta is null)
                 return Resultado<long>.Falla($"No existe la consulta con ID {solicitud.IdConsulta}.");
 
             if (await ConsultaYaCobradaAsync(solicitud.IdConsulta))
                 return Resultado<long>.Falla($"La consulta #{solicitud.IdConsulta} ya fue cobrada. No se puede volver a cobrar.");
 
-            var metodoExiste = await context.MetodosPago.AnyAsync(m => m.Id == solicitud.IdMetodoPago);
-            if (!metodoExiste)
+            var metodo = await context.MetodosPago.FirstOrDefaultAsync(m => m.Id == solicitud.IdMetodoPago);
+            if (metodo is null)
                 return Resultado<long>.Falla($"No existe el método de pago con ID {solicitud.IdMetodoPago}.");
+
+            var errorReglas = ValidarFechaYCuotas(solicitud, consulta.FechaHora, metodo.Nombre);
+            if (errorReglas is not null)
+                return Resultado<long>.Falla(errorReglas);
 
             var estado = NormalizarEstado(solicitud.Estado);
             var entidad = new Pago
@@ -118,9 +122,17 @@ public class PagoControlador(ContextoVeterinaria context)
             if (await ConsultaYaCobradaAsync(solicitud.IdConsulta, id))
                 return Resultado.Falla($"La consulta #{solicitud.IdConsulta} ya tiene otro cobro registrado.");
 
-            var metodoExiste = await context.MetodosPago.AnyAsync(m => m.Id == solicitud.IdMetodoPago);
-            if (!metodoExiste)
+            var metodo = await context.MetodosPago.FirstOrDefaultAsync(m => m.Id == solicitud.IdMetodoPago);
+            if (metodo is null)
                 return Resultado.Falla($"No existe el método de pago con ID {solicitud.IdMetodoPago}.");
+
+            var consulta = await context.Consultas.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == solicitud.IdConsulta);
+            if (consulta is null)
+                return Resultado.Falla($"No existe la consulta con ID {solicitud.IdConsulta}.");
+
+            var errorReglas = ValidarFechaYCuotas(solicitud, consulta.FechaHora, metodo.Nombre);
+            if (errorReglas is not null)
+                return Resultado.Falla(errorReglas);
 
             var estado = NormalizarEstado(solicitud.Estado);
             entidad.IdConsulta = solicitud.IdConsulta;
@@ -190,6 +202,36 @@ public class PagoControlador(ContextoVeterinaria context)
 
         if (solicitud.Importe <= 0)
             return "El importe debe ser mayor a cero.";
+
+        var estado = NormalizarEstado(solicitud.Estado);
+        if (!EstadosPermitidos.Contains(estado))
+            return "El estado del pago debe ser Completado, Pendiente o Anulado.";
+
+        return null;
+    }
+
+    private static readonly string[] EstadosPermitidos = ["Completado", "Pendiente", "Anulado"];
+    private static readonly int[] CuotasPermitidas = [1, 3, 6, 9, 12];
+
+    private static string? ValidarFechaYCuotas(PagoSolicitudDto solicitud, DateTime fechaConsulta, string nombreMetodo)
+    {
+        if (solicitud.Fecha != default)
+        {
+            if (solicitud.Fecha.Date > DateTime.Today)
+                return "La fecha del pago no puede ser posterior a hoy.";
+
+            if (solicitud.Fecha.Date < fechaConsulta.Date)
+                return "La fecha del pago no puede ser anterior a la fecha de la consulta.";
+        }
+
+        var esCredito = nombreMetodo.Contains("Crédito", StringComparison.OrdinalIgnoreCase) ||
+                        nombreMetodo.Contains("Credito", StringComparison.OrdinalIgnoreCase);
+
+        if (!esCredito && solicitud.Cuotas.HasValue)
+            return "Las cuotas solo aplican a pagos con tarjeta de crédito.";
+
+        if (esCredito && solicitud.Cuotas.HasValue && !CuotasPermitidas.Contains(solicitud.Cuotas.Value))
+            return "Las cuotas deben ser 1, 3, 6, 9 o 12.";
 
         return null;
     }

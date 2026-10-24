@@ -56,6 +56,8 @@ public partial class FormMascotas : Form
         _razaControlador = razaControlador;
 
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboEspecie, cboRaza);
+        Controles.ComboBuscable.Habilitar(permitirVacio: false, cboFiltroEspecie);
         ConfigurarValidacionVisual();
         ConfigurarRestriccionesTeclado();
         ConfigurarEventosInteraccion();

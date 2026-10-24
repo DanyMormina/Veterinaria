@@ -169,6 +169,7 @@ CREATE TABLE dbo.Consulta (
     Temperatura DECIMAL(4,2) NULL,
     Diagnostico NVARCHAR(MAX) NOT NULL,
     Observaciones NVARCHAR(MAX) NULL,
+    Importe DECIMAL(18,2) NOT NULL CONSTRAINT DF_Consulta_Importe DEFAULT (0),
     Activo BIT NOT NULL CONSTRAINT DF_Consulta_Activo DEFAULT (1),
     CONSTRAINT PK_Consulta PRIMARY KEY CLUSTERED (Id ASC),
     CONSTRAINT FK_Consulta_Usuario FOREIGN KEY (IdUsuario) REFERENCES dbo.Usuario (Id),
@@ -215,6 +216,7 @@ CREATE TABLE dbo.Pago (
     Fecha DATETIME2(0) NOT NULL,
     Importe DECIMAL(18,2) NOT NULL,
     Estado NVARCHAR(30) NOT NULL CONSTRAINT DF_Pago_Estado DEFAULT ('Completado'),
+    Cuotas INT NULL,
     Activo BIT NOT NULL CONSTRAINT DF_Pago_Activo DEFAULT (1),
     CONSTRAINT PK_Pago PRIMARY KEY CLUSTERED (Id ASC),
     CONSTRAINT FK_Pago_Consulta FOREIGN KEY (IdConsulta) REFERENCES dbo.Consulta (Id),
@@ -248,7 +250,8 @@ SET IDENTITY_INSERT dbo.TipoUsuario ON;
 INSERT INTO dbo.TipoUsuario (Id, Nombre, Activo) VALUES
 (1, 'Administrador', 1),
 (2, 'Veterinario', 1),
-(3, 'Secretario', 1);
+(3, 'Secretario', 1),
+(4, 'Gerente', 1); -- Sin vistas: solo autoriza backups y restauraciones (doble autorización)
 SET IDENTITY_INSERT dbo.TipoUsuario OFF;
 GO
 
@@ -294,6 +297,8 @@ INSERT INTO dbo.Usuario (Id, IdTipoUsuario, NombreUsuario, HashContrasena, Nombr
 VALUES (1, 1, 'admin', '$2a$11$q9hM1K9oA5F8VzE9hX2Hke0bT.G7j5Z8U1j.H7y1N8r9o1V7e8i9a', 'Administrador', 'Sistema', '12345678', 'ADM-001', 1, 1);
 SET IDENTITY_INSERT dbo.Usuario OFF;
 GO
+-- El usuario 'gerente' (TipoUsuario Gerente) lo crea la aplicación al iniciar (InicializadorDatos),
+-- con su contraseña cifrada con BCrypt.
 
 -- ------------------------------------------------------------------------------
 -- 7. TABLA DE SISTEMA: BACKUPS Y COPIAS DE SEGURIDAD
@@ -315,3 +320,186 @@ BEGIN
     CREATE NONCLUSTERED INDEX IX_Backup_FechaCreacion ON dbo.[Backup] (FechaCreacion);
 END
 GO
+
+-- ------------------------------------------------------------------------------
+-- 8. INDICES UNICOS (en catálogos solo entre registros activos)
+-- ------------------------------------------------------------------------------
+CREATE UNIQUE NONCLUSTERED INDEX UQ_Usuario_DNI ON dbo.Usuario (DNI);
+CREATE UNIQUE NONCLUSTERED INDEX UQ_Especie_Nombre ON dbo.Especie (Nombre) WHERE Activo = 1;
+CREATE UNIQUE NONCLUSTERED INDEX UQ_Raza_Especie_Nombre ON dbo.Raza (IdEspecie, Nombre) WHERE Activo = 1;
+CREATE UNIQUE NONCLUSTERED INDEX UQ_Vacuna_Especie_Nombre ON dbo.Vacuna (IdEspecie, Nombre) WHERE Activo = 1;
+GO
+
+-- ------------------------------------------------------------------------------
+-- 9. PROCEDIMIENTOS ALMACENADOS DE REPORTES
+--    (la aplicación también los crea/actualiza al iniciar: ObjetosBaseDatos.cs)
+-- ------------------------------------------------------------------------------
+CREATE OR ALTER PROCEDURE dbo.sp_ReporteConsultasClinicas
+    @FechaDesde DATE, @FechaHasta DATE, @IdVeterinario BIGINT = NULL, @IdEspecie BIGINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT c.FechaHora,
+           m.Nombre AS Mascota,
+           e.Nombre AS Especie,
+           r.Nombre AS Raza,
+           p.Nombre + ' ' + p.Apellido AS Propietario,
+           u.Nombre + ' ' + u.Apellido AS Veterinario,
+           ISNULL(c.Motivo, '') AS Motivo,
+           c.Diagnostico
+    FROM dbo.Consulta c
+    JOIN dbo.Mascota m ON m.Id = c.IdMascota AND m.Activo = 1
+    JOIN dbo.Raza r ON r.Id = m.IdRaza AND r.Activo = 1
+    JOIN dbo.Especie e ON e.Id = r.IdEspecie AND e.Activo = 1
+    JOIN dbo.Propietario p ON p.Id = m.IdPropietario AND p.Activo = 1
+    JOIN dbo.Usuario u ON u.Id = c.IdUsuario AND u.Activo = 1
+    WHERE c.Activo = 1
+      AND c.FechaHora >= @FechaDesde AND c.FechaHora < DATEADD(DAY, 1, @FechaHasta)
+      AND (@IdVeterinario IS NULL OR c.IdUsuario = @IdVeterinario)
+      AND (@IdEspecie IS NULL OR r.IdEspecie = @IdEspecie)
+    ORDER BY c.FechaHora DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ReporteConsultasDetalladas
+    @FechaDesde DATE, @FechaHasta DATE, @IdVeterinario BIGINT = NULL, @IdEspecie BIGINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT c.Id AS IdConsulta,
+           c.FechaHora,
+           m.Nombre AS Mascota,
+           e.Nombre AS Especie,
+           p.Nombre + ' ' + p.Apellido AS Propietario,
+           u.Nombre + ' ' + u.Apellido AS Veterinario,
+           c.Diagnostico,
+           ISNULL(t.Cantidad, 0) AS CantidadTratamientos,
+           ISNULL(v.Cantidad, 0) AS CantidadVacunas,
+           c.Importe AS ImporteConsulta,
+           ISNULL(t.Importe, 0) AS ImporteTratamientos,
+           ISNULL(v.Importe, 0) AS ImporteVacunas
+    FROM dbo.Consulta c
+    JOIN dbo.Mascota m ON m.Id = c.IdMascota AND m.Activo = 1
+    JOIN dbo.Raza r ON r.Id = m.IdRaza AND r.Activo = 1
+    JOIN dbo.Especie e ON e.Id = r.IdEspecie AND e.Activo = 1
+    JOIN dbo.Propietario p ON p.Id = m.IdPropietario AND p.Activo = 1
+    JOIN dbo.Usuario u ON u.Id = c.IdUsuario AND u.Activo = 1
+    OUTER APPLY (SELECT SUM(d.Cantidad) AS Cantidad, SUM(d.Subtotal) AS Importe
+                 FROM dbo.DetalleConsulta d WHERE d.IdConsulta = c.Id AND d.Activo = 1) t
+    OUTER APPLY (SELECT COUNT(*) AS Cantidad, SUM(a.PrecioUnitario) AS Importe
+                 FROM dbo.AplicacionVacuna a WHERE a.IdConsulta = c.Id) v
+    WHERE c.Activo = 1
+      AND c.FechaHora >= @FechaDesde AND c.FechaHora < DATEADD(DAY, 1, @FechaHasta)
+      AND (@IdVeterinario IS NULL OR c.IdUsuario = @IdVeterinario)
+      AND (@IdEspecie IS NULL OR r.IdEspecie = @IdEspecie)
+    ORDER BY c.FechaHora DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ReporteCobros
+    @FechaDesde DATE, @FechaHasta DATE, @Estado NVARCHAR(30) = NULL,
+    @IdVeterinario BIGINT = NULL, @IdEspecie BIGINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT pg.Fecha,
+           pg.IdConsulta,
+           m.Nombre AS Mascota,
+           p.Nombre + ' ' + p.Apellido AS Propietario,
+           ISNULL(mp.Nombre, '') AS MetodoPago,
+           pg.Cuotas,
+           pg.Importe,
+           pg.Estado
+    FROM dbo.Pago pg
+    JOIN dbo.Consulta c ON c.Id = pg.IdConsulta
+    JOIN dbo.Mascota m ON m.Id = c.IdMascota
+    JOIN dbo.Raza r ON r.Id = m.IdRaza
+    JOIN dbo.Propietario p ON p.Id = m.IdPropietario
+    LEFT JOIN dbo.MetodoPago mp ON mp.Id = pg.IdMetodoPago
+    WHERE pg.Fecha >= @FechaDesde AND pg.Fecha < DATEADD(DAY, 1, @FechaHasta)
+      AND (@Estado IS NULL OR pg.Estado = @Estado)
+      AND (@IdVeterinario IS NULL OR c.IdUsuario = @IdVeterinario)
+      AND (@IdEspecie IS NULL OR r.IdEspecie = @IdEspecie)
+    ORDER BY pg.Fecha DESC, pg.Id DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ReporteVacunasTratamientos
+    @FechaDesde DATE, @FechaHasta DATE, @IdVeterinario BIGINT = NULL, @IdEspecie BIGINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT Fecha, Mascota, Especie, TratamientoVacuna, Tipo, Dosis, Veterinario
+    FROM (
+        SELECT c.FechaHora AS Fecha,
+               m.Nombre AS Mascota,
+               e.Nombre AS Especie,
+               CAST(t.Descripcion AS NVARCHAR(MAX)) AS TratamientoVacuna,
+               CAST(CASE WHEN LTRIM(RTRIM(ISNULL(t.TipoTratamiento, ''))) = '' THEN N'Tratamiento' ELSE t.TipoTratamiento END AS NVARCHAR(100)) AS Tipo,
+               CAST(CASE WHEN LTRIM(RTRIM(ISNULL(t.Dosis, ''))) = '' THEN N'-' ELSE t.Dosis END AS NVARCHAR(100)) AS Dosis,
+               u.Nombre + ' ' + u.Apellido AS Veterinario
+        FROM dbo.DetalleConsulta d
+        JOIN dbo.Consulta c ON c.Id = d.IdConsulta AND c.Activo = 1
+        JOIN dbo.Tratamiento t ON t.Id = d.IdTratamiento AND t.Activo = 1
+        JOIN dbo.Mascota m ON m.Id = c.IdMascota AND m.Activo = 1
+        JOIN dbo.Raza r ON r.Id = m.IdRaza AND r.Activo = 1
+        JOIN dbo.Especie e ON e.Id = r.IdEspecie AND e.Activo = 1
+        JOIN dbo.Usuario u ON u.Id = c.IdUsuario AND u.Activo = 1
+        WHERE d.Activo = 1
+          AND c.FechaHora >= @FechaDesde AND c.FechaHora < DATEADD(DAY, 1, @FechaHasta)
+          AND (@IdVeterinario IS NULL OR c.IdUsuario = @IdVeterinario)
+          AND (@IdEspecie IS NULL OR r.IdEspecie = @IdEspecie)
+
+        UNION ALL
+
+        SELECT CAST(a.FechaAplicacion AS DATETIME2(0)),
+               m.Nombre,
+               e.Nombre,
+               CAST(va.Nombre AS NVARCHAR(MAX)),
+               CAST(N'Vacunación' AS NVARCHAR(100)),
+               CAST(CASE WHEN a.ProximaDosis IS NOT NULL
+                         THEN N'Próx. refuerzo: ' + CONVERT(NVARCHAR(10), a.ProximaDosis, 103)
+                         ELSE N'Dosis completa' END AS NVARCHAR(100)),
+               u.Nombre + ' ' + u.Apellido
+        FROM dbo.AplicacionVacuna a
+        JOIN dbo.Consulta c ON c.Id = a.IdConsulta AND c.Activo = 1
+        JOIN dbo.Vacuna va ON va.Id = a.IdVacuna AND va.Activo = 1
+        JOIN dbo.Mascota m ON m.Id = c.IdMascota AND m.Activo = 1
+        JOIN dbo.Raza r ON r.Id = m.IdRaza AND r.Activo = 1
+        JOIN dbo.Especie e ON e.Id = r.IdEspecie AND e.Activo = 1
+        JOIN dbo.Usuario u ON u.Id = c.IdUsuario AND u.Activo = 1
+        WHERE a.FechaAplicacion >= @FechaDesde AND a.FechaAplicacion < DATEADD(DAY, 1, @FechaHasta)
+          AND (@IdVeterinario IS NULL OR c.IdUsuario = @IdVeterinario)
+          AND (@IdEspecie IS NULL OR r.IdEspecie = @IdEspecie)
+    ) x
+    ORDER BY Fecha DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ReporteCensoMascotas
+    @IdEspecie BIGINT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT m.Id,
+           m.Nombre,
+           e.Nombre AS Especie,
+           r.Nombre AS Raza,
+           m.Sexo,
+           CAST(m.FechaNacimiento AS DATETIME2(0)) AS FechaNacimiento,
+           CASE WHEN LTRIM(RTRIM(ISNULL(m.Color, ''))) = '' THEN '-' ELSE m.Color END AS Color,
+           p.Nombre + ' ' + p.Apellido AS Propietario
+    FROM dbo.Mascota m
+    JOIN dbo.Raza r ON r.Id = m.IdRaza AND r.Activo = 1
+    JOIN dbo.Especie e ON e.Id = r.IdEspecie AND e.Activo = 1
+    JOIN dbo.Propietario p ON p.Id = m.IdPropietario AND p.Activo = 1
+    WHERE m.Activo = 1
+      AND (@IdEspecie IS NULL OR r.IdEspecie = @IdEspecie)
+    ORDER BY m.Nombre;
+END
+GO
+
+-- Ejemplos de uso:
+-- EXEC dbo.sp_ReporteConsultasClinicas @FechaDesde = '2026-10-01', @FechaHasta = '2026-10-31';
+-- EXEC dbo.sp_ReporteCobros @FechaDesde = '2026-01-01', @FechaHasta = '2026-12-31', @Estado = 'Completado';
+-- EXEC dbo.sp_ReporteCensoMascotas @IdEspecie = 1;

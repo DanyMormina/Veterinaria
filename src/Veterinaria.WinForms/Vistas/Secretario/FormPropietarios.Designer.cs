@@ -208,7 +208,7 @@ partial class FormPropietarios
         // 
         // lblDni
         // 
-        lblDni.Location = new Point(28, 127);
+        lblDni.Location = new Point(28, 39);
         lblDni.Name = "lblDni";
         lblDni.Size = new Size(118, 23);
         lblDni.TabIndex = 0;
@@ -219,14 +219,15 @@ partial class FormPropietarios
         // 
         txtDni.BackColor = Color.White;
         txtDni.BorderStyle = BorderStyle.FixedSingle;
-        txtDni.Location = new Point(152, 129);
+        txtDni.Location = new Point(152, 39);
+        txtDni.MaxLength = 8;
         txtDni.Name = "txtDni";
         txtDni.Size = new Size(356, 23);
         txtDni.TabIndex = 1;
         // 
         // lblNombre
         // 
-        lblNombre.Location = new Point(28, 39);
+        lblNombre.Location = new Point(28, 83);
         lblNombre.Name = "lblNombre";
         lblNombre.Size = new Size(118, 23);
         lblNombre.TabIndex = 2;
@@ -237,14 +238,15 @@ partial class FormPropietarios
         // 
         txtNombre.BackColor = Color.White;
         txtNombre.BorderStyle = BorderStyle.FixedSingle;
-        txtNombre.Location = new Point(152, 39);
+        txtNombre.Location = new Point(152, 83);
+        txtNombre.MaxLength = 100;
         txtNombre.Name = "txtNombre";
         txtNombre.Size = new Size(356, 23);
         txtNombre.TabIndex = 3;
         // 
         // lblApellido
         // 
-        lblApellido.Location = new Point(28, 83);
+        lblApellido.Location = new Point(28, 127);
         lblApellido.Name = "lblApellido";
         lblApellido.Size = new Size(118, 23);
         lblApellido.TabIndex = 4;
@@ -255,7 +257,8 @@ partial class FormPropietarios
         // 
         txtApellido.BackColor = Color.White;
         txtApellido.BorderStyle = BorderStyle.FixedSingle;
-        txtApellido.Location = new Point(152, 83);
+        txtApellido.Location = new Point(152, 127);
+        txtApellido.MaxLength = 100;
         txtApellido.Name = "txtApellido";
         txtApellido.Size = new Size(356, 23);
         txtApellido.TabIndex = 5;
@@ -274,6 +277,7 @@ partial class FormPropietarios
         txtTelefono.BackColor = Color.White;
         txtTelefono.BorderStyle = BorderStyle.FixedSingle;
         txtTelefono.Location = new Point(696, 37);
+        txtTelefono.MaxLength = 13;
         txtTelefono.Name = "txtTelefono";
         txtTelefono.Size = new Size(356, 23);
         txtTelefono.TabIndex = 7;
@@ -292,6 +296,7 @@ partial class FormPropietarios
         txtCorreoElectronico.BackColor = Color.White;
         txtCorreoElectronico.BorderStyle = BorderStyle.FixedSingle;
         txtCorreoElectronico.Location = new Point(696, 83);
+        txtCorreoElectronico.MaxLength = 100;
         txtCorreoElectronico.Name = "txtCorreoElectronico";
         txtCorreoElectronico.Size = new Size(356, 23);
         txtCorreoElectronico.TabIndex = 9;
@@ -310,6 +315,7 @@ partial class FormPropietarios
         txtDireccion.BackColor = Color.White;
         txtDireccion.BorderStyle = BorderStyle.FixedSingle;
         txtDireccion.Location = new Point(696, 127);
+        txtDireccion.MaxLength = 200;
         txtDireccion.Name = "txtDireccion";
         txtDireccion.Size = new Size(356, 23);
         txtDireccion.TabIndex = 11;

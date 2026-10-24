@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
@@ -7,7 +9,8 @@ namespace Veterinaria.Controllers.Controladores;
 
 /// <summary>
 /// Controlador de reporting clínico y demográfico para la gestión administrativa de la veterinaria.
-/// Implementa consultas optimizadas con AsNoTracking() bajo el Result Pattern.
+/// Los reportes principales se resuelven con procedimientos almacenados (dbo.sp_Reporte*)
+/// creados por <see cref="ObjetosBaseDatos"/> al iniciar la aplicación.
 /// </summary>
 public class ReporteControlador(ContextoVeterinaria context)
 {
@@ -48,40 +51,16 @@ public class ReporteControlador(ContextoVeterinaria context)
 
     /// <summary>
     /// Genera el reporte de Consultas Clínicas realizadas en el rango de fechas con filtros opcionales.
+    /// Procedimiento: dbo.sp_ReporteConsultasClinicas.
     /// </summary>
     public async Task<Resultado<IEnumerable<ReporteConsultaClinicaDto>>> ObtenerReporteConsultasClinicasAsync(FiltroReporteDto filtro)
     {
         try
         {
-            var fechaFin = filtro.FechaHasta.Date.AddDays(1).AddTicks(-1);
-
-            var query = context.Consultas
-                .AsNoTracking()
-                .Where(c => c.FechaHora >= filtro.FechaDesde.Date && c.FechaHora <= fechaFin);
-
-            if (filtro.IdVeterinario.HasValue && filtro.IdVeterinario.Value > 0)
-            {
-                query = query.Where(c => c.IdUsuario == filtro.IdVeterinario.Value);
-            }
-
-            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
-            {
-                query = query.Where(c => c.Mascota.Raza.IdEspecie == filtro.IdEspecie.Value);
-            }
-
-            var resultados = await query
-                .OrderByDescending(c => c.FechaHora)
-                .Select(c => new ReporteConsultaClinicaDto
-                {
-                    FechaHora = c.FechaHora,
-                    Mascota = c.Mascota.Nombre,
-                    Especie = c.Mascota.Raza.Especie.Nombre,
-                    Raza = c.Mascota.Raza.Nombre,
-                    Propietario = c.Mascota.Propietario.Nombre + " " + c.Mascota.Propietario.Apellido,
-                    Veterinario = c.Usuario.Nombre + " " + c.Usuario.Apellido,
-                    Motivo = c.Motivo ?? string.Empty,
-                    Diagnostico = c.Diagnostico
-                })
+            var resultados = await context.Database
+                .SqlQueryRaw<ReporteConsultaClinicaDto>(
+                    "EXEC dbo.sp_ReporteConsultasClinicas @FechaDesde, @FechaHasta, @IdVeterinario, @IdEspecie",
+                    ParametrosRango(filtro.FechaDesde, filtro.FechaHasta, filtro.IdVeterinario, filtro.IdEspecie))
                 .ToListAsync();
 
             return Resultado<IEnumerable<ReporteConsultaClinicaDto>>.Exito(resultados);
@@ -94,40 +73,16 @@ public class ReporteControlador(ContextoVeterinaria context)
 
     /// <summary>
     /// Reporte cruzado: cada consulta del período con la cantidad e importe de sus tratamientos y vacunas.
+    /// Procedimiento: dbo.sp_ReporteConsultasDetalladas.
     /// </summary>
     public async Task<Resultado<IEnumerable<ReporteConsultaDetalladaDto>>> ObtenerReporteConsultasDetalladasAsync(FiltroReporteDto filtro)
     {
         try
         {
-            var fechaFin = filtro.FechaHasta.Date.AddDays(1).AddTicks(-1);
-
-            var query = context.Consultas
-                .AsNoTracking()
-                .Where(c => c.FechaHora >= filtro.FechaDesde.Date && c.FechaHora <= fechaFin);
-
-            if (filtro.IdVeterinario.HasValue && filtro.IdVeterinario.Value > 0)
-                query = query.Where(c => c.IdUsuario == filtro.IdVeterinario.Value);
-
-            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
-                query = query.Where(c => c.Mascota.Raza.IdEspecie == filtro.IdEspecie.Value);
-
-            var resultados = await query
-                .OrderByDescending(c => c.FechaHora)
-                .Select(c => new ReporteConsultaDetalladaDto
-                {
-                    IdConsulta = c.Id,
-                    FechaHora = c.FechaHora,
-                    Mascota = c.Mascota.Nombre,
-                    Especie = c.Mascota.Raza.Especie.Nombre,
-                    Propietario = c.Mascota.Propietario.Nombre + " " + c.Mascota.Propietario.Apellido,
-                    Veterinario = c.Usuario.Nombre + " " + c.Usuario.Apellido,
-                    Diagnostico = c.Diagnostico,
-                    CantidadTratamientos = c.DetallesConsulta.Sum(d => (int?)d.Cantidad) ?? 0,
-                    CantidadVacunas = c.AplicacionesVacuna.Count(),
-                    ImporteConsulta = c.Importe,
-                    ImporteTratamientos = c.DetallesConsulta.Sum(d => (decimal?)d.Subtotal) ?? 0,
-                    ImporteVacunas = c.AplicacionesVacuna.Sum(v => v.PrecioUnitario) ?? 0
-                })
+            var resultados = await context.Database
+                .SqlQueryRaw<ReporteConsultaDetalladaDto>(
+                    "EXEC dbo.sp_ReporteConsultasDetalladas @FechaDesde, @FechaHasta, @IdVeterinario, @IdEspecie",
+                    ParametrosRango(filtro.FechaDesde, filtro.FechaHasta, filtro.IdVeterinario, filtro.IdEspecie))
                 .ToListAsync();
 
             return Resultado<IEnumerable<ReporteConsultaDetalladaDto>>.Exito(resultados);
@@ -140,47 +95,29 @@ public class ReporteControlador(ContextoVeterinaria context)
 
     /// <summary>
     /// Genera el reporte de cobros (pagos) en un rango de fechas, incluyendo anulados.
+    /// Procedimiento: dbo.sp_ReporteCobros.
     /// </summary>
     public async Task<Resultado<IEnumerable<ReporteCobroDto>>> ObtenerReporteCobrosAsync(FiltroReporteCobroDto filtro)
     {
         try
         {
-            var fechaFin = filtro.FechaHasta.Date.AddDays(1).AddTicks(-1);
-
-            var query = context.Pagos
-                .IgnoreQueryFilters()
-                .AsNoTracking()
-                .Where(p => p.Fecha >= filtro.FechaDesde.Date && p.Fecha <= fechaFin);
-
+            string? estado = null;
             if (!string.IsNullOrWhiteSpace(filtro.Estado) &&
                 !filtro.Estado.Equals("(Todos)", StringComparison.OrdinalIgnoreCase))
             {
-                var estado = filtro.Estado.Trim();
+                estado = filtro.Estado.Trim();
                 if (estado.Equals("Pagado", StringComparison.OrdinalIgnoreCase))
                     estado = "Completado";
-                query = query.Where(p => p.Estado == estado);
             }
 
-            if (filtro.IdVeterinario.HasValue && filtro.IdVeterinario.Value > 0)
-                query = query.Where(p => p.Consulta.IdUsuario == filtro.IdVeterinario.Value);
+            var parametros = ParametrosRango(filtro.FechaDesde, filtro.FechaHasta, filtro.IdVeterinario, filtro.IdEspecie)
+                .Append(new SqlParameter("@Estado", SqlDbType.NVarChar, 30) { Value = (object?)estado ?? DBNull.Value })
+                .ToArray();
 
-            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
-                query = query.Where(p => p.Consulta.Mascota.Raza.IdEspecie == filtro.IdEspecie.Value);
-
-            var resultados = await query
-                .OrderByDescending(p => p.Fecha)
-                .ThenByDescending(p => p.Id)
-                .Select(p => new ReporteCobroDto
-                {
-                    Fecha = p.Fecha,
-                    IdConsulta = p.IdConsulta,
-                    Mascota = p.Consulta.Mascota.Nombre,
-                    Propietario = p.Consulta.Mascota.Propietario.Nombre + " " + p.Consulta.Mascota.Propietario.Apellido,
-                    MetodoPago = p.MetodoPago != null ? p.MetodoPago.Nombre : string.Empty,
-                    Cuotas = p.Cuotas,
-                    Importe = p.Importe,
-                    Estado = p.Estado
-                })
+            var resultados = await context.Database
+                .SqlQueryRaw<ReporteCobroDto>(
+                    "EXEC dbo.sp_ReporteCobros @FechaDesde, @FechaHasta, @Estado, @IdVeterinario, @IdEspecie",
+                    parametros)
                 .ToListAsync();
 
             return Resultado<IEnumerable<ReporteCobroDto>>.Exito(resultados);
@@ -193,78 +130,19 @@ public class ReporteControlador(ContextoVeterinaria context)
 
     /// <summary>
     /// Genera el reporte consolidado de Vacunas y Tratamientos clínicos aplicados en el período.
+    /// Procedimiento: dbo.sp_ReporteVacunasTratamientos.
     /// </summary>
     public async Task<Resultado<IEnumerable<ReporteVacunaTratamientoDto>>> ObtenerReporteVacunasTratamientosAsync(FiltroReporteDto filtro)
     {
         try
         {
-            var fechaFin = filtro.FechaHasta.Date.AddDays(1).AddTicks(-1);
-
-            // 1. Tratamientos clínicos desde DetalleConsulta
-            var queryTratamientos = context.DetalleConsultas
-                .AsNoTracking()
-                .Where(d => d.Consulta.FechaHora >= filtro.FechaDesde.Date && d.Consulta.FechaHora <= fechaFin);
-
-            if (filtro.IdVeterinario.HasValue && filtro.IdVeterinario.Value > 0)
-            {
-                queryTratamientos = queryTratamientos.Where(d => d.Consulta.IdUsuario == filtro.IdVeterinario.Value);
-            }
-
-            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
-            {
-                queryTratamientos = queryTratamientos.Where(d => d.Consulta.Mascota.Raza.IdEspecie == filtro.IdEspecie.Value);
-            }
-
-            var tratamientos = await queryTratamientos
-                .Select(d => new ReporteVacunaTratamientoDto
-                {
-                    Fecha = d.Consulta.FechaHora,
-                    Mascota = d.Consulta.Mascota.Nombre,
-                    Especie = d.Consulta.Mascota.Raza.Especie.Nombre,
-                    TratamientoVacuna = d.Tratamiento.Descripcion,
-                    Tipo = string.IsNullOrWhiteSpace(d.Tratamiento.TipoTratamiento) ? "Tratamiento" : d.Tratamiento.TipoTratamiento,
-                    Dosis = string.IsNullOrWhiteSpace(d.Tratamiento.Dosis) ? "-" : d.Tratamiento.Dosis,
-                    Veterinario = d.Consulta.Usuario.Nombre + " " + d.Consulta.Usuario.Apellido
-                })
+            var resultados = await context.Database
+                .SqlQueryRaw<ReporteVacunaTratamientoDto>(
+                    "EXEC dbo.sp_ReporteVacunasTratamientos @FechaDesde, @FechaHasta, @IdVeterinario, @IdEspecie",
+                    ParametrosRango(filtro.FechaDesde, filtro.FechaHasta, filtro.IdVeterinario, filtro.IdEspecie))
                 .ToListAsync();
 
-            // 2. Aplicaciones de Vacunas desde AplicacionesVacuna
-            var queryVacunas = context.AplicacionesVacuna
-                .AsNoTracking()
-                .Where(v => v.FechaAplicacion >= filtro.FechaDesde.Date && v.FechaAplicacion <= fechaFin);
-
-            if (filtro.IdVeterinario.HasValue && filtro.IdVeterinario.Value > 0)
-            {
-                queryVacunas = queryVacunas.Where(v => v.Consulta.IdUsuario == filtro.IdVeterinario.Value);
-            }
-
-            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
-            {
-                queryVacunas = queryVacunas.Where(v => v.Consulta.Mascota.Raza.IdEspecie == filtro.IdEspecie.Value);
-            }
-
-            var vacunas = await queryVacunas
-                .Select(v => new ReporteVacunaTratamientoDto
-                {
-                    Fecha = v.FechaAplicacion,
-                    Mascota = v.Consulta.Mascota.Nombre,
-                    Especie = v.Consulta.Mascota.Raza.Especie.Nombre,
-                    TratamientoVacuna = v.Vacuna.Nombre,
-                    Tipo = "Vacunación",
-                    Dosis = v.ProximaDosis.HasValue
-                        ? "Próx. refuerzo: " + v.ProximaDosis.Value.ToString("dd/MM/yyyy")
-                        : "Dosis completa",
-                    Veterinario = v.Consulta.Usuario.Nombre + " " + v.Consulta.Usuario.Apellido
-                })
-                .ToListAsync();
-
-            // Consolidación en memoria ordenada por fecha descendente
-            var resultadoConsolidado = tratamientos
-                .Concat(vacunas)
-                .OrderByDescending(r => r.Fecha)
-                .ToList();
-
-            return Resultado<IEnumerable<ReporteVacunaTratamientoDto>>.Exito(resultadoConsolidado);
+            return Resultado<IEnumerable<ReporteVacunaTratamientoDto>>.Exito(resultados);
         }
         catch (Exception ex)
         {
@@ -317,33 +195,16 @@ public class ReporteControlador(ContextoVeterinaria context)
 
     /// <summary>
     /// Genera el Censo Demográfico de Pacientes (Mascotas registradas activas) con filtro de especie.
+    /// Procedimiento: dbo.sp_ReporteCensoMascotas.
     /// </summary>
     public async Task<Resultado<IEnumerable<ReporteCensoMascotaDto>>> ObtenerReporteCensoMascotasAsync(FiltroReporteDto filtro)
     {
         try
         {
-            var query = context.Mascotas
-                .AsNoTracking()
-                .Where(m => m.Activo);
-
-            if (filtro.IdEspecie.HasValue && filtro.IdEspecie.Value > 0)
-            {
-                query = query.Where(m => m.Raza.IdEspecie == filtro.IdEspecie.Value);
-            }
-
-            var resultados = await query
-                .OrderBy(m => m.Nombre)
-                .Select(m => new ReporteCensoMascotaDto
-                {
-                    Id = m.Id,
-                    Nombre = m.Nombre,
-                    Especie = m.Raza.Especie.Nombre,
-                    Raza = m.Raza.Nombre,
-                    Sexo = m.Sexo,
-                    FechaNacimiento = m.FechaNacimiento,
-                    Color = string.IsNullOrWhiteSpace(m.Color) ? "-" : m.Color,
-                    Propietario = m.Propietario.Nombre + " " + m.Propietario.Apellido
-                })
+            var resultados = await context.Database
+                .SqlQueryRaw<ReporteCensoMascotaDto>(
+                    "EXEC dbo.sp_ReporteCensoMascotas @IdEspecie",
+                    ParametroId("@IdEspecie", filtro.IdEspecie))
                 .ToListAsync();
 
             return Resultado<IEnumerable<ReporteCensoMascotaDto>>.Exito(resultados);
@@ -353,4 +214,15 @@ public class ReporteControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<ReporteCensoMascotaDto>>.Falla($"Error al generar censo de pacientes: {ex.Message}");
         }
     }
+
+    private static SqlParameter[] ParametrosRango(DateTime desde, DateTime hasta, long? idVeterinario, long? idEspecie) =>
+    [
+        new SqlParameter("@FechaDesde", SqlDbType.Date) { Value = desde.Date },
+        new SqlParameter("@FechaHasta", SqlDbType.Date) { Value = hasta.Date },
+        ParametroId("@IdVeterinario", idVeterinario),
+        ParametroId("@IdEspecie", idEspecie)
+    ];
+
+    private static SqlParameter ParametroId(string nombre, long? id) =>
+        new(nombre, SqlDbType.BigInt) { Value = id is > 0 ? id.Value : DBNull.Value as object };
 }

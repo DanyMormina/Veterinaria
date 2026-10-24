@@ -461,7 +461,7 @@ namespace Veterinaria.WinForms.Vistas.Administrador
             txtDni.BackColor = Color.White;
             txtDni.BorderStyle = BorderStyle.FixedSingle;
             txtDni.Location = new Point(154, 100);
-            txtDni.MaxLength = 20;
+            txtDni.MaxLength = 8;
             txtDni.Name = "txtDni";
             txtDni.Size = new Size(240, 23);
             txtDni.TabIndex = 5;

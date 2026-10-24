@@ -47,6 +47,10 @@ public class TratamientoControlador(ContextoVeterinaria context)
             if (string.IsNullOrWhiteSpace(solicitud.Descripcion))
                 return Resultado<long>.Falla("La descripción del tratamiento es obligatoria.");
 
+            var errorDatos = ValidarDatosTratamiento(solicitud);
+            if (errorDatos is not null)
+                return Resultado<long>.Falla(errorDatos);
+
             var entidad = new Tratamiento
             {
                 TipoTratamiento = string.IsNullOrWhiteSpace(solicitud.TipoTratamiento) ? "General" : solicitud.TipoTratamiento.Trim(),
@@ -197,6 +201,10 @@ public class TratamientoControlador(ContextoVeterinaria context)
             if (string.IsNullOrWhiteSpace(solicitud.Descripcion))
                 return Resultado.Falla("La descripción del tratamiento es obligatoria.");
 
+            var errorDatos = ValidarDatosTratamiento(solicitud);
+            if (errorDatos is not null)
+                return Resultado.Falla(errorDatos);
+
             var entidad = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el tratamiento con ID {id}.");
@@ -261,6 +269,20 @@ public class TratamientoControlador(ContextoVeterinaria context)
         {
             return Resultado.Falla($"Error al eliminar el tratamiento aplicado: {ex.Message}");
         }
+    }
+
+    private static string? ValidarDatosTratamiento(TratamientoSolicitudDto solicitud)
+    {
+        if (solicitud.Precio < 0)
+            return "El precio del tratamiento no puede ser negativo.";
+
+        if (solicitud.Dosis?.Trim().Length > 100)
+            return "La dosis no puede superar los 100 caracteres.";
+
+        if (solicitud.TipoTratamiento?.Trim().Length > 50)
+            return "El tipo de tratamiento no puede superar los 50 caracteres.";
+
+        return null;
     }
 
     private IQueryable<TratamientoRespuestaDto> ConsultaBase() =>
