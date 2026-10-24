@@ -39,6 +39,7 @@ public partial class FormReportes : Form
         _vista.VistaCambiada += async (_, _) => await AlCambiarVistaAsync();
         _vista.AgrupacionCambiada += async (_, _) =>
         {
+            dtpFechaDesde.Value = PeriodosGrafico.DesdeParaAgrupacion(dtpFechaDesde.Value, dtpFechaHasta.Value, _vista.Agrupacion);
             if (_reporteGenerado)
                 await GenerarAsync();
         };

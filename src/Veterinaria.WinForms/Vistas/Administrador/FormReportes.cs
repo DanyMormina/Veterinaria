@@ -57,6 +57,7 @@ public partial class FormReportes : Form
         _vista = SelectorVistaReporte.Configurar(dgvReporte);
         _vista.AgrupacionCambiada += (_, _) =>
         {
+            dtpFechaDesde.Value = PeriodosGrafico.DesdeParaAgrupacion(dtpFechaDesde.Value, dtpFechaHasta.Value, _vista.Agrupacion);
             if (btnImprimir.Enabled)
                 btnGenerar_Click(this, EventArgs.Empty);
         };
