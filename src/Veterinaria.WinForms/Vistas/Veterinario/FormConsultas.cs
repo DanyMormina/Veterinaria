@@ -36,6 +36,7 @@ public partial class FormConsultas : Form
         IServiceProvider serviceProvider)
     {
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboPropietario, cboMascota);
         _consultaControlador = consultaControlador;
         _mascotaControlador = mascotaControlador;
         _propietarioControlador = propietarioControlador;

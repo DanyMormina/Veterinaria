@@ -49,7 +49,7 @@ public partial class FormVacunasControles : Form
         AplicacionVacunaControlador? aplicacionVacunaControlador)
     {
         InitializeComponent();
-        Controles.ComboBuscable.Habilitar(cboConsulta);
+        Controles.ComboBuscable.Habilitar(cboMascota, cboConsulta, cboVacuna);
         _mascotaControlador = mascotaControlador;
         _consultaControlador = consultaControlador;
         _vacunaControlador = vacunaControlador;

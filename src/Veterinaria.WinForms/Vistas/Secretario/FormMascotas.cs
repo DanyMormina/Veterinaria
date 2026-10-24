@@ -67,7 +67,7 @@ public partial class FormMascotas : Form
         _serviceProvider = serviceProvider;
 
         InitializeComponent();
-        Controles.ComboBuscable.Habilitar(cboEspecie, cboRaza);
+        Controles.ComboBuscable.Habilitar(cboPropietario, cboEspecie, cboRaza);
         Controles.ComboBuscable.Habilitar(permitirVacio: false, cboFiltroEspecie);
         dtpFechaNacimiento.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
         ConfigurarRestriccionesTeclado();
