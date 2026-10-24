@@ -39,6 +39,10 @@ public partial class FormCobros : Form
     private bool _cargando;
     private List<PagoRespuestaDto> _cobros = [];
 
+    // Los controladores comparten el mismo DbContext, que no admite dos consultas a la vez
+    private readonly SemaphoreSlim _accesoDatos = new(1, 1);
+    private int _versionConsultaSeleccionada;
+
     private sealed record ItemCombo(long? Id, string Texto)
     {
         public override string ToString() => Texto;
@@ -62,6 +66,7 @@ public partial class FormCobros : Form
         _metodoPagoControlador = metodoPagoControlador;
 
         InitializeComponent();
+        FormClosed += (_, _) => _versionConsultaSeleccionada++;
         Controles.ComboBuscable.Habilitar(cboConsultaClinica, cboMetodoPago);
         dtpFecha.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
         ConfigurarEventos();
@@ -100,6 +105,19 @@ public partial class FormCobros : Form
         lblInfoEstado.Text = "Módulo de cobros — recepción";
     }
 
+    private async Task<T> ConsultarAsync<T>(Func<Task<T>> consulta)
+    {
+        await _accesoDatos.WaitAsync();
+        try
+        {
+            return await consulta();
+        }
+        finally
+        {
+            _accesoDatos.Release();
+        }
+    }
+
     private async Task CargarCatalogosAsync()
     {
         _cargando = true;
@@ -110,7 +128,9 @@ public partial class FormCobros : Form
 
             if (_consultaControlador is not null)
             {
-                var res = await _consultaControlador.ObtenerTodosAsync();
+                var res = await ConsultarAsync(_consultaControlador.ObtenerTodosAsync);
+                if (IsDisposed)
+                    return;
                 if (res.EsExitoso && res.Valor is not null)
                 {
                     foreach (var c in res.Valor.OrderByDescending(x => x.FechaHora))
@@ -127,7 +147,9 @@ public partial class FormCobros : Form
             cboMetodoPago.Items.Add(new ItemCombo(null, "Seleccione un método de pago"));
             if (_metodoPagoControlador is not null)
             {
-                var resMetodos = await _metodoPagoControlador.ObtenerTodosAsync();
+                var resMetodos = await ConsultarAsync(_metodoPagoControlador.ObtenerTodosAsync);
+                if (IsDisposed)
+                    return;
                 if (resMetodos.EsExitoso && resMetodos.Valor is not null)
                 {
                     foreach (var m in resMetodos.Valor.Where(x => x.Activo).OrderBy(x => x.Nombre))
@@ -148,12 +170,13 @@ public partial class FormCobros : Form
         _cobros = [];
         if (_pagoControlador is not null)
         {
-            var res = await _pagoControlador.ObtenerTodosAsync();
+            var res = await ConsultarAsync(_pagoControlador.ObtenerTodosAsync);
             if (res.EsExitoso && res.Valor is not null)
                 _cobros = res.Valor.ToList();
         }
 
-        MostrarCobros();
+        if (!IsDisposed)
+            MostrarCobros();
     }
 
     /// <summary>
@@ -202,6 +225,10 @@ public partial class FormCobros : Form
         if (_cargando)
             return;
 
+        // Solo vale la respuesta de la última selección; las anteriores se descartan
+        var version = ++_versionConsultaSeleccionada;
+        bool EsVigente() => !IsDisposed && version == _versionConsultaSeleccionada;
+
         var item = cboConsultaClinica.SelectedItem as ItemCombo;
         if (item?.Id is null || item.Id <= 0)
         {
@@ -211,12 +238,18 @@ public partial class FormCobros : Form
         }
 
         var (detalle, total) = await CalcularDetalleImporteAsync(item.Id.Value);
+        if (!EsVigente())
+            return;
+
         txtDetalleImporte.Text = detalle;
         txtImporte.Text = total > 0 ? total.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
 
         if (!_idPagoSeleccionado.HasValue && _pagoControlador is not null)
         {
-            var yaCobrada = await _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value);
+            var yaCobrada = await ConsultarAsync(() => _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value));
+            if (!EsVigente() || _idPagoSeleccionado.HasValue)
+                return;
+
             btnCobrar.Enabled = !yaCobrada;
             if (yaCobrada)
             {
@@ -238,7 +271,7 @@ public partial class FormCobros : Form
 
         if (_consultaControlador is not null)
         {
-            var resConsulta = await _consultaControlador.ObtenerPorIdAsync(idConsulta);
+            var resConsulta = await ConsultarAsync(() => _consultaControlador.ObtenerPorIdAsync(idConsulta));
             if (resConsulta.EsExitoso && resConsulta.Valor is not null)
             {
                 var importeBase = resConsulta.Valor.Importe;
@@ -252,7 +285,7 @@ public partial class FormCobros : Form
 
         if (_detalleConsultaControlador is not null)
         {
-            var resDet = await _detalleConsultaControlador.ObtenerPorConsultaAsync(idConsulta);
+            var resDet = await ConsultarAsync(() => _detalleConsultaControlador.ObtenerPorConsultaAsync(idConsulta));
             if (resDet.EsExitoso && resDet.Valor is not null)
             {
                 foreach (var d in resDet.Valor)
@@ -268,7 +301,7 @@ public partial class FormCobros : Form
 
         if (_aplicacionVacunaControlador is not null)
         {
-            var resVac = await _aplicacionVacunaControlador.ObtenerPorConsultaAsync(idConsulta);
+            var resVac = await ConsultarAsync(() => _aplicacionVacunaControlador.ObtenerPorConsultaAsync(idConsulta));
             if (resVac.EsExitoso && resVac.Valor is not null)
             {
                 foreach (var v in resVac.Valor)
@@ -325,7 +358,9 @@ public partial class FormCobros : Form
         try
         {
             btnCobrar.Enabled = false;
-            var resultado = await _pagoControlador.RegistrarPagoAsync(dto);
+            var resultado = await ConsultarAsync(() => _pagoControlador.RegistrarPagoAsync(dto));
+            if (IsDisposed)
+                return;
             if (resultado.EsExitoso)
             {
                 lblInfoEstado.ForeColor = ColorExito;
@@ -347,7 +382,8 @@ public partial class FormCobros : Form
         }
         finally
         {
-            btnCobrar.Enabled = true;
+            if (!IsDisposed)
+                btnCobrar.Enabled = true;
         }
     }
 
@@ -405,7 +441,7 @@ public partial class FormCobros : Form
 
         if (_consultaControlador is not null)
         {
-            var resConsulta = await _consultaControlador.ObtenerPorIdAsync(pago.IdConsulta);
+            var resConsulta = await ConsultarAsync(() => _consultaControlador.ObtenerPorIdAsync(pago.IdConsulta));
             if (resConsulta.EsExitoso && resConsulta.Valor is not null)
             {
                 var c = resConsulta.Valor;
@@ -537,7 +573,8 @@ public partial class FormCobros : Form
 
     private void CargarPagoSeleccionado()
     {
-        if (_cargando || dgvCobros.CurrentRow?.Tag is not PagoRespuestaDto pago)
+        // CellClick y SelectionChanged llegan juntos al hacer clic: el mismo cobro se carga una sola vez
+        if (_cargando || dgvCobros.CurrentRow?.Tag is not PagoRespuestaDto pago || _idPagoSeleccionado == pago.Id)
             return;
 
         _cargando = true;
