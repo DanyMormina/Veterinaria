@@ -24,8 +24,8 @@ partial class FormCobros
         pnlBotones = new Panel();
         btnLimpiar = new Button();
         btnCobrar = new Button();
-        btnModificar = new Button();
         btnCancelar = new Button();
+        btnImprimirTicket = new Button();
         grpConsulta = new GroupBox();
         lblConsultaClinica = new Label();
         cboConsultaClinica = new ComboBox();
@@ -43,6 +43,8 @@ partial class FormCobros
         lblSimboloPeso = new Label();
         txtImporte = new TextBox();
         pnlListado = new Panel();
+        lblBuscarCobro = new Label();
+        txtBuscarCobro = new TextBox();
         dgvCobros = new DataGridView();
         colId = new DataGridViewTextBoxColumn();
         colConsulta = new DataGridViewTextBoxColumn();
@@ -292,8 +294,8 @@ partial class FormCobros
         // 
         pnlBotones.Controls.Add(btnLimpiar);
         pnlBotones.Controls.Add(btnCobrar);
-        pnlBotones.Controls.Add(btnModificar);
         pnlBotones.Controls.Add(btnCancelar);
+        pnlBotones.Controls.Add(btnImprimirTicket);
         pnlBotones.Location = new Point(12, 332);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1076, 40);
@@ -328,21 +330,6 @@ partial class FormCobros
         btnCobrar.Text = "Cobrar";
         btnCobrar.UseVisualStyleBackColor = false;
         // 
-        // btnModificar
-        // 
-        btnModificar.BackColor = Color.FromArgb(148, 176, 214);
-        btnModificar.Enabled = false;
-        btnModificar.FlatAppearance.BorderColor = Color.FromArgb(112, 142, 182);
-        btnModificar.FlatStyle = FlatStyle.Flat;
-        btnModificar.Font = new Font("Segoe UI", 9F);
-        btnModificar.ForeColor = Color.Black;
-        btnModificar.Location = new Point(227, 5);
-        btnModificar.Name = "btnModificar";
-        btnModificar.Size = new Size(100, 32);
-        btnModificar.TabIndex = 2;
-        btnModificar.Text = "Modificar";
-        btnModificar.UseVisualStyleBackColor = false;
-        // 
         // btnCancelar
         // 
         btnCancelar.BackColor = Color.MistyRose;
@@ -350,7 +337,7 @@ partial class FormCobros
         btnCancelar.FlatStyle = FlatStyle.Flat;
         btnCancelar.Font = new Font("Segoe UI", 9F);
         btnCancelar.ForeColor = Color.Black;
-        btnCancelar.Location = new Point(335, 5);
+        btnCancelar.Location = new Point(365, 5);
         btnCancelar.Name = "btnCancelar";
         btnCancelar.Size = new Size(100, 32);
         btnCancelar.TabIndex = 3;
@@ -358,16 +345,52 @@ partial class FormCobros
         btnCancelar.UseVisualStyleBackColor = false;
         btnCancelar.Click += btnCancelar_Click;
         // 
+        // btnImprimirTicket
+        // 
+        btnImprimirTicket.BackColor = Color.FromArgb(233, 214, 236);
+        btnImprimirTicket.Enabled = false;
+        btnImprimirTicket.FlatAppearance.BorderColor = Color.FromArgb(170, 140, 178);
+        btnImprimirTicket.FlatStyle = FlatStyle.Flat;
+        btnImprimirTicket.Font = new Font("Segoe UI", 9F);
+        btnImprimirTicket.ForeColor = Color.Black;
+        btnImprimirTicket.Location = new Point(227, 5);
+        btnImprimirTicket.Name = "btnImprimirTicket";
+        btnImprimirTicket.Size = new Size(130, 32);
+        btnImprimirTicket.TabIndex = 2;
+        btnImprimirTicket.Text = "Imprimir ticket";
+        btnImprimirTicket.UseVisualStyleBackColor = false;
+        // 
         // pnlListado
         // 
         pnlListado.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         pnlListado.BackColor = Color.White;
         pnlListado.BorderStyle = BorderStyle.FixedSingle;
+        pnlListado.Controls.Add(lblBuscarCobro);
+        pnlListado.Controls.Add(txtBuscarCobro);
         pnlListado.Controls.Add(dgvCobros);
         pnlListado.Location = new Point(12, 378);
         pnlListado.Name = "pnlListado";
         pnlListado.Size = new Size(1076, 247);
         pnlListado.TabIndex = 3;
+        // 
+        // lblBuscarCobro
+        // 
+        lblBuscarCobro.AutoSize = true;
+        lblBuscarCobro.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        lblBuscarCobro.Location = new Point(10, 13);
+        lblBuscarCobro.Name = "lblBuscarCobro";
+        lblBuscarCobro.Size = new Size(48, 15);
+        lblBuscarCobro.TabIndex = 1;
+        lblBuscarCobro.Text = "Buscar:";
+        // 
+        // txtBuscarCobro
+        // 
+        txtBuscarCobro.Location = new Point(66, 9);
+        txtBuscarCobro.MaxLength = 100;
+        txtBuscarCobro.Name = "txtBuscarCobro";
+        txtBuscarCobro.PlaceholderText = "N° de cobro, consulta, mascota, propietario, método, fecha o importe";
+        txtBuscarCobro.Size = new Size(460, 23);
+        txtBuscarCobro.TabIndex = 0;
         // 
         // dgvCobros
         // 
@@ -395,14 +418,14 @@ partial class FormCobros
         celdasGrilla.WrapMode = DataGridViewTriState.False;
         dgvCobros.DefaultCellStyle = celdasGrilla;
         dgvCobros.EnableHeadersVisualStyles = false;
-        dgvCobros.Location = new Point(10, 10);
+        dgvCobros.Location = new Point(10, 40);
         dgvCobros.MultiSelect = false;
         dgvCobros.Name = "dgvCobros";
         dgvCobros.ReadOnly = true;
         dgvCobros.RowHeadersVisible = false;
         dgvCobros.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgvCobros.Size = new Size(1054, 227);
-        dgvCobros.TabIndex = 0;
+        dgvCobros.Size = new Size(1054, 197);
+        dgvCobros.TabIndex = 2;
         // 
         // colId
         // 
@@ -480,6 +503,7 @@ partial class FormCobros
         pnlImporte.ResumeLayout(false);
         pnlImporte.PerformLayout();
         pnlListado.ResumeLayout(false);
+        pnlListado.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dgvCobros).EndInit();
         barraEstado.ResumeLayout(false);
         barraEstado.PerformLayout();
@@ -510,9 +534,11 @@ partial class FormCobros
     private Panel pnlBotones;
     private Button btnLimpiar;
     private Button btnCobrar;
-    private Button btnModificar;
     private Button btnCancelar;
+    private Button btnImprimirTicket;
     private Panel pnlListado;
+    private Label lblBuscarCobro;
+    private TextBox txtBuscarCobro;
     private DataGridView dgvCobros;
     private DataGridViewTextBoxColumn colId;
     private DataGridViewTextBoxColumn colConsulta;

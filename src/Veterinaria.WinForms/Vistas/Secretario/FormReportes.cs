@@ -37,6 +37,12 @@ public partial class FormReportes : Form
 
         _vista = SelectorVistaReporte.Configurar(dgvReporte);
         _vista.VistaCambiada += async (_, _) => await AlCambiarVistaAsync();
+        _vista.AgrupacionCambiada += async (_, _) =>
+        {
+            dtpFechaDesde.Value = PeriodosGrafico.DesdeParaAgrupacion(dtpFechaDesde.Value, dtpFechaHasta.Value, _vista.Agrupacion);
+            if (_reporteGenerado)
+                await GenerarAsync();
+        };
         ActualizarVisibilidadEstado();
         AplicarPeriodoMes();
         btnHoy.Click += (_, _) => AplicarPeriodoHoy();
@@ -115,7 +121,7 @@ public partial class FormReportes : Form
 
             var resultado = await _reporteControlador.ObtenerReporteCobrosAsync(filtro);
             dgvReporte.Rows.Clear();
-            _vista?.Grafico.Limpiar();
+            _vista?.LimpiarGraficos();
 
             if (!resultado.EsExitoso || resultado.Valor is null)
             {
@@ -156,6 +162,15 @@ public partial class FormReportes : Form
                 todosLosEstados ? "Cobrado por método de pago" : $"Importe {filtro.Estado!.ToLowerInvariant()} por método de pago",
                 porMetodo.Select(gr => gr.Key).ToList(),
                 porMetodo.Select(gr => gr.Sum(x => x.Importe)).ToList(),
+                v => v.ToString("C0", new System.Globalization.CultureInfo("es-AR")));
+
+            // Resumen: evolución de lo cobrado según la agrupación elegida (día / mes / año)
+            var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista?.Agrupacion ?? AgrupacionPeriodo.Automatico);
+            _vista?.UsarGraficoSecundario(true);
+            _vista?.GraficoSecundario.MostrarEvolucion(
+                $"Cobrado por {periodos.Unidad}",
+                periodos.Etiquetas,
+                [new SerieGrafico("Cobrado", GraficoReporte.Paleta[6], periodos.Acumular(considerados, x => x.Fecha, x => x.Importe))],
                 v => v.ToString("C0", new System.Globalization.CultureInfo("es-AR")));
 
             _reporteGenerado = true;
@@ -335,7 +350,7 @@ public partial class FormReportes : Form
 
         if (_vista is { MostrandoGrafico: true })
         {
-            _vista.Grafico.Dibujar(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 28));
+            _vista.DibujarGraficos(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 28));
             e.HasMorePages = false;
             g.DrawString($"Página {_paginaActualImpresion}", fontPie, brush, bounds.Left, bounds.Bottom - 18);
             return;

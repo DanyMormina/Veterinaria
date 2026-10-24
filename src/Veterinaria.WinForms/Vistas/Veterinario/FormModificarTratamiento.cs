@@ -34,6 +34,7 @@ public partial class FormModificarTratamiento : Form
     public FormModificarTratamiento(TratamientoControlador? tratamientoControlador, long? idInicial = null)
     {
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboSeleccionarTratamiento);
         _tratamientoControlador = tratamientoControlador;
         _idInicial = idInicial;
     }

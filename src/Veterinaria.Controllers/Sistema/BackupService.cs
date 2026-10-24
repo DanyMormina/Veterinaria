@@ -60,6 +60,11 @@ public class BackupService : IBackupService
                 nombreLimpio += ".bak";
             }
 
+            if (nombreLimpio.Length > 260)
+            {
+                return Result.Falla("El nombre del archivo de backup no puede superar los 260 caracteres.");
+            }
+
             // 4. Verificación y creación automática de directorio en Windows
             string directorio = ObtenerRutaDestinoPorDefecto();
             AsegurarDirectorioConPermisos(directorio);

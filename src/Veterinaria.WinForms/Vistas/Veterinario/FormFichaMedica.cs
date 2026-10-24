@@ -47,6 +47,7 @@ public partial class FormFichaMedica : Form
         _consultaControlador = consultaControlador;
 
         InitializeComponent();
+        Controles.ComboBuscable.HabilitarSoloSugerencias(cboBuscarMascota);
         ConfigurarPoliticaSoloLectura();
         ConfigurarEventosBusqueda();
     }

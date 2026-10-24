@@ -137,7 +137,7 @@ partial class FormAltaTratamiento
         txtDosis.Font = new Font("Segoe UI", 9.5F);
         txtDosis.ForeColor = Color.FromArgb(58, 53, 59);
         txtDosis.Location = new Point(24, 150);
-        txtDosis.MaxLength = 150;
+        txtDosis.MaxLength = 100;
         txtDosis.Name = "txtDosis";
         txtDosis.Size = new Size(436, 24);
         txtDosis.TabIndex = 5;

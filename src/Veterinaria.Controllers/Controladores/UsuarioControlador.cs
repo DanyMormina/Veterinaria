@@ -15,6 +15,9 @@ public class UsuarioControlador(ContextoVeterinaria context)
     private static readonly Regex RegexTelefono = new(@"^\d{6,13}$", RegexOptions.Compiled);
     private static readonly Regex RegexCorreo = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$", RegexOptions.Compiled);
 
+    /// <summary>Perfil que solo autoriza restauraciones; se administra únicamente desde la base de datos.</summary>
+    public const string PerfilGerente = "Gerente";
+
     public async Task<Resultado<IEnumerable<UsuarioRespuestaDto>>> ObtenerTodosAsync()
     {
         try
@@ -23,6 +26,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Include(u => u.TipoUsuario)
+                .Where(u => u.TipoUsuario.Nombre != PerfilGerente)
                 .ToListAsync();
 
             var usuarios = entidades.Select(Mapear).ToList();
@@ -46,7 +50,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Include(u => u.TipoUsuario)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == id && u.TipoUsuario.Nombre != PerfilGerente);
 
             if (usuario is null)
                 return Resultado<UsuarioRespuestaDto>.Falla($"No se encontró el usuario con ID {id}.");
@@ -126,7 +130,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 return Resultado<long>.Falla(errorValidacion);
 
             // 3. Validar existencia del rol/tipo de usuario
-            var tipoExiste = await context.TiposUsuario.AnyAsync(r => r.Id == solicitud.IdTipoUsuario && r.Activo);
+            var tipoExiste = await context.TiposUsuario.AnyAsync(r => r.Id == solicitud.IdTipoUsuario && r.Activo && r.Nombre != PerfilGerente);
             if (!tipoExiste)
                 return Resultado<long>.Falla($"No existe un rol activo registrado con ID {solicitud.IdTipoUsuario}.");
 
@@ -205,11 +209,11 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 .Include(u => u.TipoUsuario)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
-            if (entidad is null)
+            if (entidad is null || entidad.TipoUsuario?.Nombre == PerfilGerente)
                 return Resultado.Falla($"No se encontró el usuario con ID {id}.");
 
             // 4. Validar existencia del rol seleccionado
-            var nuevoTipo = await context.TiposUsuario.FirstOrDefaultAsync(r => r.Id == solicitud.IdTipoUsuario && r.Activo);
+            var nuevoTipo = await context.TiposUsuario.FirstOrDefaultAsync(r => r.Id == solicitud.IdTipoUsuario && r.Activo && r.Nombre != PerfilGerente);
             if (nuevoTipo is null)
                 return Resultado.Falla($"No existe un rol activo registrado con ID {solicitud.IdTipoUsuario}.");
 
@@ -324,7 +328,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
                 .Include(u => u.TipoUsuario)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
-            if (entidad is null)
+            if (entidad is null || entidad.TipoUsuario?.Nombre == PerfilGerente)
                 return Resultado.Falla($"No se encontró el usuario con ID {id}.");
 
             if (entidad.Activo == activo)
@@ -483,6 +487,9 @@ public class UsuarioControlador(ContextoVeterinaria context)
             return "El correo electrónico es obligatorio.";
 
         var correoNormalizado = correo.Trim();
+        if (correoNormalizado.Length > 100)
+            return "El correo electrónico no puede superar los 100 caracteres.";
+
         if (!RegexCorreo.IsMatch(correoNormalizado))
             return "Ingrese un correo electrónico válido (ejemplo: usuario@dominio.com).";
 

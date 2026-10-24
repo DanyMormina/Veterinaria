@@ -42,6 +42,7 @@ public partial class FormGestionSatelite : Form
         _idEspeciePreseleccionada = idEspeciePreseleccionada;
 
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboSeleccion, cboParentEspecie);
         ConfigurarEstiloSegunModo();
         ConfigurarRestriccionesTeclado();
         ConfigurarEventosLimpiezaError();
@@ -65,6 +66,9 @@ public partial class FormGestionSatelite : Form
             _ => "GESTIÓN SATÉLITE"
         };
         Text = lblTitulo.Text;
+
+        // Largo máximo de la columna Nombre: Especie 50, Raza 80
+        txtNombre.MaxLength = esModoRaza ? 80 : 50;
 
         // Visibilidad de controles de selección superior (Solo en modificación)
         lblSeleccion.Visible = esModoEdicion;

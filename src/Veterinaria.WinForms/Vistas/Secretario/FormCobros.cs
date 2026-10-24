@@ -16,6 +16,18 @@ public partial class FormCobros : Form
     private static readonly Color ColorTextoNormal = ColorTranslator.FromHtml("#3A353B");
     private static readonly Color ColorExito = ColorTranslator.FromHtml("#8FA89B");
 
+    // Datos fiscales del comercio (ficticios) impresos en el encabezado del ticket
+    private const string EmpresaNombreFantasia = "VETERINARIA PATITAS FELICES";
+    private const string EmpresaRazonSocial = "Patitas Felices S.R.L.";
+    private const string EmpresaCuit = "30-71234567-1";
+    private const string EmpresaCondicionIva = "IVA Responsable Inscripto";
+    private const string EmpresaIngresosBrutos = "901-712345-6 (Conv. Multilateral)";
+    private const string EmpresaInicioActividades = "01/03/2018";
+    private const string EmpresaDomicilio = "Av. Rivadavia 4521 - C1424CEK - CABA";
+    private const string EmpresaTelefono = "(011) 4567-8910";
+    private const string EmpresaCorreo = "contacto@patitasfelices.com.ar";
+    private const string EmpresaPuntoVenta = "0001";
+
     private readonly PagoControlador? _pagoControlador;
     private readonly ConsultaControlador? _consultaControlador;
     private readonly DetalleConsultaControlador? _detalleConsultaControlador;
@@ -25,7 +37,11 @@ public partial class FormCobros : Form
     private long? _idPagoSeleccionado;
     private string? _estadoPagoSeleccionado;
     private bool _cargando;
-    private string? _snapshotEdicion;
+    private List<PagoRespuestaDto> _cobros = [];
+
+    // Los controladores comparten el mismo DbContext, que no admite dos consultas a la vez
+    private readonly SemaphoreSlim _accesoDatos = new(1, 1);
+    private int _versionConsultaSeleccionada;
 
     private sealed record ItemCombo(long? Id, string Texto)
     {
@@ -50,6 +66,9 @@ public partial class FormCobros : Form
         _metodoPagoControlador = metodoPagoControlador;
 
         InitializeComponent();
+        FormClosed += (_, _) => _versionConsultaSeleccionada++;
+        Controles.ComboBuscable.Habilitar(cboConsultaClinica, cboMetodoPago);
+        dtpFecha.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
         ConfigurarEventos();
     }
 
@@ -60,8 +79,9 @@ public partial class FormCobros : Form
         txtImporte.Leave += TxtImporte_Leave;
 
         btnCobrar.Click += async (_, _) => await CobrarAsync();
-        btnModificar.Click += async (_, _) => await ModificarAsync();
         btnLimpiar.Click += (_, _) => LimpiarFormulario();
+        txtBuscarCobro.TextChanged += (_, _) => MostrarCobros();
+        btnImprimirTicket.Click += async (_, _) => await ImprimirTicketSeleccionadoAsync();
         cboConsultaClinica.SelectedIndexChanged += async (_, _) => await OnConsultaSeleccionadaAsync();
         cboMetodoPago.SelectedIndexChanged += (_, _) => ActualizarVisibilidadCuotas();
         dgvCobros.CellClick += (_, _) => CargarPagoSeleccionado();
@@ -79,12 +99,23 @@ public partial class FormCobros : Form
             ? $"Recepción: {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Recepción: Secretario";
 
-        btnModificar.Enabled = false;
-
         await CargarCatalogosAsync();
         await CargarCobrosAsync();
         LimpiarFormulario();
         lblInfoEstado.Text = "Módulo de cobros — recepción";
+    }
+
+    private async Task<T> ConsultarAsync<T>(Func<Task<T>> consulta)
+    {
+        await _accesoDatos.WaitAsync();
+        try
+        {
+            return await consulta();
+        }
+        finally
+        {
+            _accesoDatos.Release();
+        }
     }
 
     private async Task CargarCatalogosAsync()
@@ -97,7 +128,9 @@ public partial class FormCobros : Form
 
             if (_consultaControlador is not null)
             {
-                var res = await _consultaControlador.ObtenerTodosAsync();
+                var res = await ConsultarAsync(_consultaControlador.ObtenerTodosAsync);
+                if (IsDisposed)
+                    return;
                 if (res.EsExitoso && res.Valor is not null)
                 {
                     foreach (var c in res.Valor.OrderByDescending(x => x.FechaHora))
@@ -114,7 +147,9 @@ public partial class FormCobros : Form
             cboMetodoPago.Items.Add(new ItemCombo(null, "Seleccione un método de pago"));
             if (_metodoPagoControlador is not null)
             {
-                var resMetodos = await _metodoPagoControlador.ObtenerTodosAsync();
+                var resMetodos = await ConsultarAsync(_metodoPagoControlador.ObtenerTodosAsync);
+                if (IsDisposed)
+                    return;
                 if (resMetodos.EsExitoso && resMetodos.Valor is not null)
                 {
                     foreach (var m in resMetodos.Valor.Where(x => x.Activo).OrderBy(x => x.Nombre))
@@ -132,29 +167,44 @@ public partial class FormCobros : Form
 
     private async Task CargarCobrosAsync()
     {
+        _cobros = [];
+        if (_pagoControlador is not null)
+        {
+            var res = await ConsultarAsync(_pagoControlador.ObtenerTodosAsync);
+            if (res.EsExitoso && res.Valor is not null)
+                _cobros = res.Valor.ToList();
+        }
+
+        if (!IsDisposed)
+            MostrarCobros();
+    }
+
+    /// <summary>
+    /// Lista todos los cobros que coinciden con el texto del buscador (en cualquier columna).
+    /// </summary>
+    private void MostrarCobros()
+    {
+        var termino = txtBuscarCobro.Text.Trim();
+
         _cargando = true;
         try
         {
             dgvCobros.Rows.Clear();
-            if (_pagoControlador is null)
-                return;
-
-            var res = await _pagoControlador.ObtenerTodosAsync();
-            if (!res.EsExitoso || res.Valor is null)
-                return;
-
-            foreach (var p in res.Valor)
+            foreach (var p in _cobros)
             {
                 var metodo = p.NombreMetodoPago;
                 if (p.Cuotas is > 0 && EsTarjetaCredito(metodo))
                     metodo = $"{metodo} ({FormatearCuotas(p.Cuotas.Value)})";
 
-                var idx = dgvCobros.Rows.Add(
-                    p.Id,
-                    p.DescripcionConsulta,
-                    metodo,
-                    p.Fecha.ToString("dd/MM/yyyy"),
-                    $"$ {p.Importe:N2}");
+                var fecha = p.Fecha.ToString("dd/MM/yyyy");
+                var importe = $"$ {p.Importe:N2}";
+
+                if (termino.Length > 0 &&
+                    !new[] { p.Id.ToString(), p.DescripcionConsulta, metodo, fecha, importe, p.Importe.ToString("0.00", CultureInfo.InvariantCulture) }
+                        .Any(valor => valor.Contains(termino, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                var idx = dgvCobros.Rows.Add(p.Id, p.DescripcionConsulta, metodo, fecha, importe);
                 dgvCobros.Rows[idx].Tag = p;
             }
 
@@ -165,12 +215,19 @@ public partial class FormCobros : Form
         {
             _cargando = false;
         }
+
+        if (termino.Length > 0)
+            lblInfoEstado.Text = $"{dgvCobros.Rows.Count} de {_cobros.Count} cobro(s) coinciden con \"{termino}\".";
     }
 
     private async Task OnConsultaSeleccionadaAsync()
     {
         if (_cargando)
             return;
+
+        // Solo vale la respuesta de la última selección; las anteriores se descartan
+        var version = ++_versionConsultaSeleccionada;
+        bool EsVigente() => !IsDisposed && version == _versionConsultaSeleccionada;
 
         var item = cboConsultaClinica.SelectedItem as ItemCombo;
         if (item?.Id is null || item.Id <= 0)
@@ -181,12 +238,18 @@ public partial class FormCobros : Form
         }
 
         var (detalle, total) = await CalcularDetalleImporteAsync(item.Id.Value);
+        if (!EsVigente())
+            return;
+
         txtDetalleImporte.Text = detalle;
         txtImporte.Text = total > 0 ? total.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
 
         if (!_idPagoSeleccionado.HasValue && _pagoControlador is not null)
         {
-            var yaCobrada = await _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value);
+            var yaCobrada = await ConsultarAsync(() => _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value));
+            if (!EsVigente() || _idPagoSeleccionado.HasValue)
+                return;
+
             btnCobrar.Enabled = !yaCobrada;
             if (yaCobrada)
             {
@@ -208,7 +271,7 @@ public partial class FormCobros : Form
 
         if (_consultaControlador is not null)
         {
-            var resConsulta = await _consultaControlador.ObtenerPorIdAsync(idConsulta);
+            var resConsulta = await ConsultarAsync(() => _consultaControlador.ObtenerPorIdAsync(idConsulta));
             if (resConsulta.EsExitoso && resConsulta.Valor is not null)
             {
                 var importeBase = resConsulta.Valor.Importe;
@@ -222,7 +285,7 @@ public partial class FormCobros : Form
 
         if (_detalleConsultaControlador is not null)
         {
-            var resDet = await _detalleConsultaControlador.ObtenerPorConsultaAsync(idConsulta);
+            var resDet = await ConsultarAsync(() => _detalleConsultaControlador.ObtenerPorConsultaAsync(idConsulta));
             if (resDet.EsExitoso && resDet.Valor is not null)
             {
                 foreach (var d in resDet.Valor)
@@ -238,7 +301,7 @@ public partial class FormCobros : Form
 
         if (_aplicacionVacunaControlador is not null)
         {
-            var resVac = await _aplicacionVacunaControlador.ObtenerPorConsultaAsync(idConsulta);
+            var resVac = await ConsultarAsync(() => _aplicacionVacunaControlador.ObtenerPorConsultaAsync(idConsulta));
             if (resVac.EsExitoso && resVac.Valor is not null)
             {
                 foreach (var v in resVac.Valor)
@@ -295,7 +358,9 @@ public partial class FormCobros : Form
         try
         {
             btnCobrar.Enabled = false;
-            var resultado = await _pagoControlador.RegistrarPagoAsync(dto);
+            var resultado = await ConsultarAsync(() => _pagoControlador.RegistrarPagoAsync(dto));
+            if (IsDisposed)
+                return;
             if (resultado.EsExitoso)
             {
                 lblInfoEstado.ForeColor = ColorExito;
@@ -317,21 +382,57 @@ public partial class FormCobros : Form
         }
         finally
         {
-            btnCobrar.Enabled = true;
+            if (!IsDisposed)
+                btnCobrar.Enabled = true;
         }
     }
 
-    private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago)
+    private async Task ImprimirTicketSeleccionadoAsync()
+    {
+        if (dgvCobros.CurrentRow?.Tag is not PagoRespuestaDto pago)
+        {
+            MessageBox.Show("Seleccione un cobro de la lista para imprimir su ticket.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        var dto = new PagoSolicitudDto
+        {
+            IdConsulta = pago.IdConsulta,
+            IdMetodoPago = pago.IdMetodoPago,
+            Fecha = pago.Fecha,
+            Importe = pago.Importe,
+            Estado = pago.Estado,
+            Cuotas = pago.Cuotas
+        };
+
+        var ticket = await ArmarTicketAsync(pago.Id, dto, pago.NombreMetodoPago, reimpresion: true);
+        using var vistaTicket = new FormTicket(ticket);
+        vistaTicket.ShowDialog(this);
+    }
+
+    private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago, bool reimpresion = false)
     {
         const int ancho = 52;
         var separador = new string('=', ancho);
         var linea = new string('-', ancho);
         var sb = new StringBuilder();
 
-        sb.AppendLine(Centrar("CLÍNICA VETERINARIA", ancho));
-        sb.AppendLine(Centrar("COMPROBANTE DE PAGO", ancho));
+        sb.AppendLine(Centrar(EmpresaNombreFantasia, ancho));
+        sb.AppendLine(Centrar($"Razón social: {EmpresaRazonSocial}", ancho));
+        sb.AppendLine(Centrar($"CUIT: {EmpresaCuit}", ancho));
+        sb.AppendLine(Centrar(EmpresaCondicionIva, ancho));
+        sb.AppendLine(Centrar($"Ing. Brutos: {EmpresaIngresosBrutos}", ancho));
+        sb.AppendLine(Centrar($"Inicio de actividades: {EmpresaInicioActividades}", ancho));
+        sb.AppendLine(Centrar(EmpresaDomicilio, ancho));
+        sb.AppendLine(Centrar($"Tel.: {EmpresaTelefono}", ancho));
+        sb.AppendLine(Centrar(EmpresaCorreo, ancho));
         sb.AppendLine(separador);
-        sb.AppendLine($"Ticket N°: {idPago:D6}");
+        sb.AppendLine(Centrar("COMPROBANTE DE PAGO", ancho));
+        sb.AppendLine(Centrar("DOCUMENTO NO VÁLIDO COMO FACTURA", ancho));
+        if (reimpresion)
+            sb.AppendLine(Centrar("*** REIMPRESIÓN ***", ancho));
+        sb.AppendLine(separador);
+        sb.AppendLine($"P.V.: {EmpresaPuntoVenta}   Ticket N°: {EmpresaPuntoVenta}-{idPago:D8}");
         sb.AppendLine($"Fecha de pago: {pago.Fecha:dd/MM/yyyy}");
         sb.AppendLine($"Emitido: {DateTime.Now:dd/MM/yyyy HH:mm}");
         if (SesionActual.EstaAutenticado)
@@ -340,7 +441,7 @@ public partial class FormCobros : Form
 
         if (_consultaControlador is not null)
         {
-            var resConsulta = await _consultaControlador.ObtenerPorIdAsync(pago.IdConsulta);
+            var resConsulta = await ConsultarAsync(() => _consultaControlador.ObtenerPorIdAsync(pago.IdConsulta));
             if (resConsulta.EsExitoso && resConsulta.Valor is not null)
             {
                 var c = resConsulta.Valor;
@@ -372,51 +473,6 @@ public partial class FormCobros : Form
 
     private static string Centrar(string texto, int ancho) =>
         texto.Length >= ancho ? texto : texto.PadLeft((ancho + texto.Length) / 2).PadRight(ancho);
-
-    private async Task ModificarAsync()
-    {
-        if (!_idPagoSeleccionado.HasValue || _idPagoSeleccionado.Value <= 0)
-        {
-            MessageBox.Show("Seleccione un cobro de la lista para modificarlo.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        if (!ValidarFormulario(out var dto, out var mensaje))
-        {
-            MessageBox.Show(mensaje, "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        if (string.Equals(ObtenerSnapshotFormulario(), _snapshotEdicion, StringComparison.Ordinal))
-        {
-            MessageBox.Show("No se detectaron cambios para guardar.", "Sin cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            return;
-        }
-
-        if (_pagoControlador is null)
-            return;
-
-        try
-        {
-            btnModificar.Enabled = false;
-            var resultado = await _pagoControlador.ActualizarAsync(_idPagoSeleccionado.Value, dto);
-            if (resultado.EsExitoso)
-            {
-                lblInfoEstado.ForeColor = ColorExito;
-                lblInfoEstado.Text = resultado.Mensaje;
-                LimpiarFormulario();
-                await CargarCobrosAsync();
-            }
-            else
-            {
-                MessageBox.Show(resultado.Mensaje, "Error al modificar", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-        }
-        finally
-        {
-            btnModificar.Enabled = _idPagoSeleccionado.HasValue;
-        }
-    }
 
     private bool ValidarFormulario(out PagoSolicitudDto dto, out string mensaje)
     {
@@ -517,7 +573,8 @@ public partial class FormCobros : Form
 
     private void CargarPagoSeleccionado()
     {
-        if (_cargando || dgvCobros.CurrentRow?.Tag is not PagoRespuestaDto pago)
+        // CellClick y SelectionChanged llegan juntos al hacer clic: el mismo cobro se carga una sola vez
+        if (_cargando || dgvCobros.CurrentRow?.Tag is not PagoRespuestaDto pago || _idPagoSeleccionado == pago.Id)
             return;
 
         _cargando = true;
@@ -533,9 +590,9 @@ public partial class FormCobros : Form
             _estadoPagoSeleccionado = pago.Estado;
 
             btnCobrar.Enabled = false;
-            btnModificar.Enabled = true;
-            _snapshotEdicion = ObtenerSnapshotFormulario();
-            lblInfoEstado.Text = $"Cobro #{pago.Id} cargado para modificación.";
+            btnImprimirTicket.Enabled = true;
+            EstablecerSoloLectura(true);
+            lblInfoEstado.Text = $"Cobro #{pago.Id}: los cobros registrados no se modifican; solo se puede reimprimir el ticket.";
         }
         finally
         {
@@ -545,23 +602,23 @@ public partial class FormCobros : Form
         _ = OnConsultaSeleccionadaAsync();
     }
 
-    private string ObtenerSnapshotFormulario()
+    /// <summary>
+    /// Un cobro ya registrado se muestra bloqueado: por seguridad no se puede editar.
+    /// </summary>
+    private void EstablecerSoloLectura(bool soloLectura)
     {
-        var idConsulta = (cboConsultaClinica.SelectedItem as ItemCombo)?.Id ?? 0;
-        var idMetodo = (cboMetodoPago.SelectedItem as ItemCombo)?.Id ?? 0;
-        return string.Join("|",
-            idConsulta,
-            idMetodo,
-            ObtenerCuotasSeleccionadas()?.ToString() ?? string.Empty,
-            dtpFecha.Value.Date.ToString("yyyy-MM-dd"),
-            txtImporte.Text.Trim());
+        cboConsultaClinica.Enabled = !soloLectura;
+        cboMetodoPago.Enabled = !soloLectura;
+        cboCuotas.Enabled = !soloLectura;
+        dtpFecha.Enabled = !soloLectura;
+        txtImporte.ReadOnly = soloLectura;
     }
 
     private void LimpiarFormulario()
     {
         _idPagoSeleccionado = null;
         _estadoPagoSeleccionado = null;
-        _snapshotEdicion = null;
+        EstablecerSoloLectura(false);
         if (cboConsultaClinica.Items.Count > 0)
             cboConsultaClinica.SelectedIndex = 0;
         if (cboMetodoPago.Items.Count > 0)
@@ -573,7 +630,7 @@ public partial class FormCobros : Form
         txtImporte.Clear();
         txtDetalleImporte.Clear();
         btnCobrar.Enabled = true;
-        btnModificar.Enabled = false;
+        btnImprimirTicket.Enabled = false;
         dgvCobros.ClearSelection();
         dgvCobros.CurrentCell = null;
         RestaurarEstiloImporte();

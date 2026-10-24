@@ -233,7 +233,7 @@ partial class FormPropietarios
         txtCorreoElectronico.BackColor = Color.White;
         txtCorreoElectronico.BorderStyle = BorderStyle.FixedSingle;
         txtCorreoElectronico.Location = new Point(128, 172);
-        txtCorreoElectronico.MaxLength = 150;
+        txtCorreoElectronico.MaxLength = 100;
         txtCorreoElectronico.Name = "txtCorreoElectronico";
         txtCorreoElectronico.Size = new Size(266, 23);
         txtCorreoElectronico.TabIndex = 9;

@@ -36,6 +36,7 @@ public partial class FormConsultas : Form
         IServiceProvider serviceProvider)
     {
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboPropietario, cboMascota);
         _consultaControlador = consultaControlador;
         _mascotaControlador = mascotaControlador;
         _propietarioControlador = propietarioControlador;
@@ -246,13 +247,7 @@ public partial class FormConsultas : Form
             }
 
             _mascotas = lista;
-            _sincronizandoCombos = true;
-            cboMascota.DisplayMember = "Nombre";
-            cboMascota.ValueMember = "Id";
-            cboMascota.DataSource = _mascotas;
-            cboMascota.SelectedIndex = -1;
-            cboMascota.Text = string.Empty;
-            _sincronizandoCombos = false;
+            CargarMascotasDePropietario(cboPropietario.SelectedValue is long idProp && idProp > 0 ? idProp : null);
         }
         catch (Exception ex)
         {
@@ -308,28 +303,36 @@ public partial class FormConsultas : Form
             txtImporte.Clear();
 
         if (cboPropietario.SelectedValue is long idProp && idProp > 0)
-        {
-            _sincronizandoCombos = true;
-            var mascotasFiltradas = _mascotas.Where(m => m.IdPropietario == idProp).ToList();
-            cboMascota.DataSource = null;
-            cboMascota.DisplayMember = "Nombre";
-            cboMascota.ValueMember = "Id";
-            cboMascota.DataSource = mascotasFiltradas;
-            cboMascota.SelectedIndex = -1;
-            cboMascota.Text = string.Empty;
-            _sincronizandoCombos = false;
-        }
+            CargarMascotasDePropietario(idProp);
         else if (cboPropietario.SelectedIndex == -1)
+            CargarMascotasDePropietario(null);
+    }
+
+    /// <summary>
+    /// Primero se elige el propietario: el combo de mascotas solo muestra (y habilita) las de ese propietario.
+    /// </summary>
+    private void CargarMascotasDePropietario(long? idPropietario, long? idMascotaSeleccionada = null)
+    {
+        _sincronizandoCombos = true;
+        cboMascota.DataSource = null;
+        cboMascota.DisplayMember = "Nombre";
+        cboMascota.ValueMember = "Id";
+        cboMascota.DataSource = idPropietario.HasValue
+            ? _mascotas.Where(m => m.IdPropietario == idPropietario.Value).ToList()
+            : new List<MascotaRespuestaDto>();
+
+        if (idMascotaSeleccionada.HasValue)
         {
-            _sincronizandoCombos = true;
-            cboMascota.DataSource = null;
-            cboMascota.DisplayMember = "Nombre";
-            cboMascota.ValueMember = "Id";
-            cboMascota.DataSource = _mascotas;
+            cboMascota.SelectedValue = idMascotaSeleccionada.Value;
+        }
+        else
+        {
             cboMascota.SelectedIndex = -1;
             cboMascota.Text = string.Empty;
-            _sincronizandoCombos = false;
         }
+
+        cboMascota.Enabled = idPropietario.HasValue;
+        _sincronizandoCombos = false;
     }
 
     /// <summary>
@@ -393,18 +396,18 @@ public partial class FormConsultas : Form
     {
         solicitud = null;
 
+        if (cboPropietario.SelectedItem is not PropietarioRespuestaDto propSeleccionado || propSeleccionado.Id <= 0)
+        {
+            MarcarControlConError(cboPropietario, "Debe seleccionar primero el propietario responsable de la mascota.");
+            return false;
+        }
+
         if (cboMascota.SelectedItem is not MascotaRespuestaDto mascotaSeleccionada || mascotaSeleccionada.Id <= 0)
         {
             MarcarControlConError(cboMascota, "Debe seleccionar una mascota para registrar la consulta clínica.");
             return false;
         }
         long idMascota = mascotaSeleccionada.Id;
-
-        if (cboPropietario.SelectedItem is not PropietarioRespuestaDto propSeleccionado || propSeleccionado.Id <= 0)
-        {
-            MarcarControlConError(cboPropietario, "Debe seleccionar el propietario responsable de la mascota.");
-            return false;
-        }
 
         var motivo = txtMotivo.Text.Trim();
         if (string.IsNullOrWhiteSpace(motivo) || motivo.Length < 3)
@@ -619,16 +622,14 @@ public partial class FormConsultas : Form
         _fechaHoraConsultaSeleccionada = consulta.FechaHora;
         LimpiarTodosLosErroresVisuales();
 
-        _sincronizandoCombos = true;
-        cboMascota.DataSource = _mascotas;
-        cboMascota.SelectedValue = consulta.IdMascota;
-
         var mascota = _mascotas.FirstOrDefault(m => m.Id == consulta.IdMascota);
         if (mascota != null)
         {
+            _sincronizandoCombos = true;
             cboPropietario.SelectedValue = mascota.IdPropietario;
+            _sincronizandoCombos = false;
+            CargarMascotasDePropietario(mascota.IdPropietario, consulta.IdMascota);
         }
-        _sincronizandoCombos = false;
 
         txtMotivo.Text = consulta.Motivo ?? string.Empty;
         txtPeso.Text = consulta.PesoKg.HasValue ? consulta.PesoKg.Value.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
@@ -731,14 +732,9 @@ public partial class FormConsultas : Form
         cboPropietario.DataSource = _propietarios;
         cboPropietario.SelectedIndex = -1;
         cboPropietario.Text = string.Empty;
-
-        cboMascota.DataSource = null;
-        cboMascota.DisplayMember = "Nombre";
-        cboMascota.ValueMember = "Id";
-        cboMascota.DataSource = _mascotas;
-        cboMascota.SelectedIndex = -1;
-        cboMascota.Text = string.Empty;
         _sincronizandoCombos = false;
+
+        CargarMascotasDePropietario(null);
 
         dtpProximoControl.Value = DateTime.Today.AddDays(15);
 

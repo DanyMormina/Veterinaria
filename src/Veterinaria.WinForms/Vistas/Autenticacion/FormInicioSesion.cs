@@ -199,6 +199,14 @@ public partial class FormInicioSesion : Form
             }
 
             var usuario = resultadoAuth.Valor;
+
+            // El gerente no tiene vistas: su cuenta solo autoriza backups y restauraciones
+            if (string.Equals(usuario.NombreTipoUsuario, "Gerente", StringComparison.OrdinalIgnoreCase))
+            {
+                MostrarError("El perfil Gerente no tiene acceso al sistema; solo autoriza backups y restauraciones.");
+                return;
+            }
+
             SesionActual.IniciarSesion(usuario);
 
             // Persistencia de credenciales según la opción del usuario

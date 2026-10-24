@@ -114,10 +114,10 @@ partial class FormConsultas
         // grpDatos
         // 
         grpDatos.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        grpDatos.Controls.Add(lblMascota);
-        grpDatos.Controls.Add(cboMascota);
         grpDatos.Controls.Add(lblPropietario);
         grpDatos.Controls.Add(cboPropietario);
+        grpDatos.Controls.Add(lblMascota);
+        grpDatos.Controls.Add(cboMascota);
         grpDatos.Controls.Add(lblMotivo);
         grpDatos.Controls.Add(txtMotivo);
         grpDatos.Controls.Add(lblPeso);
@@ -143,7 +143,7 @@ partial class FormConsultas
         // 
         // lblMascota
         // 
-        lblMascota.Location = new Point(16, 32);
+        lblMascota.Location = new Point(528, 32);
         lblMascota.Name = "lblMascota";
         lblMascota.Size = new Size(110, 23);
         lblMascota.Text = "Mascota";
@@ -156,13 +156,13 @@ partial class FormConsultas
         cboMascota.BackColor = Color.White;
         cboMascota.DropDownStyle = ComboBoxStyle.DropDown;
         cboMascota.FormattingEnabled = true;
-        cboMascota.Location = new Point(132, 32);
+        cboMascota.Location = new Point(644, 32);
         cboMascota.Name = "cboMascota";
-        cboMascota.Size = new Size(360, 23);
+        cboMascota.Size = new Size(400, 23);
         // 
         // lblPropietario
         // 
-        lblPropietario.Location = new Point(528, 32);
+        lblPropietario.Location = new Point(16, 32);
         lblPropietario.Name = "lblPropietario";
         lblPropietario.Size = new Size(110, 23);
         lblPropietario.Text = "Propietario";
@@ -175,9 +175,9 @@ partial class FormConsultas
         cboPropietario.BackColor = Color.White;
         cboPropietario.DropDownStyle = ComboBoxStyle.DropDown;
         cboPropietario.FormattingEnabled = true;
-        cboPropietario.Location = new Point(644, 32);
+        cboPropietario.Location = new Point(132, 32);
         cboPropietario.Name = "cboPropietario";
-        cboPropietario.Size = new Size(400, 23);
+        cboPropietario.Size = new Size(360, 23);
         // 
         // lblMotivo
         // 
@@ -192,6 +192,7 @@ partial class FormConsultas
         txtMotivo.BackColor = Color.White;
         txtMotivo.BorderStyle = BorderStyle.FixedSingle;
         txtMotivo.Location = new Point(132, 68);
+        txtMotivo.MaxLength = 250;
         txtMotivo.Name = "txtMotivo";
         txtMotivo.Size = new Size(912, 23);
         // 

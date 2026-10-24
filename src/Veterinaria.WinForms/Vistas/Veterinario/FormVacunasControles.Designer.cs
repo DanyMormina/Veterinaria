@@ -452,6 +452,7 @@ partial class FormVacunasControles
         txtObservaciones.BackColor = Color.White;
         txtObservaciones.BorderStyle = BorderStyle.FixedSingle;
         txtObservaciones.Location = new Point(140, 140);
+        txtObservaciones.MaxLength = 250;
         txtObservaciones.Name = "txtObservaciones";
         txtObservaciones.Size = new Size(904, 23);
         txtObservaciones.TabIndex = 13;

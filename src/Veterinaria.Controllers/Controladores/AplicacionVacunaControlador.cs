@@ -113,6 +113,10 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
                 ? fechaAplicacion.AddMonths(vacuna.PeriodoMesesRecomendado)
                 : null);
 
+            var errorDatos = ValidarDatos(fechaAplicacion, proximaDosis, solicitud.PrecioUnitario, solicitud.Observaciones);
+            if (errorDatos is not null)
+                return Resultado<long>.Falla(errorDatos);
+
             // Si PrecioUnitario es null (vacuna previa/externa), se preserva null; si tiene valor, se persiste dicho valor.
             var precioUnitario = solicitud.PrecioUnitario;
 
@@ -164,6 +168,14 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
                 entidad.IdVacuna = solicitud.IdVacuna;
             }
 
+            var errorDatos = ValidarDatos(
+                solicitud.FechaAplicacion == default ? entidad.FechaAplicacion : solicitud.FechaAplicacion,
+                solicitud.ProximaDosis ?? entidad.ProximaDosis,
+                solicitud.PrecioUnitario,
+                solicitud.Observaciones);
+            if (errorDatos is not null)
+                return Resultado.Falla(errorDatos);
+
             entidad.PrecioUnitario = solicitud.PrecioUnitario;
 
             entidad.FechaAplicacion = solicitud.FechaAplicacion == default ? entidad.FechaAplicacion : solicitud.FechaAplicacion;
@@ -201,6 +213,23 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
         {
             return Resultado.Falla($"Error al eliminar la aplicación de vacuna: {ex.Message}");
         }
+    }
+
+    private static string? ValidarDatos(DateTime fechaAplicacion, DateTime? proximaDosis, decimal? precioUnitario, string? observaciones)
+    {
+        if (fechaAplicacion.Date > DateTime.Today)
+            return "La fecha de aplicación no puede ser posterior a hoy.";
+
+        if (proximaDosis.HasValue && proximaDosis.Value.Date < fechaAplicacion.Date)
+            return "La fecha de la próxima dosis no puede ser anterior a la fecha de aplicación.";
+
+        if (precioUnitario is < 0)
+            return "El importe de la vacuna no puede ser negativo.";
+
+        if (observaciones?.Trim().Length > 250)
+            return "Las observaciones no pueden superar los 250 caracteres.";
+
+        return null;
     }
 
     private IQueryable<AplicacionVacunaRespuestaDto> ConsultaBase() =>

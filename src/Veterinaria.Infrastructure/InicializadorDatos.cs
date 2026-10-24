@@ -29,6 +29,13 @@ public static class InicializadorDatos
             await context.SaveChangesAsync();
         }
 
+        // 2b. Perfil Gerente: no tiene vistas, solo autoriza backups y restauraciones
+        if (!await context.TiposUsuario.IgnoreQueryFilters().AnyAsync(t => t.Nombre == "Gerente"))
+        {
+            context.TiposUsuario.Add(new TipoUsuario { Nombre = "Gerente", Activo = true });
+            await context.SaveChangesAsync();
+        }
+
         // 3. Sembrar Especies iniciales
         if (!await context.Especies.IgnoreQueryFilters().AnyAsync())
         {
@@ -67,6 +74,11 @@ public static class InicializadorDatos
         await SembrarUsuarioSiNoExisteAsync(context, "Administrador", "admin", "admin123", "Administrador", "Sistema", "12345678", "ADM-001");
         await SembrarUsuarioSiNoExisteAsync(context, "Veterinario", "vet", "vet123", "Lucía", "Pérez", "23456789", "MN-1024");
         await SembrarUsuarioSiNoExisteAsync(context, "Secretario", "secretario", "sec123", "Martín", "Gómez", "34567890", "REC-001");
+        await SembrarUsuarioSiNoExisteAsync(context, "Gerente", "gerente", "gerente123", "Gerente", "General", "45678901", "GER-001");
+
+        // 6. Procedimientos almacenados de reportes e índices únicos
+        await ObjetosBaseDatos.AsegurarProcedimientosReportesAsync(context);
+        await ObjetosBaseDatos.AsegurarIndicesUnicosAsync(context);
     }
 
     public static async Task AsegurarColumnasUsuarioAsync(ContextoVeterinaria context)

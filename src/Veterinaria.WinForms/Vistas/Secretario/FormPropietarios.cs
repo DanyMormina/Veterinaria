@@ -113,6 +113,92 @@ public partial class FormPropietarios : Form
 
         dgvPropietarios.CellClick += (_, _) => CargarPropietarioSeleccionado();
         dgvPropietarios.SelectionChanged += (_, _) => CargarPropietarioSeleccionado();
+
+        // DNI primero: al dejar de escribir se verifica solo; si ya está registrado se bloquea el resto de la carga
+        _timerVerificacionDni.Tick += async (_, _) =>
+        {
+            _timerVerificacionDni.Stop();
+            await VerificarDniExistenteAsync();
+        };
+        txtDNI.Leave += async (_, _) =>
+        {
+            _timerVerificacionDni.Stop();
+            await VerificarDniExistenteAsync();
+        };
+        txtDNI.TextChanged += (_, _) =>
+        {
+            if (_dniDuplicadoBloqueado)
+                BloquearCamposPorDniDuplicado(false);
+
+            _timerVerificacionDni.Stop();
+            if (!_limpiando && !_cargandoDatos && !_idPropietarioSeleccionado.HasValue && RegexDni.IsMatch(txtDNI.Text.Trim()))
+                _timerVerificacionDni.Start();
+        };
+        // La grilla se filtra mientras se escribe, sin tener que presionar Buscar
+        txtBuscar.TextChanged += (_, _) =>
+        {
+            _timerBusqueda.Stop();
+            _timerBusqueda.Start();
+        };
+        _timerBusqueda.Tick += async (_, _) =>
+        {
+            _timerBusqueda.Stop();
+            await BuscarPropietariosAsync();
+        };
+
+        FormClosed += (_, _) =>
+        {
+            _timerVerificacionDni.Dispose();
+            _timerBusqueda.Dispose();
+        };
+    }
+
+    private readonly System.Windows.Forms.Timer _timerVerificacionDni = new() { Interval = 500 };
+    private readonly System.Windows.Forms.Timer _timerBusqueda = new() { Interval = 300 };
+    private bool _dniDuplicadoBloqueado;
+
+    private async Task VerificarDniExistenteAsync()
+    {
+        if (_limpiando || _cargandoDatos || _idPropietarioSeleccionado.HasValue || _dniDuplicadoBloqueado)
+            return;
+
+        var dni = txtDNI.Text.Trim();
+        if (!RegexDni.IsMatch(dni))
+            return;
+
+        IEnumerable<PropietarioRespuestaDto> existentes = [];
+        if (_propietarioService is not null)
+        {
+            var res = await _propietarioService.BuscarPropietariosAsync(dni, soloActivos: false);
+            if (res.EsExitoso && res.Valor is not null) existentes = res.Valor;
+        }
+        else if (_propietarioControlador is not null)
+        {
+            var res = await _propietarioControlador.ObtenerTodosAsync();
+            if (res.EsExitoso && res.Valor is not null) existentes = res.Valor;
+        }
+
+        var existente = existentes.FirstOrDefault(p => p.DNI == dni);
+        if (existente is null || txtDNI.Text.Trim() != dni || _idPropietarioSeleccionado.HasValue)
+            return;
+
+        BloquearCamposPorDniDuplicado(true);
+        var mensaje = $"El DNI {dni} ya está registrado ({existente.Nombre} {existente.Apellido}). Corrija el DNI para continuar.";
+        MarcarError(txtDNI, mensaje);
+        lblInfoEstado.Text = mensaje;
+        MessageBox.Show(mensaje, "DNI ya registrado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        txtDNI.Focus();
+        txtDNI.SelectAll();
+    }
+
+    private void BloquearCamposPorDniDuplicado(bool bloquear)
+    {
+        _dniDuplicadoBloqueado = bloquear;
+        foreach (var control in _controlesEntrada.Where(c => !ReferenceEquals(c, txtDni)))
+            control.Enabled = !bloquear;
+        btnGuardar.Enabled = !bloquear && !_idPropietarioSeleccionado.HasValue;
+        if (!bloquear)
+            lblInfoEstado.Text = string.Empty;
     }
 
     /// <summary>

@@ -45,6 +45,7 @@ public partial class FormTratamientos : Form
         MascotaControlador? mascotaControlador)
     {
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboMascotas, cboConsultas, cboTratamientos);
         _tratamientoControlador = tratamientoControlador;
         _consultaControlador = consultaControlador;
         _mascotaControlador = mascotaControlador;

@@ -38,6 +38,7 @@ public partial class FormMascotas : Form
     private readonly IServiceProvider? _serviceProvider;
 
     private bool _cargandoDatos = false;
+    private readonly System.Windows.Forms.Timer _timerBusqueda = new() { Interval = 300 };
     private long _idMascotaSeleccionada = 0;
     private string? _snapshotEdicion;
 
@@ -67,6 +68,9 @@ public partial class FormMascotas : Form
         _serviceProvider = serviceProvider;
 
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboPropietario, cboEspecie, cboRaza);
+        Controles.ComboBuscable.Habilitar(permitirVacio: false, cboFiltroEspecie);
+        dtpFechaNacimiento.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
         ConfigurarRestriccionesTeclado();
         ConfigurarValidacionVisual();
         ConfigurarEventosControles();
@@ -113,6 +117,19 @@ public partial class FormMascotas : Form
                 await CargarMascotasGrillaAsync();
             }
         };
+
+        // La grilla se filtra mientras se escribe, sin tener que presionar Buscar
+        txtBuscar.TextChanged += (_, _) =>
+        {
+            _timerBusqueda.Stop();
+            _timerBusqueda.Start();
+        };
+        _timerBusqueda.Tick += async (_, _) =>
+        {
+            _timerBusqueda.Stop();
+            await CargarMascotasGrillaAsync();
+        };
+        FormClosed += (_, _) => _timerBusqueda.Dispose();
 
         // Binding de selección en la grilla
         dgvMascotas.CellClick += async (_, e) =>

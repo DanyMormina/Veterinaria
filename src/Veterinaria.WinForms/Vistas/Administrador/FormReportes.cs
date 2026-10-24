@@ -32,6 +32,7 @@ public partial class FormReportes : Form
     public FormReportes(ReporteControlador reporteControlador, EspecieControlador especieControlador)
     {
         InitializeComponent();
+        ComboBuscable.Habilitar(permitirVacio: false, cboVeterinario, cboEspecie);
         _reporteControlador = reporteControlador;
         _especieControlador = especieControlador;
     }
@@ -54,6 +55,12 @@ public partial class FormReportes : Form
 
         ConfigurarEstiloGrilla();
         _vista = SelectorVistaReporte.Configurar(dgvReporte);
+        _vista.AgrupacionCambiada += (_, _) =>
+        {
+            dtpFechaDesde.Value = PeriodosGrafico.DesdeParaAgrupacion(dtpFechaDesde.Value, dtpFechaHasta.Value, _vista.Agrupacion);
+            if (btnImprimir.Enabled)
+                btnGenerar_Click(this, EventArgs.Empty);
+        };
 
         // Limpieza de feedback visual en contenedor de fechas ante interacción
         dtpFechaDesde.ValueChanged += (s, ev) => RestaurarBordeFechas();
@@ -168,9 +175,10 @@ public partial class FormReportes : Form
         lblTotalFacturado.Visible = false;
         btnImprimir.Enabled = false;
         btnExportarPdf.Enabled = false;
-        _vista?.Grafico.Limpiar();
+        _vista?.LimpiarGraficos();
 
         string tipo = cboTipoReporte.SelectedItem?.ToString() ?? string.Empty;
+        _vista?.PermitirAgrupacion(tipo != TipoCenso);
 
         switch (tipo)
         {
@@ -314,8 +322,8 @@ public partial class FormReportes : Form
         var datos = res.Valor.ToList();
         dgvReporte.DataSource = datos;
 
-        var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta);
-        _vista.Grafico.MostrarColumnas(
+        var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista.Agrupacion);
+        _vista.Grafico.MostrarEvolucion(
             $"Consultas, tratamientos y vacunas por {periodos.Unidad}",
             periodos.Etiquetas,
             [
@@ -323,6 +331,20 @@ public partial class FormReportes : Form
                 new SerieGrafico("Tratamientos", GraficoReporte.Paleta[1], periodos.Acumular(datos, d => d.FechaHora, d => d.CantidadTratamientos)),
                 new SerieGrafico("Vacunas", GraficoReporte.Paleta[2], periodos.Acumular(datos, d => d.FechaHora, d => d.CantidadVacunas))
             ]);
+
+        // Resumen: cómo se compone lo facturado
+        var conceptos = new (string Nombre, decimal Importe)[]
+        {
+            ("Consultas", datos.Sum(d => d.ImporteConsulta)),
+            ("Tratamientos", datos.Sum(d => d.ImporteTratamientos)),
+            ("Vacunas", datos.Sum(d => d.ImporteVacunas))
+        }.Where(c => c.Importe > 0).ToList();
+        _vista.UsarGraficoSecundario(true);
+        _vista.GraficoSecundario.MostrarDona(
+            "Importe por concepto",
+            conceptos.Select(c => c.Nombre).ToList(),
+            conceptos.Select(c => c.Importe).ToList(),
+            v => v.ToString("C0", CulturaArgentina));
 
         ActualizarResumen(datos.Count);
         lblTotalRegistros.Text = $"Consultas: {datos.Count} | Tratamientos: {datos.Sum(d => d.CantidadTratamientos)} | Vacunas: {datos.Sum(d => d.CantidadVacunas)}";
@@ -363,11 +385,23 @@ public partial class FormReportes : Form
         dgvReporte.DataSource = datos;
 
         var cobrados = datos.Where(p => p.Estado.Equals("Completado", StringComparison.OrdinalIgnoreCase)).ToList();
-        var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta);
-        _vista.Grafico.MostrarLinea(
+        var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista.Agrupacion);
+        _vista.Grafico.MostrarEvolucion(
             $"Total cobrado por {periodos.Unidad}",
             periodos.Etiquetas,
-            new SerieGrafico("Cobrado", GraficoReporte.Paleta[6], periodos.Acumular(cobrados, p => p.Fecha, p => p.Importe)),
+            [new SerieGrafico("Cobrado", GraficoReporte.Paleta[6], periodos.Acumular(cobrados, p => p.Fecha, p => p.Importe))],
+            v => v.ToString("C0", CulturaArgentina));
+
+        // Resumen: lo cobrado según el método de pago
+        var porMetodo = cobrados
+            .GroupBy(p => string.IsNullOrWhiteSpace(p.MetodoPago) ? "Sin método" : p.MetodoPago)
+            .OrderByDescending(g => g.Sum(p => p.Importe))
+            .ToList();
+        _vista.UsarGraficoSecundario(true);
+        _vista.GraficoSecundario.MostrarDona(
+            "Cobrado por método de pago",
+            porMetodo.Select(g => g.Key).ToList(),
+            porMetodo.Select(g => g.Sum(p => p.Importe)).ToList(),
             v => v.ToString("C0", CulturaArgentina));
 
         ActualizarResumen(datos.Count);
@@ -417,6 +451,19 @@ public partial class FormReportes : Form
             especieFiltrada is null ? "Mascotas por especie" : $"Mascotas de {especieFiltrada} por raza",
             grupos.Select(g => g.Key).ToList(),
             grupos.Select(g => (decimal)g.Count()).ToList());
+
+        // Resumen: propietarios con más mascotas registradas
+        var topPropietarios = datos
+            .GroupBy(m => m.Propietario)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key)
+            .Take(8)
+            .ToList();
+        _vista.UsarGraficoSecundario(true);
+        _vista.GraficoSecundario.MostrarBarrasHorizontales(
+            "Propietarios con más mascotas",
+            topPropietarios.Select(g => g.Key).ToList(),
+            new SerieGrafico("Mascotas", GraficoReporte.Paleta[2], topPropietarios.Select(g => (decimal)g.Count()).ToList()));
 
         ActualizarResumen(datos.Count);
         lblTotalRegistros.Text = $"Mascotas: {datos.Count} | Propietarios: {datos.Select(m => m.Propietario).Distinct().Count()}";
@@ -668,7 +715,7 @@ public partial class FormReportes : Form
 
         if (_vista.MostrandoGrafico)
         {
-            _vista.Grafico.Dibujar(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 35));
+            _vista.DibujarGraficos(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 35));
             e.HasMorePages = false;
             DibujarPieDePagina(g, bounds, fontPie, brushTexto, penSeparador);
             return;

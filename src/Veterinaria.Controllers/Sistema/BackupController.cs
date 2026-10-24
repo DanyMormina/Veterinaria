@@ -50,38 +50,32 @@ public class BackupController
     }
 
     /// <summary>
-    /// Envoltorio seguro para consultar el historial de copias registradas.
+    /// Verifica la contraseña contra los gerentes activos registrados en la base (segunda autorización del restore).
     /// </summary>
-    public async Task<Result<IEnumerable<BackupHistorialDto>>> CargarHistorialAsync()
+    private async Task<bool> VerificarPasswordGerenteAsync(string passwordGerente)
     {
-        return await _backupService.ObtenerHistorialAsync();
+        if (string.IsNullOrWhiteSpace(passwordGerente))
+            return false;
+
+        var hashesGerentes = await _contexto.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Activo && u.TipoUsuario.Nombre == "Gerente")
+            .Select(u => u.HashContrasena)
+            .ToListAsync();
+
+        return hashesGerentes.Any(hash => PasswordHasher.Verificar(passwordGerente, hash));
     }
 
     /// <summary>
-    /// Solicita y ejecuta la restauración de una copia de seguridad tras validar doble factor:
-    /// 1. Permiso exclusivo PuedeRestaurarBD verificado en tiempo real contra la base de datos.
-    /// 2. Verificación de contraseña administrativa del usuario en sesión.
+    /// Primer paso del restore: permiso PuedeRestaurarBD y contraseña del administrador en sesión.
     /// </summary>
-    /// <param name="nombreArchivoBak">Nombre del archivo .bak ubicado en el directorio de backups.</param>
-    /// <param name="passwordConfirmacion">Contraseña ingresada por el usuario para doble factor de seguridad.</param>
-    /// <param name="idUsuarioSesion">ID opcional del usuario en sesión para desacoplar de contexto estático.</param>
-    /// <returns>Resultado de la operación de restauración.</returns>
-    public async Task<Result> SolicitarRestauracionAsync(
-        string nombreArchivoBak,
-        string passwordConfirmacion,
-        long? idUsuarioSesion = null)
+    public async Task<Result> VerificarAdministradorParaRestoreAsync(string passwordConfirmacion, long? idUsuarioSesion = null)
     {
-        // 1. Identificar usuario en sesión
         long? idUsuarioActual = idUsuarioSesion ?? (SesionActual.EstaAutenticado ? SesionActual.IdUsuario : null);
 
         if (!idUsuarioActual.HasValue || idUsuarioActual.Value <= 0)
         {
             return Result.Falla("No se pudo identificar una sesión activa de usuario válida.");
-        }
-
-        if (string.IsNullOrWhiteSpace(nombreArchivoBak))
-        {
-            return Result.Falla("Debe especificar el archivo de copia de seguridad a restaurar.");
         }
 
         if (string.IsNullOrWhiteSpace(passwordConfirmacion))
@@ -96,7 +90,7 @@ public class BackupController
             return Result.Falla(validacionPermiso.Mensaje);
         }
 
-        // Paso B: Doble factor mediante verificación de contraseña
+        // Paso B: Verificación de contraseña del administrador
         var usuario = await _contexto.Usuarios
             .AsNoTracking()
             .Where(u => u.Id == idUsuarioActual.Value && u.Activo)
@@ -111,6 +105,53 @@ public class BackupController
         if (!PasswordHasher.Verificar(passwordConfirmacion, usuario.PasswordHash))
         {
             return Result.Falla("La contraseña ingresada es incorrecta. Operación cancelada.");
+        }
+
+        return Result.Ok("Contraseña del administrador verificada.");
+    }
+
+    /// <summary>
+    /// Envoltorio seguro para consultar el historial de copias registradas.
+    /// </summary>
+    public async Task<Result<IEnumerable<BackupHistorialDto>>> CargarHistorialAsync()
+    {
+        return await _backupService.ObtenerHistorialAsync();
+    }
+
+    /// <summary>
+    /// Solicita y ejecuta la restauración de una copia de seguridad tras validar doble autorización:
+    /// 1. Permiso PuedeRestaurarBD y contraseña del administrador en sesión.
+    /// 2. Contraseña de un gerente activo registrado en la base de datos.
+    /// </summary>
+    /// <param name="nombreArchivoBak">Nombre del archivo .bak ubicado en el directorio de backups.</param>
+    /// <param name="passwordConfirmacion">Contraseña del administrador en sesión.</param>
+    /// <param name="passwordGerente">Contraseña del gerente que autoriza la operación.</param>
+    /// <param name="idUsuarioSesion">ID opcional del usuario en sesión para desacoplar de contexto estático.</param>
+    /// <returns>Resultado de la operación de restauración.</returns>
+    public async Task<Result> SolicitarRestauracionAsync(
+        string nombreArchivoBak,
+        string passwordConfirmacion,
+        string passwordGerente,
+        long? idUsuarioSesion = null)
+    {
+        long? idUsuarioActual = idUsuarioSesion ?? (SesionActual.EstaAutenticado ? SesionActual.IdUsuario : null);
+
+        if (string.IsNullOrWhiteSpace(nombreArchivoBak))
+        {
+            return Result.Falla("Debe especificar el archivo de copia de seguridad a restaurar.");
+        }
+
+        // Paso A y B: permiso y contraseña del administrador
+        var verificacionAdmin = await VerificarAdministradorParaRestoreAsync(passwordConfirmacion, idUsuarioActual);
+        if (!verificacionAdmin.EsExitoso)
+        {
+            return verificacionAdmin;
+        }
+
+        // Paso B2: Autorización del gerente
+        if (!await VerificarPasswordGerenteAsync(passwordGerente))
+        {
+            return Result.Falla("La contraseña del gerente es incorrecta. Operación no autorizada.");
         }
 
         // Paso C: Ejecutar la restauración de la base de datos

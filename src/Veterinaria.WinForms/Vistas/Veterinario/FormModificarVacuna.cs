@@ -23,6 +23,7 @@ public partial class FormModificarVacuna : Form
     public FormModificarVacuna(VacunaControlador? vacunaControlador, long? idInicial = null)
     {
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboSeleccionarVacuna);
         _vacunaControlador = vacunaControlador;
         _idInicial = idInicial;
 

@@ -61,8 +61,21 @@ public sealed class GraficoReporte : Control
     public void MostrarBarrasHorizontales(string titulo, IReadOnlyList<string> categorias, SerieGrafico serie, Func<decimal, string>? formato = null) =>
         Mostrar(TipoGrafico.BarrasHorizontales, titulo, categorias, [serie], formato);
 
+    /// <summary>
+    /// Línea de tendencia; con menos de 3 períodos una línea no muestra evolución, así que se dibujan columnas.
+    /// </summary>
     public void MostrarLinea(string titulo, IReadOnlyList<string> categorias, SerieGrafico serie, Func<decimal, string>? formato = null) =>
-        Mostrar(TipoGrafico.Linea, titulo, categorias, [serie], formato);
+        Mostrar(categorias.Count < 3 ? TipoGrafico.Columnas : TipoGrafico.Linea, titulo, categorias, [serie], formato);
+
+    /// <summary>
+    /// Evolución en el tiempo eligiendo el gráfico según la cantidad de períodos:
+    /// columnas para pocos períodos (se comparan valores puntuales) y línea para muchos (se lee la tendencia).
+    /// </summary>
+    public void MostrarEvolucion(string titulo, IReadOnlyList<string> categorias, IReadOnlyList<SerieGrafico> series, Func<decimal, string>? formato = null) =>
+        Mostrar(categorias.Count <= MaximoPeriodosColumnas ? TipoGrafico.Columnas : TipoGrafico.Linea, titulo, categorias, series, formato);
+
+    private const int MaximoPeriodosColumnas = 12;
+    private const float AnchoMaximoBarra = 46f;
 
     public void MostrarDona(string titulo, IReadOnlyList<string> categorias, IReadOnlyList<decimal> valores, Func<decimal, string>? formato = null) =>
         Mostrar(TipoGrafico.Dona, titulo, categorias, [new SerieGrafico(titulo, Paleta[0], valores)], formato);
@@ -182,7 +195,7 @@ public sealed class GraficoReporte : Control
         var (trazado, maximo) = DibujarEjes(g, cuerpo, fuente, pincelTexto, maximoDatos);
 
         var anchoGrupo = trazado.Width / _categorias.Count;
-        var anchoBarra = Math.Max(2f, anchoGrupo * 0.75f / _series.Count);
+        var anchoBarra = Math.Clamp(anchoGrupo * 0.75f / _series.Count, 2f, AnchoMaximoBarra);
         using var formatoCentro = new StringFormat { Alignment = StringAlignment.Center };
 
         for (var c = 0; c < _categorias.Count; c++)
@@ -206,34 +219,46 @@ public sealed class GraficoReporte : Control
 
     private void DibujarLinea(Graphics g, Rectangle cuerpo, Font fuente, Brush pincelTexto)
     {
-        var serie = _series[0];
-        var maximoDatos = serie.Valores.DefaultIfEmpty(0).Max();
+        var variasSeries = _series.Count > 1;
+        if (variasSeries)
+            DibujarLeyenda(g, cuerpo, fuente, pincelTexto);
+
+        var maximoDatos = _series.SelectMany(s => s.Valores).DefaultIfEmpty(0).Max();
         var (trazado, maximo) = DibujarEjes(g, cuerpo, fuente, pincelTexto, maximoDatos);
 
         var paso = _categorias.Count > 1 ? trazado.Width / (_categorias.Count - 1) : 0;
-        var puntos = serie.Valores
-            .Select((v, i) => new PointF(
-                _categorias.Count > 1 ? trazado.Left + paso * i : trazado.Left + trazado.Width / 2,
-                trazado.Bottom - (float)(v / maximo) * trazado.Height))
-            .ToArray();
-
-        if (puntos.Length > 1)
-        {
-            using var relleno = new SolidBrush(Color.FromArgb(50, serie.Color));
-            var area = puntos.Prepend(new PointF(puntos[0].X, trazado.Bottom)).Append(new PointF(puntos[^1].X, trazado.Bottom)).ToArray();
-            g.FillPolygon(relleno, area);
-            using var lapiz = new Pen(serie.Color, 2.5f);
-            g.DrawLines(lapiz, puntos);
-        }
-
-        using var pincelPunto = new SolidBrush(serie.Color);
         using var formatoCentro = new StringFormat { Alignment = StringAlignment.Center };
-        var mostrarValores = puntos.Length <= 16;
-        for (var i = 0; i < puntos.Length; i++)
+
+        foreach (var serie in _series)
         {
-            g.FillEllipse(pincelPunto, puntos[i].X - 4, puntos[i].Y - 4, 8, 8);
-            if (mostrarValores)
-                g.DrawString(_formato(serie.Valores[i]), fuente, pincelTexto, new RectangleF(puntos[i].X - 50, puntos[i].Y - 20, 100, 16), formatoCentro);
+            var puntos = serie.Valores
+                .Select((v, i) => new PointF(
+                    _categorias.Count > 1 ? trazado.Left + paso * i : trazado.Left + trazado.Width / 2,
+                    trazado.Bottom - (float)(v / maximo) * trazado.Height))
+                .ToArray();
+
+            if (puntos.Length > 1)
+            {
+                // Con varias series el relleno taparía las otras líneas
+                if (!variasSeries)
+                {
+                    using var relleno = new SolidBrush(Color.FromArgb(50, serie.Color));
+                    var area = puntos.Prepend(new PointF(puntos[0].X, trazado.Bottom)).Append(new PointF(puntos[^1].X, trazado.Bottom)).ToArray();
+                    g.FillPolygon(relleno, area);
+                }
+                using var lapiz = new Pen(serie.Color, 2.5f);
+                g.DrawLines(lapiz, puntos);
+            }
+
+            using var pincelPunto = new SolidBrush(serie.Color);
+            var radio = puntos.Length > 40 ? 2.5f : 4f;
+            var mostrarValores = !variasSeries && puntos.Length <= 16;
+            for (var i = 0; i < puntos.Length; i++)
+            {
+                g.FillEllipse(pincelPunto, puntos[i].X - radio, puntos[i].Y - radio, radio * 2, radio * 2);
+                if (mostrarValores)
+                    g.DrawString(_formato(serie.Valores[i]), fuente, pincelTexto, new RectangleF(puntos[i].X - 50, puntos[i].Y - 20, 100, 16), formatoCentro);
+            }
         }
 
         var anchoGrupo = _categorias.Count > 1 ? paso : trazado.Width;

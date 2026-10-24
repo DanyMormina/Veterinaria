@@ -25,6 +25,7 @@ public partial class FormAltaVacuna : Form
         long? idEspecieSugerida = null)
     {
         InitializeComponent();
+        Controles.ComboBuscable.Habilitar(cboEspecie);
         _vacunaControlador = vacunaControlador;
         _especieControlador = especieControlador;
         _idEspecieSugerida = idEspecieSugerida;

@@ -187,8 +187,8 @@ public class VacunaControlador(ContextoVeterinaria context)
         if (string.IsNullOrWhiteSpace(solicitud.Nombre))
             return "El nombre de la vacuna es obligatorio.";
 
-        if (solicitud.PeriodoMesesRecomendado <= 0)
-            return "El período recomendado en meses debe ser mayor a cero.";
+        if (solicitud.PeriodoMesesRecomendado <= 0 || solicitud.PeriodoMesesRecomendado > 120)
+            return "El período recomendado debe estar entre 1 y 120 meses.";
 
         if (solicitud.Precio < 0)
             return "El precio de la vacuna no puede ser negativo.";

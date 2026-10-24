@@ -142,6 +142,7 @@ partial class FormBackup
         txtNombreArchivo.Font = new Font("Segoe UI", 9.5F);
         txtNombreArchivo.ForeColor = Color.FromArgb(58, 53, 59);
         txtNombreArchivo.Location = new Point(155, 33);
+        txtNombreArchivo.MaxLength = 255;
         txtNombreArchivo.Name = "txtNombreArchivo";
         txtNombreArchivo.Size = new Size(815, 24);
         txtNombreArchivo.TabIndex = 1;

@@ -12,8 +12,10 @@ public class TipoUsuarioControlador(ContextoVeterinaria context)
     {
         try
         {
+            // El perfil Gerente se administra solo desde la base de datos
             var list = await context.TiposUsuario
                 .AsNoTracking()
+                .Where(t => t.Nombre != UsuarioControlador.PerfilGerente)
                 .Select(t => new TipoUsuarioRespuestaDto { Id = t.Id, Nombre = t.Nombre, Activo = t.Activo })
                 .ToListAsync();
 
