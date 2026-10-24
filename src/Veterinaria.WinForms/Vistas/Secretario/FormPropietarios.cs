@@ -134,10 +134,27 @@ public partial class FormPropietarios : Form
             if (!_limpiando && !_cargandoDatos && !_idPropietarioSeleccionado.HasValue && RegexDni.IsMatch(txtDNI.Text.Trim()))
                 _timerVerificacionDni.Start();
         };
-        FormClosed += (_, _) => _timerVerificacionDni.Dispose();
+        // La grilla se filtra mientras se escribe, sin tener que presionar Buscar
+        txtBuscar.TextChanged += (_, _) =>
+        {
+            _timerBusqueda.Stop();
+            _timerBusqueda.Start();
+        };
+        _timerBusqueda.Tick += async (_, _) =>
+        {
+            _timerBusqueda.Stop();
+            await BuscarPropietariosAsync();
+        };
+
+        FormClosed += (_, _) =>
+        {
+            _timerVerificacionDni.Dispose();
+            _timerBusqueda.Dispose();
+        };
     }
 
     private readonly System.Windows.Forms.Timer _timerVerificacionDni = new() { Interval = 500 };
+    private readonly System.Windows.Forms.Timer _timerBusqueda = new() { Interval = 300 };
     private bool _dniDuplicadoBloqueado;
 
     private async Task VerificarDniExistenteAsync()
