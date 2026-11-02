@@ -6,4 +6,5 @@ public class VacunaSolicitudDto
     public string Nombre { get; set; } = string.Empty;
     public int PeriodoMesesRecomendado { get; set; } = 12;
     public decimal Precio { get; set; }
+    public int Stock { get; set; }
 }

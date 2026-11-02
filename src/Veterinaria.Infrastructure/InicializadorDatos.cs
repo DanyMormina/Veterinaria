@@ -16,6 +16,7 @@ public static class InicializadorDatos
         await CorregirMetodosPagoAsync(context);
         await AsegurarTablaBackupAsync(context);
         await AsegurarTablaPrecioConsultaAsync(context);
+        await AsegurarStockCatalogoAsync(context);
 
         // 2. Sembrar Tipos de Usuario si la tabla está vacía
         if (!await context.TiposUsuario.IgnoreQueryFilters().AnyAsync())
@@ -134,6 +135,18 @@ public static class InicializadorDatos
             UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Débito' WHERE Id = 2;
             UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Crédito' WHERE Id = 3;
             UPDATE dbo.MetodoPago SET Nombre = N'Transferencia Bancaria' WHERE Id = 4;
+            """);
+    }
+
+    public static async Task AsegurarStockCatalogoAsync(ContextoVeterinaria context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Vacuna', 'Stock') IS NULL
+                ALTER TABLE dbo.Vacuna ADD Stock INT NOT NULL CONSTRAINT DF_Vacuna_Stock DEFAULT (0);
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Tratamiento', 'Stock') IS NULL
+                ALTER TABLE dbo.Tratamiento ADD Stock INT NOT NULL CONSTRAINT DF_Tratamiento_Stock DEFAULT (0);
             """);
     }
 

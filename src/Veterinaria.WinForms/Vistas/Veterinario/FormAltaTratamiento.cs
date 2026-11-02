@@ -81,7 +81,8 @@ public partial class FormAltaTratamiento : Form
             TipoTratamiento = tipo,
             Descripcion = descripcion,
             Dosis = dosis,
-            Precio = precio
+            Precio = precio,
+            Stock = (int)numStock.Value
         };
 
         btnGuardar.Enabled = false;

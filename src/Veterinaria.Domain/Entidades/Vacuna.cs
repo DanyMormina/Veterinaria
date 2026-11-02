@@ -8,6 +8,7 @@ public class Vacuna : EntidadAuditable
     public string Nombre { get; set; } = string.Empty;
     public int PeriodoMesesRecomendado { get; set; } = 12;
     public decimal Precio { get; set; }
+    public int Stock { get; set; }
 
     public Especie Especie { get; set; } = null!;
     public ICollection<AplicacionVacuna> AplicacionesVacuna { get; set; } = [];

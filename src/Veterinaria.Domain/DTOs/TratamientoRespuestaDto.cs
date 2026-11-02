@@ -7,5 +7,6 @@ public class TratamientoRespuestaDto
     public string Descripcion { get; set; } = string.Empty;
     public string? Dosis { get; set; }
     public decimal Precio { get; set; }
+    public int Stock { get; set; }
     public bool Activo { get; set; }
 }

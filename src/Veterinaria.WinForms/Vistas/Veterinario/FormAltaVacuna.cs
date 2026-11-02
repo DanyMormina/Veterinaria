@@ -176,7 +176,8 @@ public partial class FormAltaVacuna : Form
             IdEspecie = idEspecie,
             Nombre = nombre,
             PeriodoMesesRecomendado = (int)numPeriodoMeses.Value,
-            Precio = precio
+            Precio = precio,
+            Stock = (int)numStock.Value
         };
 
         btnGuardar.Enabled = false;

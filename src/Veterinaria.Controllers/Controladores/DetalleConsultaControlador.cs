@@ -64,6 +64,11 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             if (tratamiento is null)
                 return Resultado<long>.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
 
+            if (tratamiento.Stock < solicitud.Cantidad)
+                return Resultado<long>.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamiento.Stock}.");
+
+            tratamiento.Stock -= solicitud.Cantidad;
+
             var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : tratamiento.Precio;
             var subtotal = solicitud.Subtotal > 0 ? solicitud.Subtotal : (precioUnitario * solicitud.Cantidad);
 
@@ -105,8 +110,33 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             if (solicitud.Cantidad <= 0)
                 return Resultado.Falla("La cantidad debe ser mayor a cero.");
 
-            if (!await context.Tratamientos.AnyAsync(t => t.Id == solicitud.IdTratamiento))
+            var tratamientoNuevo = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
+            if (tratamientoNuevo is null)
                 return Resultado.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
+
+            var cantidadAnterior = entidad.Activo ? entidad.Cantidad : 0;
+            if (entidad.IdTratamiento == solicitud.IdTratamiento)
+            {
+                var delta = solicitud.Cantidad - cantidadAnterior;
+                if (delta > 0 && tratamientoNuevo.Stock < delta)
+                    return Resultado.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamientoNuevo.Stock}.");
+
+                tratamientoNuevo.Stock -= delta;
+            }
+            else
+            {
+                if (tratamientoNuevo.Stock < solicitud.Cantidad)
+                    return Resultado.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamientoNuevo.Stock}.");
+
+                if (cantidadAnterior > 0)
+                {
+                    var tratamientoAnterior = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == entidad.IdTratamiento);
+                    if (tratamientoAnterior is not null)
+                        tratamientoAnterior.Stock += cantidadAnterior;
+                }
+
+                tratamientoNuevo.Stock -= solicitud.Cantidad;
+            }
 
             var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : entidad.PrecioUnitario;
             var subtotal = solicitud.Subtotal > 0 ? solicitud.Subtotal : (precioUnitario * solicitud.Cantidad);
@@ -139,6 +169,13 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             var entidad = await context.DetalleConsultas.FirstOrDefaultAsync(d => d.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el detalle con ID {id}.");
+
+            if (entidad.Activo)
+            {
+                var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == entidad.IdTratamiento);
+                if (tratamiento is not null)
+                    tratamiento.Stock += entidad.Cantidad;
+            }
 
             context.DetalleConsultas.Remove(entidad);
             await context.SaveChangesAsync();

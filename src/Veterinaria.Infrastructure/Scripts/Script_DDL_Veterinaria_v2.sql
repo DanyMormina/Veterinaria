@@ -116,6 +116,7 @@ CREATE TABLE dbo.Vacuna (
     Nombre NVARCHAR(100) NOT NULL,
     PeriodoMesesRecomendado INT NOT NULL CONSTRAINT DF_Vacuna_Periodo DEFAULT (12),
     Precio DECIMAL(18,2) NOT NULL CONSTRAINT DF_Vacuna_Precio DEFAULT (0),
+    Stock INT NOT NULL CONSTRAINT DF_Vacuna_Stock DEFAULT (0),
     Activo BIT NOT NULL CONSTRAINT DF_Vacuna_Activo DEFAULT (1),
     CONSTRAINT PK_Vacuna PRIMARY KEY CLUSTERED (Id ASC),
     CONSTRAINT FK_Vacuna_Especie FOREIGN KEY (IdEspecie) REFERENCES dbo.Especie (Id)
@@ -138,6 +139,7 @@ CREATE TABLE dbo.Tratamiento (
     Descripcion NVARCHAR(MAX) NOT NULL,
     Dosis NVARCHAR(100) NULL,
     Precio DECIMAL(18,2) NOT NULL CONSTRAINT DF_Tratamiento_Precio DEFAULT (0),
+    Stock INT NOT NULL CONSTRAINT DF_Tratamiento_Stock DEFAULT (0),
     Activo BIT NOT NULL CONSTRAINT DF_Tratamiento_Activo DEFAULT (1),
     CONSTRAINT PK_Tratamiento PRIMARY KEY CLUSTERED (Id ASC)
 );

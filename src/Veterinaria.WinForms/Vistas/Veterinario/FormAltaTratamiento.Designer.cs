@@ -26,12 +26,15 @@ partial class FormAltaTratamiento
         txtDosis = new TextBox();
         lblPrecio = new Label();
         numPrecio = new NumericUpDown();
+        lblStock = new Label();
+        numStock = new NumericUpDown();
         pnlBotones = new Panel();
         btnGuardar = new Button();
         btnCancelar = new Button();
         pnlEncabezado.SuspendLayout();
         pnlContenedor.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)numPrecio).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)numStock).BeginInit();
         pnlBotones.SuspendLayout();
         SuspendLayout();
         // 
@@ -69,11 +72,13 @@ partial class FormAltaTratamiento
         pnlContenedor.Controls.Add(txtDosis);
         pnlContenedor.Controls.Add(lblPrecio);
         pnlContenedor.Controls.Add(numPrecio);
+        pnlContenedor.Controls.Add(lblStock);
+        pnlContenedor.Controls.Add(numStock);
         pnlContenedor.Dock = DockStyle.Fill;
         pnlContenedor.Location = new Point(0, 45);
         pnlContenedor.Name = "pnlContenedor";
         pnlContenedor.Padding = new Padding(24, 20, 24, 16);
-        pnlContenedor.Size = new Size(484, 255);
+        pnlContenedor.Size = new Size(484, 310);
         pnlContenedor.TabIndex = 1;
         // 
         // lblTipo
@@ -166,6 +171,28 @@ partial class FormAltaTratamiento
         numPrecio.TabIndex = 7;
         numPrecio.TextAlign = HorizontalAlignment.Right;
         // 
+        // lblStock
+        // 
+        lblStock.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        lblStock.ForeColor = Color.FromArgb(58, 53, 59);
+        lblStock.Location = new Point(24, 246);
+        lblStock.Name = "lblStock";
+        lblStock.Size = new Size(436, 18);
+        lblStock.TabIndex = 8;
+        lblStock.Text = "Stock:";
+        // 
+        // numStock
+        // 
+        numStock.BackColor = Color.White;
+        numStock.Font = new Font("Segoe UI", 9.5F);
+        numStock.ForeColor = Color.FromArgb(58, 53, 59);
+        numStock.Location = new Point(24, 267);
+        numStock.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+        numStock.Name = "numStock";
+        numStock.Size = new Size(200, 24);
+        numStock.TabIndex = 9;
+        numStock.TextAlign = HorizontalAlignment.Right;
+        // 
         // pnlBotones
         // 
         pnlBotones.BackColor = Color.FromArgb(249, 240, 242);
@@ -220,7 +247,7 @@ partial class FormAltaTratamiento
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
         CancelButton = btnCancelar;
-        ClientSize = new Size(484, 352);
+        ClientSize = new Size(484, 407);
         Controls.Add(pnlContenedor);
         Controls.Add(pnlBotones);
         Controls.Add(pnlEncabezado);
@@ -237,6 +264,7 @@ partial class FormAltaTratamiento
         pnlContenedor.ResumeLayout(false);
         pnlContenedor.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)numPrecio).EndInit();
+        ((System.ComponentModel.ISupportInitialize)numStock).EndInit();
         pnlBotones.ResumeLayout(false);
         ResumeLayout(false);
     }
@@ -252,6 +280,8 @@ partial class FormAltaTratamiento
     private TextBox txtDosis;
     private Label lblPrecio;
     private NumericUpDown numPrecio;
+    private Label lblStock;
+    private NumericUpDown numStock;
     private Panel pnlBotones;
     private Button btnGuardar;
     private Button btnCancelar;

@@ -155,7 +155,7 @@ public partial class FormTratamientos : Form
             var items = _listaTratamientos.Select(t => new TratamientoComboItem
             {
                 Id = t.Id,
-                Texto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", CulturaArgentina)}",
+                Texto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", CulturaArgentina)} - Stock: {t.Stock}",
                 Precio = t.Precio
             }).ToList();
 

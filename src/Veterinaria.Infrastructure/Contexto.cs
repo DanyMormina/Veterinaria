@@ -133,6 +133,9 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
             b.Property(v => v.Precio)
                 .HasColumnType("decimal(18,2)");
 
+            b.Property(v => v.Stock)
+                .HasDefaultValue(0);
+
             b.HasOne(v => v.Especie)
                 .WithMany(e => e.Vacunas)
                 .HasForeignKey(v => v.IdEspecie)
@@ -164,6 +167,9 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
 
             b.Property(t => t.Precio)
                 .HasColumnType("decimal(18,2)");
+
+            b.Property(t => t.Stock)
+                .HasDefaultValue(0);
         });
 
         // PrecioConsulta (precio fijo de la consulta por especie)

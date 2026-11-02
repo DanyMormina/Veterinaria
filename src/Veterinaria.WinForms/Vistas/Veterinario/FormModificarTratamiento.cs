@@ -82,7 +82,7 @@ public partial class FormModificarTratamiento : Form
             var items = _tratamientos.Select(t => new TratamientoItemVista
             {
                 Id = t.Id,
-                Texto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", new CultureInfo("es-AR"))}"
+                Texto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", new CultureInfo("es-AR"))} - Stock: {t.Stock}"
             }).ToList();
 
             cboSeleccionarTratamiento.DataSource = items;
@@ -144,6 +144,9 @@ public partial class FormModificarTratamiento : Form
         txtDescripcion.Text = seleccionado.Descripcion;
         txtDosis.Text = seleccionado.Dosis ?? string.Empty;
         numPrecio.Value = Math.Clamp(seleccionado.Precio, numPrecio.Minimum, numPrecio.Maximum);
+        numStock.Minimum = 0;
+        numStock.Value = Math.Clamp(seleccionado.Stock, 0, (int)numStock.Maximum);
+        numStock.Minimum = numStock.Value;
     }
 
     private void HabilitarEdicion(bool habilitar)
@@ -152,6 +155,7 @@ public partial class FormModificarTratamiento : Form
         txtDescripcion.Enabled = habilitar;
         txtDosis.Enabled = habilitar;
         numPrecio.Enabled = habilitar;
+        numStock.Enabled = habilitar;
         btnModificar.Enabled = habilitar;
         btnBaja.Enabled = habilitar;
 
@@ -160,6 +164,8 @@ public partial class FormModificarTratamiento : Form
             txtDescripcion.Clear();
             txtDosis.Clear();
             numPrecio.Value = 0;
+            numStock.Minimum = 0;
+            numStock.Value = 0;
         }
     }
 
@@ -198,7 +204,8 @@ public partial class FormModificarTratamiento : Form
             TipoTratamiento = tipo,
             Descripcion = descripcion,
             Dosis = dosis,
-            Precio = precio
+            Precio = precio,
+            Stock = (int)numStock.Value
         };
 
         btnModificar.Enabled = false;

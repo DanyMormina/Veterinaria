@@ -197,8 +197,8 @@ public partial class FormVacunasControles : Form
         {
             Id = v.Id,
             Texto = string.IsNullOrWhiteSpace(v.NombreEspecie)
-                ? $"{v.Nombre} — Precio: {v.Precio.ToString("C2", CulturaArgentina)}"
-                : $"{v.Nombre} ({v.NombreEspecie}) — Precio: {v.Precio.ToString("C2", CulturaArgentina)}"
+                ? $"{v.Nombre} — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
+                : $"{v.Nombre} ({v.NombreEspecie}) — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
         }).ToList();
 
         cboVacunas.DataSource = items;

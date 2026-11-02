@@ -82,8 +82,8 @@ public partial class FormModificarVacuna : Form
             {
                 Id = v.Id,
                 Texto = string.IsNullOrWhiteSpace(v.NombreEspecie)
-                    ? $"{v.Nombre} — Precio: {v.Precio.ToString("C2", CulturaArgentina)}"
-                    : $"{v.Nombre} ({v.NombreEspecie}) — Precio: {v.Precio.ToString("C2", CulturaArgentina)}"
+                    ? $"{v.Nombre} — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
+                    : $"{v.Nombre} ({v.NombreEspecie}) — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
             }).ToList();
 
             cboSeleccionarVacuna.DataSource = items;
@@ -138,6 +138,9 @@ public partial class FormModificarVacuna : Form
         txtNombre.Text = seleccionado.Nombre;
         numPeriodoMeses.Value = Math.Clamp(seleccionado.PeriodoMesesRecomendado, numPeriodoMeses.Minimum, numPeriodoMeses.Maximum);
         txtPrecioUnitario.Text = seleccionado.Precio.ToString("N2", CulturaArgentina);
+        numStock.Minimum = 0;
+        numStock.Value = Math.Clamp(seleccionado.Stock, 0, (int)numStock.Maximum);
+        numStock.Minimum = numStock.Value;
     }
 
     private void HabilitarEdicion(bool habilitar)
@@ -145,6 +148,7 @@ public partial class FormModificarVacuna : Form
         txtNombre.Enabled = habilitar;
         numPeriodoMeses.Enabled = habilitar;
         txtPrecioUnitario.Enabled = habilitar;
+        numStock.Enabled = habilitar;
         btnModificar.Enabled = habilitar;
         btnBaja.Enabled = habilitar;
 
@@ -153,6 +157,8 @@ public partial class FormModificarVacuna : Form
             txtNombre.Clear();
             numPeriodoMeses.Value = 12;
             txtPrecioUnitario.Text = "0,00";
+            numStock.Minimum = 0;
+            numStock.Value = 0;
         }
     }
 
@@ -243,7 +249,8 @@ public partial class FormModificarVacuna : Form
             IdEspecie = seleccionado.IdEspecie,
             Nombre = nombre,
             PeriodoMesesRecomendado = (int)numPeriodoMeses.Value,
-            Precio = precio
+            Precio = precio,
+            Stock = (int)numStock.Value
         };
 
         btnModificar.Enabled = false;

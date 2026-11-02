@@ -26,12 +26,15 @@ partial class FormAltaVacuna
         numPeriodoMeses = new NumericUpDown();
         lblPrecio = new Label();
         txtPrecioUnitario = new TextBox();
+        lblStock = new Label();
+        numStock = new NumericUpDown();
         pnlBotones = new Panel();
         btnGuardar = new Button();
         btnCancelar = new Button();
         pnlEncabezado.SuspendLayout();
         pnlContenedor.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)numPeriodoMeses).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)numStock).BeginInit();
         pnlBotones.SuspendLayout();
         SuspendLayout();
         // 
@@ -69,6 +72,8 @@ partial class FormAltaVacuna
         pnlContenedor.Controls.Add(numPeriodoMeses);
         pnlContenedor.Controls.Add(lblPrecio);
         pnlContenedor.Controls.Add(txtPrecioUnitario);
+        pnlContenedor.Controls.Add(lblStock);
+        pnlContenedor.Controls.Add(numStock);
         pnlContenedor.Dock = DockStyle.Fill;
         pnlContenedor.Location = new Point(0, 45);
         pnlContenedor.Name = "pnlContenedor";
@@ -168,6 +173,28 @@ partial class FormAltaVacuna
         txtPrecioUnitario.Text = "0,00";
         txtPrecioUnitario.TextAlign = HorizontalAlignment.Right;
         // 
+        // lblStock
+        // 
+        lblStock.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        lblStock.ForeColor = Color.FromArgb(58, 53, 59);
+        lblStock.Location = new Point(24, 186);
+        lblStock.Name = "lblStock";
+        lblStock.Size = new Size(210, 18);
+        lblStock.TabIndex = 8;
+        lblStock.Text = "Stock:";
+        // 
+        // numStock
+        // 
+        numStock.BackColor = Color.White;
+        numStock.Font = new Font("Segoe UI", 9.5F);
+        numStock.ForeColor = Color.FromArgb(58, 53, 59);
+        numStock.Location = new Point(24, 207);
+        numStock.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+        numStock.Name = "numStock";
+        numStock.Size = new Size(200, 24);
+        numStock.TabIndex = 9;
+        numStock.TextAlign = HorizontalAlignment.Right;
+        // 
         // pnlBotones
         // 
         pnlBotones.BackColor = Color.FromArgb(249, 240, 242);
@@ -239,6 +266,7 @@ partial class FormAltaVacuna
         pnlContenedor.ResumeLayout(false);
         pnlContenedor.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)numPeriodoMeses).EndInit();
+        ((System.ComponentModel.ISupportInitialize)numStock).EndInit();
         pnlBotones.ResumeLayout(false);
         ResumeLayout(false);
     }
@@ -254,6 +282,8 @@ partial class FormAltaVacuna
     private NumericUpDown numPeriodoMeses;
     private Label lblPrecio;
     private TextBox txtPrecioUnitario;
+    private Label lblStock;
+    private NumericUpDown numStock;
     private Panel pnlBotones;
     private Button btnGuardar;
     private Button btnCancelar;

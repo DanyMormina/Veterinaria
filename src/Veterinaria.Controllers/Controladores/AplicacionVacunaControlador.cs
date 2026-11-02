@@ -108,6 +108,10 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
             if (vacuna.IdEspecie != idEspecieMascota)
                 return Resultado<long>.Falla("La vacuna no corresponde a la especie de la mascota.");
 
+            var descuentaStock = solicitud.PrecioUnitario.HasValue;
+            if (descuentaStock && vacuna.Stock < 1)
+                return Resultado<long>.Falla($"No hay stock suficiente de esta vacuna. Stock actual: {vacuna.Stock}.");
+
             var fechaAplicacion = solicitud.FechaAplicacion == default ? DateTime.Today : solicitud.FechaAplicacion;
             var proximaDosis = solicitud.ProximaDosis ?? (vacuna.PeriodoMesesRecomendado > 0
                 ? fechaAplicacion.AddMonths(vacuna.PeriodoMesesRecomendado)
@@ -130,6 +134,9 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
                 Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim()
             };
 
+            if (descuentaStock)
+                vacuna.Stock -= 1;
+
             context.AplicacionesVacuna.Add(entidad);
             await context.SaveChangesAsync();
             return Resultado<long>.Exito(entidad.Id, "Aplicación de vacuna registrada exitosamente.");
@@ -151,23 +158,6 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el registro con ID {id}.");
 
-            if (solicitud.IdVacuna > 0)
-            {
-                var vacuna = await context.Vacunas.FirstOrDefaultAsync(v => v.Id == solicitud.IdVacuna);
-                if (vacuna is null)
-                    return Resultado.Falla($"No existe la vacuna con ID {solicitud.IdVacuna}.");
-
-                var idEspecieMascota = await context.Consultas
-                    .Where(c => c.Id == entidad.IdConsulta)
-                    .Select(c => c.Mascota.Raza.IdEspecie)
-                    .FirstOrDefaultAsync();
-
-                if (vacuna.IdEspecie != idEspecieMascota)
-                    return Resultado.Falla("La vacuna no corresponde a la especie de la mascota.");
-
-                entidad.IdVacuna = solicitud.IdVacuna;
-            }
-
             var errorDatos = ValidarDatos(
                 solicitud.FechaAplicacion == default ? entidad.FechaAplicacion : solicitud.FechaAplicacion,
                 solicitud.ProximaDosis ?? entidad.ProximaDosis,
@@ -175,6 +165,54 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
                 solicitud.Observaciones);
             if (errorDatos is not null)
                 return Resultado.Falla(errorDatos);
+
+            var idVacunaAnterior = entidad.IdVacuna;
+            var consumiaStock = entidad.PrecioUnitario.HasValue;
+            var consumeStock = solicitud.PrecioUnitario.HasValue;
+            var idVacunaNueva = solicitud.IdVacuna > 0 ? solicitud.IdVacuna : idVacunaAnterior;
+
+            if (idVacunaNueva != idVacunaAnterior || consumiaStock != consumeStock)
+            {
+                var vacunaNueva = await context.Vacunas.FirstOrDefaultAsync(v => v.Id == idVacunaNueva);
+                if (vacunaNueva is null)
+                    return Resultado.Falla($"No existe la vacuna con ID {idVacunaNueva}.");
+
+                var idEspecieMascota = await context.Consultas
+                    .Where(c => c.Id == entidad.IdConsulta)
+                    .Select(c => c.Mascota.Raza.IdEspecie)
+                    .FirstOrDefaultAsync();
+
+                if (vacunaNueva.IdEspecie != idEspecieMascota)
+                    return Resultado.Falla("La vacuna no corresponde a la especie de la mascota.");
+
+                if (idVacunaAnterior == idVacunaNueva)
+                {
+                    if (!consumiaStock && consumeStock && vacunaNueva.Stock < 1)
+                        return Resultado.Falla($"No hay stock suficiente de esta vacuna. Stock actual: {vacunaNueva.Stock}.");
+
+                    if (consumiaStock && !consumeStock)
+                        vacunaNueva.Stock += 1;
+                    else if (!consumiaStock && consumeStock)
+                        vacunaNueva.Stock -= 1;
+                }
+                else
+                {
+                    if (consumeStock && vacunaNueva.Stock < 1)
+                        return Resultado.Falla($"No hay stock suficiente de esta vacuna. Stock actual: {vacunaNueva.Stock}.");
+
+                    if (consumiaStock)
+                    {
+                        var vacunaAnterior = await context.Vacunas.FirstOrDefaultAsync(v => v.Id == idVacunaAnterior);
+                        if (vacunaAnterior is not null)
+                            vacunaAnterior.Stock += 1;
+                    }
+
+                    if (consumeStock)
+                        vacunaNueva.Stock -= 1;
+                }
+
+                entidad.IdVacuna = idVacunaNueva;
+            }
 
             entidad.PrecioUnitario = solicitud.PrecioUnitario;
 
@@ -204,6 +242,13 @@ public class AplicacionVacunaControlador(ContextoVeterinaria context)
             var entidad = await context.AplicacionesVacuna.FirstOrDefaultAsync(a => a.Id == id);
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el registro con ID {id}.");
+
+            if (entidad.PrecioUnitario.HasValue)
+            {
+                var vacuna = await context.Vacunas.FirstOrDefaultAsync(v => v.Id == entidad.IdVacuna);
+                if (vacuna is not null)
+                    vacuna.Stock += 1;
+            }
 
             context.AplicacionesVacuna.Remove(entidad);
             await context.SaveChangesAsync();

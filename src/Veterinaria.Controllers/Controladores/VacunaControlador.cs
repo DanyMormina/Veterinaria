@@ -85,6 +85,7 @@ public class VacunaControlador(ContextoVeterinaria context)
                 Nombre = nombreNormalizado,
                 PeriodoMesesRecomendado = solicitud.PeriodoMesesRecomendado,
                 Precio = solicitud.Precio,
+                Stock = solicitud.Stock,
                 Activo = true
             };
 
@@ -126,10 +127,14 @@ public class VacunaControlador(ContextoVeterinaria context)
             if (existeDuplicado)
                 return Resultado.Falla($"Ya existe otra vacuna '{nombreNormalizado}' para esa especie.");
 
+            if (solicitud.Stock < entidad.Stock)
+                return Resultado.Falla("El stock solo se puede aumentar.");
+
             entidad.IdEspecie = solicitud.IdEspecie;
             entidad.Nombre = nombreNormalizado;
             entidad.PeriodoMesesRecomendado = solicitud.PeriodoMesesRecomendado;
             entidad.Precio = solicitud.Precio;
+            entidad.Stock = solicitud.Stock;
 
             if (!context.ChangeTracker.HasChanges())
                 return Resultado.Falla("No se detectaron cambios para guardar.");
@@ -176,6 +181,7 @@ public class VacunaControlador(ContextoVeterinaria context)
                 Nombre = v.Nombre,
                 PeriodoMesesRecomendado = v.PeriodoMesesRecomendado,
                 Precio = v.Precio,
+                Stock = v.Stock,
                 Activo = v.Activo
             });
 
@@ -192,6 +198,9 @@ public class VacunaControlador(ContextoVeterinaria context)
 
         if (solicitud.Precio < 0)
             return "El precio de la vacuna no puede ser negativo.";
+
+        if (solicitud.Stock < 0)
+            return "El stock no puede ser negativo.";
 
         return null;
     }

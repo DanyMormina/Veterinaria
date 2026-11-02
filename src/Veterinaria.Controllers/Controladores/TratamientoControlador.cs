@@ -57,6 +57,7 @@ public class TratamientoControlador(ContextoVeterinaria context)
                 Descripcion = solicitud.Descripcion.Trim(),
                 Dosis = string.IsNullOrWhiteSpace(solicitud.Dosis) ? null : solicitud.Dosis.Trim(),
                 Precio = solicitud.Precio,
+                Stock = solicitud.Stock,
                 Activo = true
             };
 
@@ -94,6 +95,11 @@ public class TratamientoControlador(ContextoVeterinaria context)
             var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
             if (tratamiento is null)
                 return Resultado<long>.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
+
+            if (tratamiento.Stock < solicitud.Cantidad)
+                return Resultado<long>.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamiento.Stock}.");
+
+            tratamiento.Stock -= solicitud.Cantidad;
 
             // 2. Cálculo de importes unitario y subtotal
             var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : tratamiento.Precio;
@@ -209,10 +215,14 @@ public class TratamientoControlador(ContextoVeterinaria context)
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el tratamiento con ID {id}.");
 
+            if (solicitud.Stock < entidad.Stock)
+                return Resultado.Falla("El stock solo se puede aumentar.");
+
             entidad.TipoTratamiento = string.IsNullOrWhiteSpace(solicitud.TipoTratamiento) ? "General" : solicitud.TipoTratamiento.Trim();
             entidad.Descripcion = solicitud.Descripcion.Trim();
             entidad.Dosis = string.IsNullOrWhiteSpace(solicitud.Dosis) ? null : solicitud.Dosis.Trim();
             entidad.Precio = solicitud.Precio;
+            entidad.Stock = solicitud.Stock;
 
             if (!context.ChangeTracker.HasChanges())
                 return Resultado.Falla("No se detectaron cambios para guardar.");
@@ -261,6 +271,13 @@ public class TratamientoControlador(ContextoVeterinaria context)
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el tratamiento aplicado con ID {idDetalle}.");
 
+            if (entidad.Activo)
+            {
+                var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == entidad.IdTratamiento);
+                if (tratamiento is not null)
+                    tratamiento.Stock += entidad.Cantidad;
+            }
+
             entidad.Activo = false;
             await context.SaveChangesAsync();
             return Resultado.Exito("Tratamiento eliminado de la consulta.");
@@ -275,6 +292,9 @@ public class TratamientoControlador(ContextoVeterinaria context)
     {
         if (solicitud.Precio < 0)
             return "El precio del tratamiento no puede ser negativo.";
+
+        if (solicitud.Stock < 0)
+            return "El stock no puede ser negativo.";
 
         if (solicitud.Dosis?.Trim().Length > 100)
             return "La dosis no puede superar los 100 caracteres.";
@@ -295,6 +315,7 @@ public class TratamientoControlador(ContextoVeterinaria context)
                 Descripcion = t.Descripcion,
                 Dosis = t.Dosis,
                 Precio = t.Precio,
+                Stock = t.Stock,
                 Activo = t.Activo
             });
 }
