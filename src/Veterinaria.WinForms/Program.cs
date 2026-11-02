@@ -80,7 +80,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// Valida que el servidor de base de datos esté accesible e inicializa datos iniciales si no existen.
+    /// Valida conectividad e inicializa el esquema y datos iniciales si no existen.
     /// </summary>
     private static bool ValidarEInicializarBaseDeDatos(IServiceProvider serviceProvider, string cadenaConexion)
     {
@@ -89,18 +89,7 @@ internal static class Program
             using var scope = serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ContextoVeterinaria>();
 
-            // 1. Validar conectividad física con el servidor de base de datos
-            if (!dbContext.Database.CanConnect())
-            {
-                MostrarErrorConexion(
-                    "Error al conectar con el servidor de base de datos SQL Server.",
-                    cadenaConexion,
-                    "No se pudo establecer conexión con el servidor especificado.",
-                    "Error de Conexión a Base de Datos");
-                return false;
-            }
-
-            // 2. Inicializar esquema y sembrado inicial de datos si la base está vacía
+            // Inicializar esquema y sembrado inicial (EnsureCreatedAsync crea la base de datos si aún no existe)
             InicializadorDatos.InicializarAsync(dbContext).GetAwaiter().GetResult();
 
             return true;
@@ -109,10 +98,10 @@ internal static class Program
         {
             var detalle = ObtenerMensajeExcepcionCompleto(ex);
             MostrarErrorConexion(
-                "Error al inicializar los datos base del sistema.",
+                "Error al conectar con el servidor de base de datos o inicializar el sistema.",
                 cadenaConexion,
                 detalle,
-                "Error de Inicialización de Base de Datos");
+                "Error de Conexión a la Base de Datos");
             return false;
         }
     }

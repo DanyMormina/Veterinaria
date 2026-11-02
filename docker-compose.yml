@@ -9,6 +9,7 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=Pass123456!
+      - SQLCMDPASSWORD=Pass123456!
     volumes:
       - sqlserver_data:/var/opt/mssql/data
       - C:/Backup_Veterinaria:/var/opt/mssql/backup

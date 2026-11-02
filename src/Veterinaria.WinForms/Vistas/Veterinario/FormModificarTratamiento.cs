@@ -146,7 +146,6 @@ public partial class FormModificarTratamiento : Form
         numPrecio.Value = Math.Clamp(seleccionado.Precio, numPrecio.Minimum, numPrecio.Maximum);
         numStock.Minimum = 0;
         numStock.Value = Math.Clamp(seleccionado.Stock, 0, (int)numStock.Maximum);
-        numStock.Minimum = numStock.Value;
     }
 
     private void HabilitarEdicion(bool habilitar)

@@ -97,10 +97,9 @@ public partial class FormTratamientos : Form
                 return;
             }
 
-            _listaMascotas = resultado.Valor
+            _listaMascotas = [.. resultado.Valor
                 .Where(m => m.Activo)
-                .OrderBy(m => m.Nombre)
-                .ToList();
+                .OrderBy(m => m.Nombre)];
 
             cboMascotas.DataSource = null;
             cboMascotas.DisplayMember = nameof(MascotaComboItem.Texto);
@@ -143,10 +142,9 @@ public partial class FormTratamientos : Form
                 return;
             }
 
-            _listaTratamientos = resultado.Valor
+            _listaTratamientos = [.. resultado.Valor
                 .Where(t => t.Activo)
-                .OrderBy(t => t.Descripcion)
-                .ToList();
+                .OrderBy(t => t.Descripcion)];
 
             cboTratamientos.DataSource = null;
             cboTratamientos.DisplayMember = nameof(TratamientoComboItem.Texto);
@@ -201,9 +199,7 @@ public partial class FormTratamientos : Form
                 return;
             }
 
-            _listaConsultasMascota = resultado.Valor
-                .OrderByDescending(c => c.FechaHora)
-                .ToList();
+            _listaConsultasMascota = [.. resultado.Valor.OrderByDescending(c => c.FechaHora)];
 
             cboConsultas.DataSource = null;
             cboConsultas.DisplayMember = nameof(ConsultaComboItem.Texto);
@@ -297,7 +293,7 @@ public partial class FormTratamientos : Form
     /// <summary>
     /// Actualiza la ficha resumen de la mascota y recarga sus consultas clínicas en cascada.
     /// </summary>
-    private async void cboMascotas_SelectedIndexChanged(object? sender, EventArgs e)
+    private async void CboMascotas_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoMascotas) return;
 
@@ -321,13 +317,15 @@ public partial class FormTratamientos : Form
             lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
         }
 
+        // Recargar catálogo de tratamientos para asegurar stock y precios vigentes
+        await CargarCatalogoTratamientosAsync();
         await CargarConsultasDeMascotaAsync(idMascota.Value);
     }
 
     /// <summary>
     /// Al cambiar la consulta seleccionada, actualiza la grilla con los tratamientos de esa consulta.
     /// </summary>
-    private async void cboConsultas_SelectedIndexChanged(object? sender, EventArgs e)
+    private async void CboConsultas_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoConsultas) return;
 
@@ -346,7 +344,7 @@ public partial class FormTratamientos : Form
     /// <summary>
     /// Al cambiar el tratamiento seleccionado, recalcula dinámicamente el Subtotal en tiempo real.
     /// </summary>
-    private void cboTratamientos_SelectedIndexChanged(object? sender, EventArgs e)
+    private void CboTratamientos_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoTratamientos) return;
         RecalcularSubtotal();
@@ -355,7 +353,7 @@ public partial class FormTratamientos : Form
     /// <summary>
     /// Al variar la cantidad, recalcula el Subtotal en tiempo real.
     /// </summary>
-    private void numCantidad_ValueChanged(object? sender, EventArgs e)
+    private void NumCantidad_ValueChanged(object? sender, EventArgs e)
     {
         RecalcularSubtotal();
     }
@@ -415,7 +413,7 @@ public partial class FormTratamientos : Form
     /// <summary>
     /// Abre el diálogo modal de Alta de Tratamiento (#C88A96) y refresca el catálogo al confirmarse.
     /// </summary>
-    private async void btnAltaTratamiento_Click(object? sender, EventArgs e)
+    private async void BtnAltaTratamiento_Click(object? sender, EventArgs e)
     {
         using var modalAlta = new FormAltaTratamiento(_tratamientoControlador);
         var resultadoModal = modalAlta.ShowDialog(this);
@@ -430,7 +428,7 @@ public partial class FormTratamientos : Form
     /// <summary>
     /// Abre el diálogo modal de Modificación/Baja (#E2D9DC) y refresca el catálogo al confirmarse.
     /// </summary>
-    private async void btnModificarTratamiento_Click(object? sender, EventArgs e)
+    private async void BtnModificarTratamiento_Click(object? sender, EventArgs e)
     {
         var idTratamiento = ObtenerIdSeleccionado(cboTratamientos);
         using var modalModificar = new FormModificarTratamiento(_tratamientoControlador, idTratamiento);
@@ -458,7 +456,7 @@ public partial class FormTratamientos : Form
     /// <summary>
     /// Registra la aplicación del tratamiento a la consulta clínica activa previa validación.
     /// </summary>
-    private async void btnAplicar_Click(object? sender, EventArgs e)
+    private async void BtnAplicar_Click(object? sender, EventArgs e)
     {
         // 1. Validaciones preventivas de selección
         var idConsulta = ObtenerIdSeleccionado(cboConsultas);
@@ -542,13 +540,19 @@ public partial class FormTratamientos : Form
                 return;
             }
 
-            // 4. Recargar la grilla con los detalles actualizados de la consulta activa y totalizar
+            // 4. Recargar el catálogo maestro para reflejar el descuento de stock inmediatamente
+            cboTratamientos.SelectedIndex = -1;
+            cboTratamientos.Text = string.Empty;
+            await CargarCatalogoTratamientosAsync();
+
+            // 5. Recargar la grilla con los detalles actualizados de la consulta activa y totalizar
             await CargarTratamientosConsultaAsync(idConsulta.Value);
 
-            // 5. Dejar listo para agregar otro tratamiento a la misma consulta
+            // 6. Dejar listo para agregar otro tratamiento a la misma consulta
             numCantidad.Value = 1;
             txtIndicaciones.Clear();
             cboTratamientos.SelectedIndex = -1;
+            cboTratamientos.Text = string.Empty;
             RecalcularSubtotal();
             cboTratamientos.Focus();
 
@@ -568,7 +572,7 @@ public partial class FormTratamientos : Form
         }
     }
 
-    private async void btnEliminar_Click(object? sender, EventArgs e)
+    private async void BtnEliminar_Click(object? sender, EventArgs e)
     {
         if (_tratamientoControlador is null)
             return;
@@ -598,20 +602,32 @@ public partial class FormTratamientos : Form
             return;
         }
 
+        // Recargar el catálogo maestro para reflejar la restitución del stock inmediatamente
+        await CargarCatalogoTratamientosAsync();
+
         var idConsulta = ObtenerIdSeleccionado(cboConsultas);
         if (idConsulta.HasValue && idConsulta.Value > 0)
             await CargarTratamientosConsultaAsync(idConsulta.Value);
 
-        lblInfoEstado.Text = "Tratamiento eliminado de la consulta.";
+        lblInfoEstado.Text = "Tratamiento eliminado de la consulta y stock restituido.";
     }
 
     /// <summary>
     /// Botón Limpiar: Restablece completamente el estado de la vista, limpiando selecciones
     /// de paciente, consultas, tratamientos, detalles y la grilla de tratamientos aplicados.
     /// </summary>
-    private void btnLimpiar_Click(object? sender, EventArgs e)
+    private async void BtnLimpiar_Click(object? sender, EventArgs e)
     {
-        RestablecerFormulario();
+        btnLimpiar.Enabled = false;
+        try
+        {
+            RestablecerFormulario();
+            await CargarCatalogoTratamientosAsync();
+        }
+        finally
+        {
+            btnLimpiar.Enabled = true;
+        }
     }
 
     /// <summary>
@@ -691,7 +707,7 @@ public partial class FormTratamientos : Form
         e.Handled = true;
     }
 
-    private void btnVolver_Click(object? sender, EventArgs e)
+    private void BtnVolver_Click(object? sender, EventArgs e)
     {
         Close();
     }

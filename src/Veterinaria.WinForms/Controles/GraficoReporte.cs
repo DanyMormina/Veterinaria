@@ -10,7 +10,8 @@ public sealed record SerieGrafico(string Nombre, Color Color, IReadOnlyList<deci
 
 /// <summary>
 /// Control de gráficos dibujado con GDI+ (sin librerías externas) para los reportes:
-/// columnas agrupadas, barras horizontales, dona y línea. Se puede dibujar también sobre una hoja impresa.
+/// columnas agrupadas, barras horizontales, dona y línea. Incluye tooltips interactivos,
+/// cabeceras adaptativas sin solapamiento y formato compacto de valores.
 /// </summary>
 public sealed class GraficoReporte : Control
 {
@@ -30,6 +31,7 @@ public sealed class GraficoReporte : Control
     ];
 
     private static readonly Color ColorTexto = Color.FromArgb(58, 53, 59);
+    private static readonly Color ColorTextoSecundario = Color.FromArgb(110, 105, 112);
     private static readonly Color ColorGrilla = Color.FromArgb(226, 217, 220);
     private static readonly CultureInfo Cultura = new("es-AR");
 
@@ -39,6 +41,47 @@ public sealed class GraficoReporte : Control
     private IReadOnlyList<string> _categorias = [];
     private IReadOnlyList<SerieGrafico> _series = [];
     private Func<decimal, string> _formato = v => v.ToString("N0", Cultura);
+
+    private readonly ToolTip _toolTip = new()
+    {
+        InitialDelay = 80,
+        ReshowDelay = 80,
+        AutoPopDelay = 5000
+    };
+    private string? _ultimoTextoTooltip;
+
+    private sealed class ElementoInteractivo
+    {
+        public RectangleF Rectangulo { get; init; }
+        public bool EsSectorCircular { get; init; }
+        public PointF Centro { get; init; }
+        public float RadioInterno { get; init; }
+        public float RadioExterno { get; init; }
+        public float AnguloInicio { get; init; }
+        public float AnguloBarrido { get; init; }
+        public string TextoTooltip { get; init; } = string.Empty;
+
+        public bool Contiene(PointF pt)
+        {
+            if (EsSectorCircular)
+            {
+                var dx = pt.X - Centro.X;
+                var dy = pt.Y - Centro.Y;
+                var dist = Math.Sqrt(dx * dx + dy * dy);
+                if (dist < RadioInterno || dist > RadioExterno)
+                    return false;
+
+                var angulo = Math.Atan2(dy, dx) * 180.0 / Math.PI;
+                var norm = (angulo - AnguloInicio) % 360.0;
+                if (norm < 0) norm += 360.0;
+                return norm <= AnguloBarrido;
+            }
+
+            return Rectangulo.Contains(pt);
+        }
+    }
+
+    private readonly List<ElementoInteractivo> _elementosInteractivos = [];
 
     public GraficoReporte()
     {
@@ -52,6 +95,9 @@ public sealed class GraficoReporte : Control
     {
         _tipo = TipoGrafico.Ninguno;
         _mensajeVacio = mensaje;
+        _elementosInteractivos.Clear();
+        _ultimoTextoTooltip = null;
+        _toolTip.Hide(this);
         Invalidate();
     }
 
@@ -61,16 +107,9 @@ public sealed class GraficoReporte : Control
     public void MostrarBarrasHorizontales(string titulo, IReadOnlyList<string> categorias, SerieGrafico serie, Func<decimal, string>? formato = null) =>
         Mostrar(TipoGrafico.BarrasHorizontales, titulo, categorias, [serie], formato);
 
-    /// <summary>
-    /// Línea de tendencia; con menos de 3 períodos una línea no muestra evolución, así que se dibujan columnas.
-    /// </summary>
     public void MostrarLinea(string titulo, IReadOnlyList<string> categorias, SerieGrafico serie, Func<decimal, string>? formato = null) =>
         Mostrar(categorias.Count < 3 ? TipoGrafico.Columnas : TipoGrafico.Linea, titulo, categorias, [serie], formato);
 
-    /// <summary>
-    /// Evolución en el tiempo eligiendo el gráfico según la cantidad de períodos:
-    /// columnas para pocos períodos (se comparan valores puntuales) y línea para muchos (se lee la tendencia).
-    /// </summary>
     public void MostrarEvolucion(string titulo, IReadOnlyList<string> categorias, IReadOnlyList<SerieGrafico> series, Func<decimal, string>? formato = null) =>
         Mostrar(categorias.Count <= MaximoPeriodosColumnas ? TipoGrafico.Columnas : TipoGrafico.Linea, titulo, categorias, series, formato);
 
@@ -88,6 +127,9 @@ public sealed class GraficoReporte : Control
         _categorias = categorias;
         _series = series;
         _formato = formato ?? (v => v.ToString("N0", Cultura));
+        _elementosInteractivos.Clear();
+        _ultimoTextoTooltip = null;
+        _toolTip.Hide(this);
         Invalidate();
     }
 
@@ -95,6 +137,46 @@ public sealed class GraficoReporte : Control
     {
         base.OnPaint(e);
         Dibujar(e.Graphics, ClientRectangle);
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        if (_tipo == TipoGrafico.Ninguno) return;
+
+        var elemento = _elementosInteractivos.FirstOrDefault(elem => elem.Contiene(e.Location));
+        if (elemento is not null)
+        {
+            if (_ultimoTextoTooltip != elemento.TextoTooltip)
+            {
+                _ultimoTextoTooltip = elemento.TextoTooltip;
+                _toolTip.Show(elemento.TextoTooltip, this, e.X + 12, e.Y + 16, 4000);
+            }
+        }
+        else
+        {
+            if (_ultimoTextoTooltip is not null)
+            {
+                _ultimoTextoTooltip = null;
+                _toolTip.Hide(this);
+            }
+        }
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _ultimoTextoTooltip = null;
+        _toolTip.Hide(this);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _toolTip.Dispose();
+        }
+        base.Dispose(disposing);
     }
 
     /// <summary>
@@ -106,7 +188,7 @@ public sealed class GraficoReporte : Control
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
         using var fuente = new Font("Segoe UI", 8.5F);
-        using var fuenteTitulo = new Font("Segoe UI", 11F, FontStyle.Bold);
+        using var fuenteTitulo = new Font("Segoe UI", 10.5F, FontStyle.Bold);
         using var pincelTexto = new SolidBrush(ColorTexto);
 
         if (_tipo == TipoGrafico.Ninguno)
@@ -116,8 +198,51 @@ public sealed class GraficoReporte : Control
             return;
         }
 
-        g.DrawString(_titulo, fuenteTitulo, pincelTexto, area.Left + 12, area.Top + 8);
-        var cuerpo = Rectangle.FromLTRB(area.Left + 12, area.Top + 36, area.Right - 12, area.Bottom - 10);
+        // Si estamos dibujando en pantalla (mismo tamaño que el control), actualizamos la lista interactiva
+        if (area.Width == ClientRectangle.Width && area.Height == ClientRectangle.Height)
+        {
+            _elementosInteractivos.Clear();
+        }
+
+        // Evaluación dinámica del encabezado: si título y leyenda no entran juntos, se colocan en 2 renglones
+        var hayLeyendaSuperior = (_tipo == TipoGrafico.Columnas && _series.Count > 0) ||
+                                  (_tipo == TipoGrafico.Linea && _series.Count > 1);
+
+        float anchoLeyenda = 0;
+        if (hayLeyendaSuperior)
+        {
+            foreach (var s in _series)
+            {
+                anchoLeyenda += g.MeasureString(s.Nombre, fuente).Width + 24f;
+            }
+        }
+
+        var tamTitulo = g.MeasureString(_titulo, fuenteTitulo);
+        var anchoDisponible = (float)(area.Width - 24);
+        var cabeEnUnaLinea = !hayLeyendaSuperior || (tamTitulo.Width + anchoLeyenda + 20f <= anchoDisponible);
+
+        int altoEncabezado;
+        if (cabeEnUnaLinea)
+        {
+            altoEncabezado = 36;
+            g.DrawString(_titulo, fuenteTitulo, pincelTexto, area.Left + 12, area.Top + 8);
+            if (hayLeyendaSuperior)
+            {
+                DibujarLeyendaHorizontal(g, area.Right - 12, area.Top + 10, fuente, pincelTexto);
+            }
+        }
+        else
+        {
+            // Título arriba, leyenda en segundo renglón
+            altoEncabezado = 54;
+            g.DrawString(_titulo, fuenteTitulo, pincelTexto, area.Left + 12, area.Top + 6);
+            if (hayLeyendaSuperior)
+            {
+                DibujarLeyendaHorizontal(g, area.Right - 12, area.Top + 30, fuente, pincelTexto);
+            }
+        }
+
+        var cuerpo = Rectangle.FromLTRB(area.Left + 12, area.Top + altoEncabezado, area.Right - 12, area.Bottom - 10);
         if (cuerpo.Width < 80 || cuerpo.Height < 80)
             return;
 
@@ -138,22 +263,19 @@ public sealed class GraficoReporte : Control
         }
     }
 
-    private void DibujarLeyenda(Graphics g, Rectangle cuerpo, Font fuente, Brush pincelTexto)
+    private void DibujarLeyendaHorizontal(Graphics g, float rightX, float topY, Font fuente, Brush pincelTexto)
     {
-        var x = (float)cuerpo.Right;
+        var x = rightX;
         for (var i = _series.Count - 1; i >= 0; i--)
         {
-            var ancho = g.MeasureString(_series[i].Nombre, fuente).Width;
-            x -= ancho + 22;
+            var anchoTexto = g.MeasureString(_series[i].Nombre, fuente).Width;
+            x -= (anchoTexto + 22f);
             using var pincel = new SolidBrush(_series[i].Color);
-            g.FillRectangle(pincel, x, cuerpo.Top - 26, 12, 12);
-            g.DrawString(_series[i].Nombre, fuente, pincelTexto, x + 15, cuerpo.Top - 28);
+            g.FillRectangle(pincel, x, topY + 2f, 11f, 11f);
+            g.DrawString(_series[i].Nombre, fuente, pincelTexto, x + 15f, topY);
         }
     }
 
-    /// <summary>
-    /// Dibuja ejes y líneas guía; devuelve el área de trazado y el máximo de la escala.
-    /// </summary>
     private (RectangleF Trazado, decimal Maximo) DibujarEjes(Graphics g, Rectangle cuerpo, Font fuente, Brush pincelTexto, decimal maximoDatos)
     {
         var maximo = MaximoRedondeado(maximoDatos);
@@ -190,13 +312,11 @@ public sealed class GraficoReporte : Control
 
     private void DibujarColumnas(Graphics g, Rectangle cuerpo, Font fuente, Brush pincelTexto)
     {
-        DibujarLeyenda(g, cuerpo, fuente, pincelTexto);
         var maximoDatos = _series.SelectMany(s => s.Valores).DefaultIfEmpty(0).Max();
         var (trazado, maximo) = DibujarEjes(g, cuerpo, fuente, pincelTexto, maximoDatos);
 
         var anchoGrupo = trazado.Width / _categorias.Count;
         var anchoBarra = Math.Clamp(anchoGrupo * 0.75f / _series.Count, 2f, AnchoMaximoBarra);
-        using var formatoCentro = new StringFormat { Alignment = StringAlignment.Center };
 
         for (var c = 0; c < _categorias.Count; c++)
         {
@@ -204,25 +324,67 @@ public sealed class GraficoReporte : Control
             for (var s = 0; s < _series.Count; s++)
             {
                 var valor = c < _series[s].Valores.Count ? _series[s].Valores[c] : 0;
-                var alto = (float)(valor / maximo) * trazado.Height;
-                var rect = new RectangleF(inicioGrupo + anchoBarra * s, trazado.Bottom - alto, anchoBarra - 1, alto);
+                var alto = maximo > 0 ? (float)(valor / maximo) * trazado.Height : 0;
+                var rect = new RectangleF(inicioGrupo + anchoBarra * s, trazado.Bottom - alto, Math.Max(1f, anchoBarra - 1), alto);
                 using var pincel = new SolidBrush(_series[s].Color);
                 g.FillRectangle(pincel, rect);
 
-                if (valor > 0 && anchoBarra >= 18)
-                    g.DrawString(_formato(valor), fuente, pincelTexto, new RectangleF(rect.Left - 20, rect.Top - 16, rect.Width + 40, 16), formatoCentro);
+                // Registrar para hover tooltip
+                _elementosInteractivos.Add(new ElementoInteractivo
+                {
+                    Rectangulo = new RectangleF(rect.Left, rect.Top - 8, Math.Max(rect.Width, 8), Math.Max(rect.Height + 8, 16)),
+                    TextoTooltip = $"{_categorias[c]}\n{_series[s].Nombre}: {_formato(valor)}"
+                });
+
+                // Comprobar si entra la etiqueta sobre la barra sin solapamiento
+                if (valor > 0 && alto > 2)
+                {
+                    var textoCompleto = _formato(valor);
+                    var anchoCompleto = g.MeasureString(textoCompleto, fuente).Width;
+                    var espacioDisponible = (_series.Count == 1) ? anchoGrupo - 2 : anchoBarra + 2;
+
+                    if (anchoCompleto <= espacioDisponible)
+                    {
+                        g.DrawString(textoCompleto, fuente, pincelTexto,
+                            new RectangleF(rect.Left + (rect.Width - anchoCompleto) / 2, rect.Top - 16, anchoCompleto, 16));
+                    }
+                    else
+                    {
+                        var textoCompacto = FormatearCompacto(valor);
+                        var anchoCompacto = g.MeasureString(textoCompacto, fuente).Width;
+                        if (anchoCompacto <= espacioDisponible)
+                        {
+                            g.DrawString(textoCompacto, fuente, pincelTexto,
+                                new RectangleF(rect.Left + (rect.Width - anchoCompacto) / 2, rect.Top - 16, anchoCompacto, 16));
+                        }
+                    }
+                }
             }
         }
 
         DibujarEtiquetasCategorias(g, trazado, fuente, pincelTexto, anchoGrupo, true);
     }
 
+    private static string FormatearCompacto(decimal valor)
+    {
+        if (valor >= 1_000_000m)
+        {
+            var millones = valor / 1_000_000m;
+            return millones >= 10m
+                ? $"$ {millones:0.#}M"
+                : $"$ {millones:0.##}M";
+        }
+        if (valor >= 10_000m)
+        {
+            var miles = valor / 1_000m;
+            return $"$ {miles:0.#}k";
+        }
+        return valor.ToString("N0", Cultura);
+    }
+
     private void DibujarLinea(Graphics g, Rectangle cuerpo, Font fuente, Brush pincelTexto)
     {
         var variasSeries = _series.Count > 1;
-        if (variasSeries)
-            DibujarLeyenda(g, cuerpo, fuente, pincelTexto);
-
         var maximoDatos = _series.SelectMany(s => s.Valores).DefaultIfEmpty(0).Max();
         var (trazado, maximo) = DibujarEjes(g, cuerpo, fuente, pincelTexto, maximoDatos);
 
@@ -234,12 +396,11 @@ public sealed class GraficoReporte : Control
             var puntos = serie.Valores
                 .Select((v, i) => new PointF(
                     _categorias.Count > 1 ? trazado.Left + paso * i : trazado.Left + trazado.Width / 2,
-                    trazado.Bottom - (float)(v / maximo) * trazado.Height))
+                    maximo > 0 ? trazado.Bottom - (float)(v / maximo) * trazado.Height : trazado.Bottom))
                 .ToArray();
 
             if (puntos.Length > 1)
             {
-                // Con varias series el relleno taparía las otras líneas
                 if (!variasSeries)
                 {
                     using var relleno = new SolidBrush(Color.FromArgb(50, serie.Color));
@@ -257,7 +418,15 @@ public sealed class GraficoReporte : Control
             {
                 g.FillEllipse(pincelPunto, puntos[i].X - radio, puntos[i].Y - radio, radio * 2, radio * 2);
                 if (mostrarValores)
+                {
                     g.DrawString(_formato(serie.Valores[i]), fuente, pincelTexto, new RectangleF(puntos[i].X - 50, puntos[i].Y - 20, 100, 16), formatoCentro);
+                }
+
+                _elementosInteractivos.Add(new ElementoInteractivo
+                {
+                    Rectangulo = new RectangleF(puntos[i].X - 10, puntos[i].Y - 10, 20, 20),
+                    TextoTooltip = $"{_categorias[i]}\n{serie.Nombre}: {_formato(serie.Valores[i])}"
+                });
             }
         }
 
@@ -284,11 +453,17 @@ public sealed class GraficoReporte : Control
         {
             var y = trazado.Top + altoFila * i;
             var valor = i < serie.Valores.Count ? serie.Valores[i] : 0;
-            var ancho = (float)(valor / maximo) * trazado.Width;
+            var ancho = maximo > 0 ? (float)(valor / maximo) * trazado.Width : 0;
             using var pincel = new SolidBrush(Paleta[i % Paleta.Length]);
             g.FillRectangle(pincel, trazado.Left, y + altoFila * 0.15f, ancho, altoFila * 0.7f);
             g.DrawString(_categorias[i], fuente, pincelTexto, new RectangleF(cuerpo.Left, y, anchoEtiqueta - 8, altoFila), formatoEtiqueta);
             g.DrawString(_formato(valor), fuente, pincelTexto, new RectangleF(trazado.Left + ancho + 4, y, anchoValor + 40, altoFila), formatoValor);
+
+            _elementosInteractivos.Add(new ElementoInteractivo
+            {
+                Rectangulo = new RectangleF(trazado.Left, y, trazado.Width + anchoValor, altoFila),
+                TextoTooltip = $"{_categorias[i]}: {_formato(valor)}"
+            });
         }
     }
 
@@ -296,39 +471,101 @@ public sealed class GraficoReporte : Control
     {
         var valores = _series[0].Valores;
         var total = valores.Sum();
-        var diametro = Math.Min(cuerpo.Height - 10, (int)(cuerpo.Width * 0.5));
-        var circulo = new Rectangle(cuerpo.Left + 20, cuerpo.Top + (cuerpo.Height - diametro) / 2, diametro, diametro);
+        if (valores.Count == 0 || total <= 0)
+        {
+            using var formatoCentro = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+            g.DrawString("Sin datos registrados para graficar.", fuente, Brushes.Gray, cuerpo, formatoCentro);
+            return;
+        }
+
+        using var fuenteSecundaria = new Font("Segoe UI", 8F);
+        using var pincelGris = new SolidBrush(ColorTextoSecundario);
+
+        float anchoLeyendaMaximo = 0;
+        for (var i = 0; i < valores.Count; i++)
+        {
+            var textoCompleto = $"{_categorias[i]}: {_formato(valores[i])} ({(valores[i] / total * 100):0.#}%)";
+            var ancho = g.MeasureString(textoCompleto, fuente).Width;
+            if (ancho > anchoLeyendaMaximo) anchoLeyendaMaximo = ancho;
+        }
+
+        // Asignar espacio equilibrado entre la dona y la leyenda
+        var anchoLeyendaDeseado = Math.Clamp(anchoLeyendaMaximo + 26f, cuerpo.Width * 0.45f, cuerpo.Width * 0.60f);
+        var espacioDonut = cuerpo.Width - anchoLeyendaDeseado - 16f;
+
+        var diametro = Math.Min(cuerpo.Height - 12, (int)espacioDonut);
+        diametro = Math.Max(diametro, 80);
+
+        var circulo = new Rectangle(
+            (int)(cuerpo.Left + Math.Max(4, (espacioDonut - diametro) / 2)),
+            cuerpo.Top + (cuerpo.Height - diametro) / 2,
+            diametro,
+            diametro);
+
+        var radioExterno = diametro / 2f;
+        var radioInterno = diametro / 4f;
+        var centroX = circulo.Left + radioExterno;
+        var centroY = circulo.Top + radioExterno;
 
         float angulo = -90;
         for (var i = 0; i < valores.Count; i++)
         {
-            if (total <= 0) break;
             var barrido = (float)(valores[i] / total) * 360f;
             using var pincel = new SolidBrush(Paleta[i % Paleta.Length]);
             g.FillPie(pincel, circulo, angulo, barrido);
+
+            var porcentaje = valores[i] / total * 100;
+            _elementosInteractivos.Add(new ElementoInteractivo
+            {
+                EsSectorCircular = true,
+                Centro = new PointF(centroX, centroY),
+                RadioInterno = radioInterno,
+                RadioExterno = radioExterno,
+                AnguloInicio = angulo,
+                AnguloBarrido = barrido,
+                TextoTooltip = $"{_categorias[i]}\n{_formato(valores[i])} ({porcentaje:0.#}% del total)"
+            });
+
             angulo += barrido;
         }
 
-        var hueco = Rectangle.Inflate(circulo, -diametro / 4, -diametro / 4);
+        var hueco = Rectangle.Inflate(circulo, -(int)radioInterno, -(int)radioInterno);
         using (var pincelFondo = new SolidBrush(Color.White))
             g.FillEllipse(pincelFondo, hueco);
 
-        using var fuenteTotal = new Font("Segoe UI", 12F, FontStyle.Bold);
-        using var formatoCentro = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-        g.DrawString($"Total\n{_formato(total)}", fuenteTotal, pincelTexto, hueco, formatoCentro);
+        using var fuenteTotal = new Font("Segoe UI", diametro > 140 ? 11F : 9.5F, FontStyle.Bold);
+        using var formatoCentroTotal = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+        g.DrawString($"Total\n{_formato(total)}", fuenteTotal, pincelTexto, hueco, formatoCentroTotal);
 
-        var xLeyenda = circulo.Right + 30;
-        var altoFila = Math.Min(26f, (float)cuerpo.Height / Math.Max(valores.Count, 1));
+        // Leyenda
+        var xLeyenda = circulo.Right + 16f;
+        var anchoLeyendaDisponible = cuerpo.Right - xLeyenda;
+        var altoFila = Math.Clamp((float)(cuerpo.Height - 8) / Math.Max(valores.Count, 1), 24f, 38f);
         var yLeyenda = cuerpo.Top + (cuerpo.Height - altoFila * valores.Count) / 2;
-        using var formatoLeyenda = new StringFormat { LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter };
+
         for (var i = 0; i < valores.Count; i++)
         {
-            var porcentaje = total > 0 ? valores[i] / total * 100 : 0;
-            using var pincel = new SolidBrush(Paleta[i % Paleta.Length]);
+            var porcentaje = valores[i] / total * 100;
             var y = yLeyenda + altoFila * i;
-            g.FillRectangle(pincel, xLeyenda, y + altoFila / 2 - 6, 12, 12);
-            g.DrawString($"{_categorias[i]}: {_formato(valores[i])} ({porcentaje:0.#}%)", fuente, pincelTexto,
-                new RectangleF(xLeyenda + 18, y, cuerpo.Right - xLeyenda - 18, altoFila), formatoLeyenda);
+            using var pincel = new SolidBrush(Paleta[i % Paleta.Length]);
+            g.FillRectangle(pincel, xLeyenda, y + 6f, 11f, 11f);
+
+            var textoLineaUnica = $"{_categorias[i]}: {_formato(valores[i])} ({porcentaje:0.#}%)";
+            var entraEnUnaLinea = g.MeasureString(textoLineaUnica, fuente).Width <= anchoLeyendaDisponible - 18f;
+            var rectTexto = new RectangleF(xLeyenda + 16f, y, anchoLeyendaDisponible - 16f, altoFila);
+
+            if (entraEnUnaLinea || altoFila < 28f)
+            {
+                using var formatoSimple = new StringFormat { LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
+                g.DrawString(textoLineaUnica, fuente, pincelTexto, rectTexto, formatoSimple);
+            }
+            else
+            {
+                // Formato en 2 líneas estructuradas: categoría arriba, importe abajo
+                using var formatoNoWrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
+                g.DrawString(_categorias[i], fuente, pincelTexto, new RectangleF(rectTexto.Left, y + 1, rectTexto.Width, 15), formatoNoWrap);
+                g.DrawString($"{_formato(valores[i])} ({porcentaje:0.#}%)", fuenteSecundaria, pincelGris, new RectangleF(rectTexto.Left, y + 16, rectTexto.Width, 14), formatoNoWrap);
+            }
         }
     }
 

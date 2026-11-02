@@ -326,6 +326,10 @@ GO
 -- ------------------------------------------------------------------------------
 -- 8. INDICES UNICOS (en catálogos solo entre registros activos)
 -- ------------------------------------------------------------------------------
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
 CREATE UNIQUE NONCLUSTERED INDEX UQ_Usuario_DNI ON dbo.Usuario (DNI);
 CREATE UNIQUE NONCLUSTERED INDEX UQ_Especie_Nombre ON dbo.Especie (Nombre) WHERE Activo = 1;
 CREATE UNIQUE NONCLUSTERED INDEX UQ_Raza_Especie_Nombre ON dbo.Raza (IdEspecie, Nombre) WHERE Activo = 1;

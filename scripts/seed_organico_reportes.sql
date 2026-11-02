@@ -1,10 +1,13 @@
 ﻿/* =========================================================================================
-   SCRIPT DE HIDRATACIÓN ORGÁNICA PARA REPORTES Y GRÁFICOS - VETERINARIADB
+   SCRIPT DE POBLAMIENTO ORGÁNICO PARA REPORTES Y GRÁFICOS - VETERINARIADB
    Arquitectura: .NET 10 / SQL Server
    Objetivo: Poblar 18 meses de historia clínica continua, censo demográfico con distribución
              de Pareto en propietarios, proporciones clínicas realistas y cobros consistentes.
    Carácter: Idempotente (preserva usuarios base, roles, especies, métodos de pago y backups).
    ========================================================================================= */
+
+USE VeterinariaDb;
+GO
 
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
@@ -49,6 +52,49 @@ UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Débito', Activo = 1 WHERE Id = 
 UPDATE dbo.MetodoPago SET Nombre = N'Tarjeta de Crédito', Activo = 1 WHERE Id = 3;
 UPDATE dbo.MetodoPago SET Nombre = N'Transferencia Bancaria', Activo = 1 WHERE Id = 4;
 
+-- Asegurar columnas de stock en catálogos si no existen
+IF COL_LENGTH('dbo.Vacuna', 'Stock') IS NULL
+    ALTER TABLE dbo.Vacuna ADD Stock INT NOT NULL CONSTRAINT DF_Vacuna_Stock DEFAULT (0);
+
+IF COL_LENGTH('dbo.Tratamiento', 'Stock') IS NULL
+    ALTER TABLE dbo.Tratamiento ADD Stock INT NOT NULL CONSTRAINT DF_Tratamiento_Stock DEFAULT (0);
+
+-- Asegurar tipo de usuario Gerente
+IF NOT EXISTS (SELECT 1 FROM dbo.TipoUsuario WHERE Nombre = 'Gerente')
+    INSERT INTO dbo.TipoUsuario (Nombre, Activo) VALUES ('Gerente', 1);
+
+-- Asegurar usuarios base y usuarios del set poblado con sus hashes respectivos
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE NombreUsuario = N'admin')
+    INSERT INTO dbo.Usuario (IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+    VALUES (1, N'admin', N'$2a$11$8OSOAXnlbeE3RjVyOweCiOwtb3J1T2/Hq3fodZnA29JxCe7WiNqKe', N'Administrador', N'Sistema', N'12345678', N'ADM-001', 1, 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE NombreUsuario = N'lLOPEZ.ADM')
+    INSERT INTO dbo.Usuario (IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+    VALUES (1, N'lLOPEZ.ADM', N'$2a$11$B9fnqzmMt4X/9Sb7q/hVgug0V12up3RX9xSEs8MOaXf5TOhwSjdGe', N'Luana', N'López', N'38343170', N'ADM-002', 1, 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE NombreUsuario = N'vet')
+    INSERT INTO dbo.Usuario (IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+    VALUES (2, N'vet', N'$2a$11$Iv.ENFfFRaZJI7JwslS0iOipZEze23u16C5R0JFPYZCtMYLiN1qUq', N'Lucía', N'Pérez', N'23456789', N'MN-1024', 0, 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE NombreUsuario = N'MROGRIGUEZ.VET')
+    INSERT INTO dbo.Usuario (IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+    VALUES (2, N'MROGRIGUEZ.VET', N'$2a$11$EVpd4404qOkCIdmiRikNP.9KwrX9bVxa3TlCviloob8GuRd96jA3e', N'Mariano', N'Rodríguez', N'39343166', N'MP-2045', 0, 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE NombreUsuario = N'secretario')
+    INSERT INTO dbo.Usuario (IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+    VALUES (3, N'secretario', N'$2a$11$lB3gNdyUphX/b08KDTsr7eT1gaxfwnS9ajX/N/Y.QWsktPVvPpv9.', N'Daniela', N'Mormina', N'38343166', N'REC-001', 0, 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE NombreUsuario = N'cMORALES.SEC')
+    INSERT INTO dbo.Usuario (IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+    VALUES (3, N'cMORALES.SEC', N'$2a$11$.h/YtO5FDpLO2kuEMhCpke0oNzAVam08SyJkxuLVEerhFX7bDIXiu', N'Carlos', N'Morales', N'45261588', N'REC-002', 0, 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE NombreUsuario = N'gerente')
+    INSERT INTO dbo.Usuario (IdTipoUsuario, NombreUsuario, HashContrasena, Nombre, Apellido, DNI, Matricula, PuedeRestaurarBD, Activo)
+    VALUES (4, N'gerente', N'$2a$11$/bDlvCQkzjT3X7BsN6xVguoULrTWEQYwl2jUXogcFNOikxQzkFg8.', N'Gerente', N'General', N'45678901', N'GER-001', 0, 1);
+
+UPDATE dbo.Usuario SET PuedeRestaurarBD = 1 WHERE NombreUsuario IN (N'admin', N'lLOPEZ.ADM');
+UPDATE dbo.Usuario SET IdTipoUsuario = 4 WHERE NombreUsuario = N'gerente';
+
 -- Desactivar usuario de prueba basura ("da FDDFSDF") y normalizar nombres de veterinarios activos
 UPDATE dbo.Usuario SET Activo = 0 WHERE NombreUsuario IN (N'DNJANKA', N'LLOPEZ');
 
@@ -82,113 +128,122 @@ IF @IdVetJunior IS NULL    SET @IdVetJunior = @IdVetSenior;
 -- =========================================================================================
 -- 3. CATÁLOGO DE RAZAS POR ESPECIE
 -- =========================================================================================
-INSERT INTO dbo.Raza (IdEspecie, Nombre, Activo) VALUES
+SET IDENTITY_INSERT dbo.Raza ON;
+INSERT INTO dbo.Raza (Id, IdEspecie, Nombre, Activo) VALUES
 -- Caninos (IdEspecie = 1) -> IDs 1..6
-(1, N'Mestizo Canino', 1),
-(1, N'Caniche', 1),
-(1, N'Labrador Retriever', 1),
-(1, N'Bulldog Francés', 1),
-(1, N'Ovejero Alemán', 1),
-(1, N'Golden Retriever', 1),
+(1, 1, N'Mestizo Canino', 1),
+(2, 1, N'Caniche', 1),
+(3, 1, N'Labrador Retriever', 1),
+(4, 1, N'Bulldog Francés', 1),
+(5, 1, N'Ovejero Alemán', 1),
+(6, 1, N'Golden Retriever', 1),
 -- Felinos (IdEspecie = 2) -> IDs 7..10
-(2, N'Común Europeo', 1),
-(2, N'Siamés', 1),
-(2, N'Persa', 1),
-(2, N'Maine Coon', 1),
+(7, 2, N'Común Europeo', 1),
+(8, 2, N'Siamés', 1),
+(9, 2, N'Persa', 1),
+(10, 2, N'Maine Coon', 1),
 -- Aves (IdEspecie = 3) -> IDs 11..12
-(3, N'Cacatúa Ninfa', 1),
-(3, N'Canario Doméstico', 1),
+(11, 3, N'Cacatúa Ninfa', 1),
+(12, 3, N'Canario Doméstico', 1),
 -- Roedores (IdEspecie = 4) -> IDs 13..14
-(4, N'Cobayo', 1),
-(4, N'Conejo Californiano', 1);
+(13, 4, N'Cobayo', 1),
+(14, 4, N'Conejo Californiano', 1);
+SET IDENTITY_INSERT dbo.Raza OFF;
 
 -- =========================================================================================
 -- 4. CATÁLOGO DE VACUNAS Y TRATAMIENTOS CON PRECIOS REALISTAS (ARS)
 -- =========================================================================================
-INSERT INTO dbo.Vacuna (IdEspecie, Nombre, PeriodoMesesRecomendado, Precio, Activo) VALUES
+SET IDENTITY_INSERT dbo.Vacuna ON;
+INSERT INTO dbo.Vacuna (Id, IdEspecie, Nombre, PeriodoMesesRecomendado, Precio, Stock, Activo) VALUES
 -- Caninos (IDs 1..4)
-(1, N'Séxtuple Canina (DHPPI+L)', 12, 24500.00, 1),
-(1, N'Antirrábica Anual Canina', 12, 19500.00, 1),
-(1, N'Refuerzo Séxtuple Cachorro', 1, 22000.00, 1),
-(1, N'Bordetella (Tos de las Perreras)', 12, 26000.00, 1),
+(1, 1, N'Séxtuple Canina (DHPPI+L)', 12, 24500.00, 50, 1),
+(2, 1, N'Antirrábica Anual Canina', 12, 19500.00, 50, 1),
+(3, 1, N'Refuerzo Séxtuple Cachorro', 1, 22000.00, 50, 1),
+(4, 1, N'Bordetella (Tos de las Perreras)', 12, 26000.00, 50, 1),
 -- Felinos (IDs 5..7)
-(2, N'Triple Felina (FVRCP)', 12, 23500.00, 1),
-(2, N'Antirrábica Anual Felina', 12, 19500.00, 1),
-(2, N'Leucemia Felina (FeLV)', 12, 29000.00, 1),
+(5, 2, N'Triple Felina (FVRCP)', 12, 23500.00, 50, 1),
+(6, 2, N'Antirrábica Anual Felina', 12, 19500.00, 50, 1),
+(7, 2, N'Leucemia Felina (FeLV)', 12, 29000.00, 50, 1),
 -- Otros / Roedores (ID 8)
-(4, N'Mixomatosis Viral', 6, 21000.00, 1);
+(8, 4, N'Mixomatosis Viral', 6, 21000.00, 50, 1);
+SET IDENTITY_INSERT dbo.Vacuna OFF;
 
-INSERT INTO dbo.Tratamiento (TipoTratamiento, Descripcion, Dosis, Precio, Activo) VALUES
+SET IDENTITY_INSERT dbo.Tratamiento ON;
+INSERT INTO dbo.Tratamiento (Id, TipoTratamiento, Descripcion, Dosis, Precio, Stock, Activo) VALUES
 -- IDs 1..10
-(N'Desparasitación', N'Desparasitación interna de amplio espectro (Praziquantel + Pirantel)', N'1 comp. cada 10 kg (dosis única)', 14500.00, 1),
-(N'Desparasitación', N'Aplicación ectoparasiticida Spot-On (Pipeta pulgas y garrapatas)', N'1 pipeta tópica según rango de peso', 18500.00, 1),
-(N'Medicación Clínica', N'Terapia antiemética y gastroprotectora parenteral', N'Maropitant 1 mg/kg SC + Omeprazol c/24h', 22500.00, 1),
-(N'Medicación Clínica', N'Antibioticoterapia sistémica de amplio espectro', N'Amoxicilina + Ác. Clavulánico 12.5 mg/kg c/12h x 7 días', 25000.00, 1),
-(N'Medicación Clínica', N'Analgesia y terapia antiinflamatoria (AINE)', N'Meloxicam 0.1 mg/kg c/24h vía oral x 5 días', 17500.00, 1),
-(N'Dermatología y Otología', N'Lavaje ótico antiséptico y medicación tópica polivalente', N'4 gotas en conducto auditivo c/12h x 10 días', 21000.00, 1),
-(N'Dermatología y Otología', N'Tratamiento dermatológico antialérgico y champú medicado', N'Prednisolona 0.5 mg/kg + Clorhexidina 2% semanal', 24000.00, 1),
-(N'Procedimiento Ambulatorio', N'Fluidoterapia endovenosa de rehidratación y electrolitos', N'Ringer Lactato 40 ml/kg EV en internación diurna', 38000.00, 1),
-(N'Procedimiento Ambulatorio', N'Toilette quirúrgico, antisepsia y sutura de herida superficial', N'Iodopovidona + puntos simples + Cefalexina 25 mg/kg', 34000.00, 1),
-(N'Procedimiento Ambulatorio', N'Profilaxis periodontal por ultrasonido (destartraje)', N'Limpieza ultrasónica bajo sedación ligera', 42000.00, 1);
+(1, N'Desparasitación', N'Desparasitación interna de amplio espectro (Praziquantel + Pirantel)', N'1 comp. cada 10 kg (dosis única)', 14500.00, 100, 1),
+(2, N'Desparasitación', N'Aplicación ectoparasiticida Spot-On (Pipeta pulgas y garrapatas)', N'1 pipeta tópica según rango de peso', 18500.00, 100, 1),
+(3, N'Medicación Clínica', N'Terapia antiemética y gastroprotectora parenteral', N'Maropitant 1 mg/kg SC + Omeprazol c/24h', 22500.00, 100, 1),
+(4, N'Medicación Clínica', N'Antibioticoterapia sistémica de amplio espectro', N'Amoxicilina + Ác. Clavulánico 12.5 mg/kg c/12h x 7 días', 25000.00, 100, 1),
+(5, N'Medicación Clínica', N'Analgesia y terapia antiinflamatoria (AINE)', N'Meloxicam 0.1 mg/kg c/24h vía oral x 5 días', 17500.00, 100, 1),
+(6, N'Dermatología y Otología', N'Lavaje ótico antiséptico y medicación tópica polivalente', N'4 gotas en conducto auditivo c/12h x 10 días', 21000.00, 100, 1),
+(7, N'Dermatología y Otología', N'Tratamiento dermatológico antialérgico y champú medicado', N'Prednisolona 0.5 mg/kg + Clorhexidina 2% semanal', 24000.00, 100, 1),
+(8, N'Procedimiento Ambulatorio', N'Fluidoterapia endovenosa de soporte y electrolitos', N'Ringer Lactato 40 ml/kg EV en internación diurna', 38000.00, 100, 1),
+(9, N'Procedimiento Ambulatorio', N'Toilette quirúrgico, antisepsia y sutura de herida superficial', N'Iodopovidona + puntos simples + Cefalexina 25 mg/kg', 34000.00, 100, 1),
+(10, N'Procedimiento Ambulatorio', N'Profilaxis periodontal por ultrasonido (destartraje)', N'Limpieza ultrasónica bajo sedación ligera', 42000.00, 100, 1);
+SET IDENTITY_INSERT dbo.Tratamiento OFF;
 
 -- =========================================================================================
 -- 5. PROPIETARIOS (50 PROPIETARIOS ARGENTINOS REALISTAS)
 --    Los primeros 8 propietarios forman una escalera de Pareto (7, 6, 5, 5, 4, 4, 3, 3 mascotas)
 -- =========================================================================================
-INSERT INTO dbo.Propietario (DNI, Nombre, Apellido, Telefono, CorreoElectronico, Direccion, Activo) VALUES
+SET IDENTITY_INSERT dbo.Propietario ON;
+INSERT INTO dbo.Propietario (Id, DNI, Nombre, Apellido, Telefono, CorreoElectronico, Direccion, Activo) VALUES
 -- Top 8 Propietarios para el gráfico de Barras Horizontales (IDs 1..8)
-(N'28451901', N'Valeria Soledad', N'Montes de Oca', N'387-4510291', N'valeria.montesdeoca@gmail.com', N'Av. Belgrano 1420, Salta', 1),         -- 7 mascotas
-(N'31094822', N'Santiago Ezequiel', N'Quiroga', N'387-5129043', N'santiago.quiroga85@hotmail.com', N'Caseros 845, Salta', 1),                  -- 6 mascotas
-(N'29847110', N'Carolina Inés', N'Figueroa', N'387-4892310', N'caro.figueroa.vet@gmail.com', N'Juramento 312, Salta', 1),                      -- 5 mascotas
-(N'33491025', N'Martín Alejandro', N'Cornejo', N'387-5301928', N'mcornejo.salta@gmail.com', N'Av. Reyes Católicos 1890, Salta', 1),            -- 5 mascotas
-(N'35102948', N'Florencia Belén', N'Aráoz', N'387-4771209', N'flor.araoz@yahoo.com.ar', N'Leguizamón 654, Salta', 1),                          -- 4 mascotas
-(N'26748391', N'Gustavo Adolfo', N'Torino', N'387-5908123', N'gustavo.torino@gmail.com', N'Mitre 1105, Salta', 1),                             -- 4 mascotas
-(N'37891204', N'Jorgelina Paz', N'Alvarado', N'387-4665432', N'jorgelina.alvarado@gmail.com', N'Zuviría 920, Salta', 1),                       -- 3 mascotas
-(N'32509184', N'Nicolás Federico', N'Saravia', N'387-5214789', N'nico.saravia@outlook.com', N'Santiago del Estero 480, Salta', 1),             -- 3 mascotas
+(1, N'28451901', N'Valeria Soledad', N'Montes de Oca', N'387-4510291', N'valeria.montesdeoca@gmail.com', N'Av. Belgrano 1420, Salta', 1),         -- 7 mascotas
+(2, N'31094822', N'Santiago Ezequiel', N'Quiroga', N'387-5129043', N'santiago.quiroga85@hotmail.com', N'Caseros 845, Salta', 1),                  -- 6 mascotas
+(3, N'29847110', N'Carolina Inés', N'Figueroa', N'387-4892310', N'caro.figueroa.vet@gmail.com', N'Juramento 312, Salta', 1),                      -- 5 mascotas
+(4, N'33491025', N'Martín Alejandro', N'Cornejo', N'387-5301928', N'mcornejo.salta@gmail.com', N'Av. Reyes Católicos 1890, Salta', 1),            -- 5 mascotas
+(5, N'35102948', N'Florencia Belén', N'Aráoz', N'387-4771209', N'flor.araoz@yahoo.com.ar', N'Leguizamón 654, Salta', 1),                          -- 4 mascotas
+(6, N'26748391', N'Gustavo Adolfo', N'Torino', N'387-5908123', N'gustavo.torino@gmail.com', N'Mitre 1105, Salta', 1),                             -- 4 mascotas
+(7, N'37891204', N'Jorgelina Paz', N'Alvarado', N'387-4665432', N'jorgelina.alvarado@gmail.com', N'Zuviría 920, Salta', 1),                       -- 3 mascotas
+(8, N'32509184', N'Nicolás Federico', N'Saravia', N'387-5214789', N'nico.saravia@outlook.com', N'Santiago del Estero 480, Salta', 1),             -- 3 mascotas
 -- Propietarios con 2 mascotas (IDs 9..29 -> 21 propietarios = 42 mascotas)
-(N'34112098', N'Luciana María', N'SOLÁ', N'387-4321098', N'luciana.sola@gmail.com', N'Gral. Güemes 740, Salta', 1),
-(N'27901234', N'Federico Gabriel', N'Ledesma', N'387-5432109', N'fede.ledesma@gmail.com', N'España 1250, Salta', 1),
-(N'39012345', N'Camila Victoria', N'Ovejero', N'387-4543210', N'cami.ovejero@gmail.com', N'Pueyrredón 530, Salta', 1),
-(N'30123456', N'Diego Sebastián', N'Uriburu', N'387-5654321', N'diego.uriburu@hotmail.com', N'Deán Funes 815, Salta', 1),
-(N'41234567', N'Agustina Rocío', N'Castellanos', N'387-4765432', N'agus.castellanos@gmail.com', N'Alvarado 1340, Salta', 1),
-(N'25345678', N'Roberto Carlos', N'San Millán', N'387-5876543', N'roberto.sanmillan@gmail.com', N'Urquiza 690, Salta', 1),
-(N'36456789', N'Paula Andrea', N'Usandivaras', N'387-4987654', N'paula.usandivaras@gmail.com', N'20 de Febrero 410, Salta', 1),
-(N'38567890', N'Gonzalo Matías', N'Bavastro', N'387-5098765', N'gonzalo.bavastro@gmail.com', N'Balcarce 950, Salta', 1),
-(N'40678901', N'Micaela Abril', N'Arias', N'387-4109876', N'mica.arias@gmail.com', N'Necochea 720, Salta', 1),
-(N'29789012', N'Hernán Darío', N'Peñalba', N'387-5210987', N'hernan.penalba@gmail.com', N'Ameghino 560, Salta', 1),
-(N'33890123', N'Romina Natalia', N'Ceballos', N'387-4320987', N'romina.ceballos@hotmail.com', N'Entre Ríos 1120, Salta', 1),
-(N'35901234', N'Facundo Tomás', N'Rovaletti', N'387-5430987', N'facu.rovaletti@gmail.com', N'Rivadavia 890, Salta', 1),
-(N'42012345', N'Valentina Sofía', N'Dávalos', N'387-4540987', N'valen.davalos@gmail.com', N'Alsina 630, Salta', 1),
-(N'24123456', N'Eduardo Jorge', N'Patrón Costas', N'387-5650987', N'eduardo.patron@gmail.com', N'Av. Virrey Toledo 450, Salta', 1),
-(N'37234567', N'Natalia Lorena', N'Sylvester', N'387-4760987', N'natalia.sylvester@gmail.com', N'Adolfo Güemes 380, Salta', 1),
-(N'31345678', N'Leandro Javier', N'Villagrán', N'387-5870987', N'leandro.villagran@gmail.com', N'Alvear 710, Salta', 1),
-(N'39456789', N'Julieta Mercedes', N'Becerra', N'387-4980987', N'juli.becerra@gmail.com', N'Bolívar 540, Salta', 1),
-(N'28567890', N'Cristian Emanuel', N'Mendoza', N'387-5090987', N'cristian.mendoza@gmail.com', N'Córdoba 620, Salta', 1),
-(N'34678901', N'Gabriela Fernanda', N'Peralta', N'387-4198765', N'gaby.peralta@gmail.com', N'Lerma 830, Salta', 1),
-(N'36789012', N'Maximiliano José', N'Aguirre', N'387-5298765', N'maxi.aguirre@gmail.com', N'Catamarca 470, Salta', 1),
-(N'43890123', N'Martina Candelaria', N'Ibarra', N'387-4398765', N'martina.ibarra@gmail.com', N'Santa Fe 910, Salta', 1),
+(9, N'34112098', N'Luciana María', N'SOLÁ', N'387-4321098', N'luciana.sola@gmail.com', N'Gral. Güemes 740, Salta', 1),
+(10, N'27901234', N'Federico Gabriel', N'Ledesma', N'387-5432109', N'fede.ledesma@gmail.com', N'España 1250, Salta', 1),
+(11, N'39012345', N'Camila Victoria', N'Ovejero', N'387-4543210', N'cami.ovejero@gmail.com', N'Pueyrredón 530, Salta', 1),
+(12, N'30123456', N'Diego Sebastián', N'Uriburu', N'387-5654321', N'diego.uriburu@hotmail.com', N'Deán Funes 815, Salta', 1),
+(13, N'41234567', N'Agustina Rocío', N'Castellanos', N'387-4765432', N'agus.castellanos@gmail.com', N'Alvarado 1340, Salta', 1),
+(14, N'25345678', N'Roberto Carlos', N'San Millán', N'387-5876543', N'roberto.sanmillan@gmail.com', N'Urquiza 690, Salta', 1),
+(15, N'36456789', N'Paula Andrea', N'Usandivaras', N'387-4987654', N'paula.usandivaras@gmail.com', N'20 de Febrero 410, Salta', 1),
+(16, N'38567890', N'Gonzalo Matías', N'Bavastro', N'387-5098765', N'gonzalo.bavastro@gmail.com', N'Balcarce 950, Salta', 1),
+(17, N'40678901', N'Micaela Abril', N'Arias', N'387-4109876', N'mica.arias@gmail.com', N'Necochea 720, Salta', 1),
+(18, N'29789012', N'Hernán Darío', N'Peñalba', N'387-5210987', N'hernan.penalba@gmail.com', N'Ameghino 560, Salta', 1),
+(19, N'33890123', N'Romina Natalia', N'Ceballos', N'387-4320987', N'romina.ceballos@hotmail.com', N'Entre Ríos 1120, Salta', 1),
+(20, N'35901234', N'Facundo Tomás', N'Rovaletti', N'387-5430987', N'facu.rovaletti@gmail.com', N'Rivadavia 890, Salta', 1),
+(21, N'42012345', N'Valentina Sofía', N'Dávalos', N'387-4540987', N'valen.davalos@gmail.com', N'Alsina 630, Salta', 1),
+(22, N'24123456', N'Eduardo Jorge', N'Patrón Costas', N'387-5650987', N'eduardo.patron@gmail.com', N'Av. Virrey Toledo 450, Salta', 1),
+(23, N'37234567', N'Natalia Lorena', N'Sylvester', N'387-4760987', N'natalia.sylvester@gmail.com', N'Adolfo Güemes 380, Salta', 1),
+(24, N'31345678', N'Leandro Javier', N'Villagrán', N'387-5870987', N'leandro.villagran@gmail.com', N'Alvear 710, Salta', 1),
+(25, N'39456789', N'Julieta Mercedes', N'Becerra', N'387-4980987', N'juli.becerra@gmail.com', N'Bolívar 540, Salta', 1),
+(26, N'28567890', N'Cristian Emanuel', N'Mendoza', N'387-5090987', N'cristian.mendoza@gmail.com', N'Córdoba 620, Salta', 1),
+(27, N'34678901', N'Gabriela Fernanda', N'Peralta', N'387-4198765', N'gaby.peralta@gmail.com', N'Lerma 830, Salta', 1),
+(28, N'36789012', N'Maximiliano José', N'Aguirre', N'387-5298765', N'maxi.aguirre@gmail.com', N'Catamarca 470, Salta', 1),
+(29, N'43890123', N'Martina Candelaria', N'Ibarra', N'387-4398765', N'martina.ibarra@gmail.com', N'Santa Fe 910, Salta', 1),
 -- Propietarios con 1 mascota (IDs 30..50 -> 21 propietarios = 21 mascotas)
-(N'30901234', N'Esteban Rodrigo', N'Benítez', N'387-5498765', N'esteban.benitez@gmail.com', N'San Juan 1040, Salta', 1),
-(N'44012345', N'Delfina María', N'Zavaleta', N'387-4598765', N'delfi.zavaleta@gmail.com', N'San Luis 780, Salta', 1),
-(N'26123456', N'Marcelo Alejandro', N'Giménez', N'387-5698765', N'marcelo.gimenez@gmail.com', N'La Rioja 650, Salta', 1),
-(N'32234567', N'Verónica Cecilia', N'Molina', N'387-4798765', N'vero.molina@gmail.com', N'Tucumán 520, Salta', 1),
-(N'38345678', N'Ignacio Agustín', N'Ortiz', N'387-5898765', N'nacho.ortiz@gmail.com', N'Orán 390, Salta', 1),
-(N'41456789', N'Josefina Pilar', N'Vega', N'387-4998765', N'josefina.vega@gmail.com', N'Pellegrini 870, Salta', 1),
-(N'27567890', N'Pablo Daniel', N'Ríos', N'387-5012345', N'pablo.rios@gmail.com', N'Ituzaingó 610, Salta', 1),
-(N'35678901', N'Noelia Beatriz', N'Silva', N'387-4123456', N'noelia.silva@gmail.com', N'Florida 740, Salta', 1),
-(N'40789012', N'Franco Nicolás', N'Castro', N'387-5234567', N'franco.castro@gmail.com', N'Alberdi 830, Salta', 1),
-(N'29890123', N'Silvina Andrea', N'Romero', N'387-4345678', N'silvina.romero@gmail.com', N'Mendoza 435, Salta', 1),
-(N'33901234', N'Ramiro Ezequiel', N'Suárez', N'387-5456789', N'ramiro.suarez@gmail.com', N'Ayacucho 510, Salta', 1),
-(N'37012345', N'Laura Patricia', N'Navarro', N'387-4567890', N'laura.navarro@gmail.com', N'Junín 690, Salta', 1),
-(N'42123456', N'Bautista Mateo', N'Domínguez', N'387-5678901', N'bautista.dominguez@gmail.com', N'Maipú 770, Salta', 1),
-(N'25234567', N'Héctor Raúl', N'Ponce', N'387-4789012', N'hector.ponce@gmail.com', N'moldes 320, Salta', 1),
-(N'31345679', N'Lorena Elizabeth', N'Cabrera', N'387-5890123', N'lorena.cabrera@gmail.com', N'Chacabuco 440, Salta', 1),
-(N'36456780', N'Matías Nicolás', N'Vargas', N'387-4901234', N'matias.vargas@gmail.com', N'Lavalle 590, Salta', 1),
-(N'39567891', N'Rocío Belén', N'Medina', N'387-5023456', N'rocio.medina@gmail.com', N'Corrientes 810, Salta', 1),
-(N'43678902', N'Tomás Joaquín', N'Rojas', N'387-4134567', N'tomas.rojas@gmail.com', N'Av. Sarmiento 960, Salta', 1),
-(N'28789013', N'Mariana Soledad', N'Acosta', N'387-5245678', N'mariana.acosta@gmail.com', N'Siria 640, Salta', 1),
-(N'34890124', N'Sebastián Lucas', N'Campos', N'387-4356789', N'sebastian.campos@gmail.com', N'Ibazeta 730, Salta', 1),
-(N'37901235', N'Cecilia Inés', N'Vázquez', N'387-5467890', N'cecilia.vazquez@gmail.com', N'Aniceto Latorre 480, Salta', 1);
+(30, N'30901234', N'Esteban Rodrigo', N'Benítez', N'387-5498765', N'esteban.benitez@gmail.com', N'San Juan 1040, Salta', 1),
+(31, N'44012345', N'Delfina María', N'Zavaleta', N'387-4598765', N'delfi.zavaleta@gmail.com', N'San Luis 780, Salta', 1),
+(32, N'26123456', N'Marcelo Alejandro', N'Giménez', N'387-5698765', N'marcelo.gimenez@gmail.com', N'La Rioja 650, Salta', 1),
+(33, N'32234567', N'Verónica Cecilia', N'Molina', N'387-4798765', N'vero.molina@gmail.com', N'Tucumán 520, Salta', 1),
+(34, N'38345678', N'Ignacio Agustín', N'Ortiz', N'387-5898765', N'nacho.ortiz@gmail.com', N'Orán 390, Salta', 1),
+(35, N'41456789', N'Josefina Pilar', N'Vega', N'387-4998765', N'josefina.vega@gmail.com', N'Pellegrini 870, Salta', 1),
+(36, N'27567890', N'Pablo Daniel', N'Ríos', N'387-5012345', N'pablo.rios@gmail.com', N'Ituzaingó 610, Salta', 1),
+(37, N'35678901', N'Noelia Beatriz', N'Silva', N'387-4123456', N'noelia.silva@gmail.com', N'Florida 740, Salta', 1),
+(38, N'40789012', N'Franco Nicolás', N'Castro', N'387-5234567', N'franco.castro@gmail.com', N'Alberdi 830, Salta', 1),
+(39, N'29890123', N'Silvina Andrea', N'Romero', N'387-4345678', N'silvina.romero@gmail.com', N'Mendoza 435, Salta', 1),
+(40, N'33901234', N'Ramiro Ezequiel', N'Suárez', N'387-5456789', N'ramiro.suarez@gmail.com', N'Ayacucho 510, Salta', 1),
+(41, N'37012345', N'Laura Patricia', N'Navarro', N'387-4567890', N'laura.navarro@gmail.com', N'Junín 690, Salta', 1),
+(42, N'42123456', N'Bautista Mateo', N'Domínguez', N'387-5678901', N'bautista.dominguez@gmail.com', N'Maipú 770, Salta', 1),
+(43, N'25234567', N'Héctor Raúl', N'Ponce', N'387-4789012', N'hector.ponce@gmail.com', N'moldes 320, Salta', 1),
+(44, N'31345679', N'Lorena Elizabeth', N'Cabrera', N'387-5890123', N'lorena.cabrera@gmail.com', N'Chacabuco 440, Salta', 1),
+(45, N'36456780', N'Matías Nicolás', N'Vargas', N'387-4901234', N'matias.vargas@gmail.com', N'Lavalle 590, Salta', 1),
+(46, N'39567891', N'Rocío Belén', N'Medina', N'387-5023456', N'rocio.medina@gmail.com', N'Corrientes 810, Salta', 1),
+(47, N'43678902', N'Tomás Joaquín', N'Rojas', N'387-4134567', N'tomas.rojas@gmail.com', N'Av. Sarmiento 960, Salta', 1),
+(48, N'28789013', N'Mariana Soledad', N'Acosta', N'387-5245678', N'mariana.acosta@gmail.com', N'Siria 640, Salta', 1),
+(49, N'34890124', N'Sebastián Lucas', N'Campos', N'387-4356789', N'sebastian.campos@gmail.com', N'Ibazeta 730, Salta', 1),
+(50, N'37901235', N'Cecilia Inés', N'Vázquez', N'387-5467890', N'cecilia.vazquez@gmail.com', N'Aniceto Latorre 480, Salta', 1);
+SET IDENTITY_INSERT dbo.Propietario OFF;
+
 
 UPDATE dbo.Propietario SET Apellido = N'Solá' WHERE DNI = N'34112098';
 
@@ -366,8 +421,10 @@ UPDATE @MascotasSeed SET Nombre = N'Oliver' WHERE Nombre = N'OLIVER';
 UPDATE @MascotasSeed SET Nombre = N'Pelusa' WHERE Nombre = N'pelusa';
 UPDATE @MascotasSeed SET Nombre = N'Sultán' WHERE Nombre = N'Sultan';
 
-INSERT INTO dbo.Mascota (IdPropietario, IdRaza, Nombre, Sexo, FechaNacimiento, Color, Activo)
+SET IDENTITY_INSERT dbo.Mascota ON;
+INSERT INTO dbo.Mascota (Id, IdPropietario, IdRaza, Nombre, Sexo, FechaNacimiento, Color, Activo)
 SELECT
+    ms.Num,
     os.IdPropietario,
     ms.IdRaza,
     ms.Nombre,
@@ -378,6 +435,7 @@ SELECT
 FROM @MascotasSeed ms
 JOIN @OwnersSlot os ON os.Slot = ((ms.Num * 13 + 7) % 100) + 1
 ORDER BY ms.Num;
+SET IDENTITY_INSERT dbo.Mascota OFF;
 
 -- =========================================================================================
 -- 7. GENERACIÓN DE ACTIVIDAD CLÍNICA EN HORIZONTE DE 18 MESES (CURVA ORGÁNICA + ESTACIONALIDAD)
@@ -677,4 +735,4 @@ BEGIN
 END
 
 COMMIT TRANSACTION;
-PRINT 'Hidratación orgánica completada exitosamente.';
+PRINT 'Poblamiento orgánico completado exitosamente.';

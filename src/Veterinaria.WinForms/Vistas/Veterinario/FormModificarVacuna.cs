@@ -140,7 +140,6 @@ public partial class FormModificarVacuna : Form
         txtPrecioUnitario.Text = seleccionado.Precio.ToString("N2", CulturaArgentina);
         numStock.Minimum = 0;
         numStock.Value = Math.Clamp(seleccionado.Stock, 0, (int)numStock.Maximum);
-        numStock.Minimum = numStock.Value;
     }
 
     private void HabilitarEdicion(bool habilitar)

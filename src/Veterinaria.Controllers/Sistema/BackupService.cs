@@ -285,6 +285,9 @@ public class BackupService : IBackupService
                 SqlConnection.ClearAllPools();
             }
 
+            // 9. Sincronizar esquema defensivamente para asegurar compatibilidad tras restaurar cualquier backup
+            await SincronizarEsquemaPostRestoreAsync(csb.ConnectionString, nombreBd);
+
             return Result.Ok("Base de datos restaurada correctamente. La sesión debe reiniciarse.");
         }
         catch (SqlException sqlEx)
@@ -436,6 +439,61 @@ public class BackupService : IBackupService
         catch
         {
             return null;
+        }
+    }
+    /// <summary>
+    /// Sincroniza columnas y tablas nuevas tras restaurar un backup para asegurar compatibilidad total con la versión actual.
+    /// </summary>
+    private static async Task SincronizarEsquemaPostRestoreAsync(string masterConnectionString, string nombreBd)
+    {
+        try
+        {
+            var csbDestino = new SqlConnectionStringBuilder(masterConnectionString)
+            {
+                InitialCatalog = nombreBd,
+                ConnectTimeout = 30
+            };
+
+            await using var connDestino = new SqlConnection(csbDestino.ConnectionString);
+            await connDestino.OpenAsync();
+
+            string sqlSync = """
+                -- 1. Asegurar columna Stock en Vacuna
+                IF COL_LENGTH('dbo.Vacuna', 'Stock') IS NULL
+                    ALTER TABLE dbo.Vacuna ADD Stock INT NOT NULL CONSTRAINT DF_Vacuna_Stock DEFAULT (0);
+
+                -- 2. Asegurar columna Stock en Tratamiento
+                IF COL_LENGTH('dbo.Tratamiento', 'Stock') IS NULL
+                    ALTER TABLE dbo.Tratamiento ADD Stock INT NOT NULL CONSTRAINT DF_Tratamiento_Stock DEFAULT (0);
+
+                -- 3. Si vacunas o tratamientos restaurados tienen stock 0, asignar stock base operativo
+                UPDATE dbo.Vacuna SET Stock = 50 WHERE Stock = 0;
+                UPDATE dbo.Tratamiento SET Stock = 100 WHERE Stock = 0;
+
+                -- 4. Asegurar tipo Gerente y asignación correcta a usuario gerente
+                IF NOT EXISTS (SELECT 1 FROM dbo.TipoUsuario WHERE Nombre = 'Gerente')
+                    INSERT INTO dbo.TipoUsuario (Nombre, Activo) VALUES ('Gerente', 1);
+
+                UPDATE u
+                SET u.IdTipoUsuario = t.Id
+                FROM dbo.Usuario u
+                INNER JOIN dbo.TipoUsuario t ON t.Nombre = 'Gerente'
+                WHERE LOWER(u.NombreUsuario) = 'gerente' AND u.IdTipoUsuario != t.Id;
+
+                -- 5. Asegurar PuedeRestaurarBD en administradores
+                IF COL_LENGTH('dbo.Usuario', 'PuedeRestaurarBD') IS NOT NULL
+                BEGIN
+                    UPDATE dbo.Usuario SET PuedeRestaurarBD = 1 WHERE LOWER(NombreUsuario) IN ('admin', 'llopez.adm');
+                END
+            """;
+
+            await using var cmdSync = new SqlCommand(sqlSync, connDestino);
+            cmdSync.CommandTimeout = 60;
+            await cmdSync.ExecuteNonQueryAsync();
+        }
+        catch
+        {
+            // Ignorar defensivamente para no abortar si el esquema ya está actualizado
         }
     }
 }

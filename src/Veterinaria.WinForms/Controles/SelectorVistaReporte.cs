@@ -8,7 +8,7 @@ namespace Veterinaria.WinForms.Controles;
 /// </summary>
 public sealed class SelectorVistaReporte
 {
-    private const float ProporcionPrincipal = 0.6f;
+    private const float ProporcionPrincipal = 0.65f;
 
     private readonly DataGridView _grilla;
     private readonly RadioButton _rbGrafico;

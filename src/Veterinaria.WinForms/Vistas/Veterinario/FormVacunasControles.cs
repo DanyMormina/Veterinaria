@@ -80,6 +80,7 @@ public partial class FormVacunasControles : Form
         dgvVacunas.Rows.Clear();
         btnGuardar.Enabled = true;
         btnModificar.Enabled = false;
+        btnEliminar.Enabled = false;
 
         // 4. Precarga asíncrona de catálogos base (sin seleccionar nada en el formulario)
         await CargarCatalogoMascotasAsync();
@@ -91,6 +92,7 @@ public partial class FormVacunasControles : Form
             cboVacunas.SelectedIndex = -1;
         cboConsultas.DataSource = null;
         btnModificar.Enabled = false;
+        btnEliminar.Enabled = false;
     }
 
     #region Carga de Datos y Catálogos
@@ -331,6 +333,7 @@ public partial class FormVacunasControles : Form
             dgvVacunas.CurrentCell = null;
             _idAplicacionSeleccionada = null;
             btnModificar.Enabled = false;
+        btnEliminar.Enabled = false;
         }
         catch (Exception ex)
         {
@@ -361,13 +364,16 @@ public partial class FormVacunasControles : Form
         {
             cboConsultas.DataSource = null;
             PoblarComboVacunas();
+            btnModificar.Enabled = false;
+            btnEliminar.Enabled = false;
+            btnGuardar.Enabled = true;
             await CargarAplicacionesGrillaAsync();
             dgvVacunas.ClearSelection();
             return;
         }
 
-        // 1. Filtrar vacunas correspondientes a la especie de la mascota
-        PoblarComboVacunas();
+        // 1. Refrescar catálogo con stock actualizado y filtrar por la especie de la mascota
+        await CargarCatalogoVacunasAsync();
 
         // 2. Poblar consultas clínicas en cascada (OrderByDescending FechaHora)
         await CargarConsultasDeMascotaAsync(idMascota.Value);
@@ -462,6 +468,7 @@ public partial class FormVacunasControles : Form
         if (dgvVacunas.SelectedRows.Count == 0)
         {
             btnModificar.Enabled = false;
+        btnEliminar.Enabled = false;
             return;
         }
 
@@ -534,6 +541,7 @@ public partial class FormVacunasControles : Form
                     txtObservaciones.Text = app.Observaciones ?? string.Empty;
 
                     btnModificar.Enabled = true;
+                    btnEliminar.Enabled = true;
                     btnGuardar.Enabled = false;
                     lblInfoEstado.Text = $"Aplicación #{app.Id} seleccionada ({app.NombreVacuna} - {app.NombreMascota}). Modifique los datos y presione 'Modificar' o 'Limpiar' para cancelar.";
                 }
@@ -590,7 +598,11 @@ public partial class FormVacunasControles : Form
         if (resultadoModal == DialogResult.OK)
         {
             await CargarCatalogoVacunasAsync();
+            btnModificar.Enabled = false;
+            btnEliminar.Enabled = false;
+            btnGuardar.Enabled = true;
             await CargarAplicacionesGrillaAsync();
+            dgvVacunas.ClearSelection();
             lblInfoEstado.Text = "Catálogo de vacunas y grilla clínica actualizados.";
         }
     }
@@ -730,7 +742,12 @@ public partial class FormVacunasControles : Form
             txtObservaciones.Clear();
             chkVacunaPrevia.Checked = false;
             _idAplicacionSeleccionada = null;
+            btnModificar.Enabled = false;
+            btnEliminar.Enabled = false;
+            btnGuardar.Enabled = true;
+            await CargarCatalogoVacunasAsync();
             await CargarAplicacionesGrillaAsync();
+            dgvVacunas.ClearSelection();
         }
         catch (Exception ex)
         {
@@ -820,6 +837,7 @@ public partial class FormVacunasControles : Form
         };
 
         btnModificar.Enabled = false;
+        btnEliminar.Enabled = false;
 
         try
         {
@@ -845,7 +863,9 @@ public partial class FormVacunasControles : Form
             chkVacunaPrevia.Checked = false;
             _idAplicacionSeleccionada = null;
             btnModificar.Enabled = false;
+            btnEliminar.Enabled = false;
             btnGuardar.Enabled = true;
+            await CargarCatalogoVacunasAsync();
             await CargarAplicacionesGrillaAsync();
             dgvVacunas.ClearSelection();
         }
@@ -856,6 +876,80 @@ public partial class FormVacunasControles : Form
                 "Error Inesperado",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
+            btnModificar.Enabled = true;
+            btnEliminar.Enabled = true;
+        }
+    }
+
+    /// <summary>
+    /// Elimina la aplicación de vacuna seleccionada en la grilla y restituye automáticamente el stock en el catálogo.
+    /// </summary>
+    private async void btnEliminar_Click(object? sender, EventArgs e)
+    {
+        if (_aplicacionVacunaControlador is null) return;
+
+        if (!_idAplicacionSeleccionada.HasValue || _idAplicacionSeleccionada.Value <= 0)
+        {
+            MessageBox.Show(
+                "Debe seleccionar una aplicación de vacuna de la grilla para eliminar.",
+                "Selección Requerida",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        var confirmar = MessageBox.Show(
+            "¿Está seguro de que desea eliminar la aplicación de vacuna seleccionada? Si la vacuna descontó stock, éste será restituido.",
+            "Confirmar Eliminación",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (confirmar != DialogResult.Yes)
+            return;
+
+        btnEliminar.Enabled = false;
+        btnModificar.Enabled = false;
+
+        try
+        {
+            var resultado = await _aplicacionVacunaControlador.EliminarAsync(_idAplicacionSeleccionada.Value);
+            if (!resultado.EsExitoso)
+            {
+                MessageBox.Show(
+                    resultado.Mensaje,
+                    "Error al Eliminar",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                btnEliminar.Enabled = true;
+                btnModificar.Enabled = true;
+                return;
+            }
+
+            MessageBox.Show(
+                "Aplicación de vacuna eliminada exitosamente. El stock ha sido restituido en el catálogo.",
+                "Operación Exitosa",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            txtObservaciones.Clear();
+            chkVacunaPrevia.Checked = false;
+            _idAplicacionSeleccionada = null;
+            btnModificar.Enabled = false;
+            btnEliminar.Enabled = false;
+            btnGuardar.Enabled = true;
+
+            await CargarCatalogoVacunasAsync();
+            await CargarAplicacionesGrillaAsync();
+            dgvVacunas.ClearSelection();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Ocurrió un error al eliminar la aplicación de vacuna: {ex.Message}",
+                "Error Inesperado",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            btnEliminar.Enabled = true;
             btnModificar.Enabled = true;
         }
     }
@@ -875,6 +969,7 @@ public partial class FormVacunasControles : Form
             // 1. Deseleccionar identificador en edición y restaurar botones de acción
             _idAplicacionSeleccionada = null;
             btnModificar.Enabled = false;
+        btnEliminar.Enabled = false;
             btnGuardar.Enabled = true;
 
             // 2. Limpiar selector de paciente y su texto autocompletado
@@ -912,7 +1007,8 @@ public partial class FormVacunasControles : Form
             _cargandoVacunas = false;
         }
 
-        // 8. Recargar todas las aplicaciones generales en la grilla y deseleccionar filas
+        // 8. Recargar catálogo actualizado de vacunas y todas las aplicaciones generales en la grilla
+        await CargarCatalogoVacunasAsync();
         await CargarAplicacionesGrillaAsync();
         dgvVacunas.ClearSelection();
 

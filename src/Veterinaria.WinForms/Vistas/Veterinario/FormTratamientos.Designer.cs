@@ -137,7 +137,7 @@ partial class FormTratamientos
         btnLimpiar.TabIndex = 16;
         btnLimpiar.Text = "Limpiar";
         btnLimpiar.UseVisualStyleBackColor = false;
-        btnLimpiar.Click += btnLimpiar_Click;
+        btnLimpiar.Click += BtnLimpiar_Click;
         // 
         // btnVolver
         // 
@@ -153,7 +153,7 @@ partial class FormTratamientos
         btnVolver.TabIndex = 2;
         btnVolver.Text = "Volver al panel";
         btnVolver.UseVisualStyleBackColor = false;
-        btnVolver.Click += btnVolver_Click;
+        btnVolver.Click += BtnVolver_Click;
         // 
         // btnAplicar
         // 
@@ -169,7 +169,7 @@ partial class FormTratamientos
         btnAplicar.TabIndex = 17;
         btnAplicar.Text = "Agregar";
         btnAplicar.UseVisualStyleBackColor = false;
-        btnAplicar.Click += btnAplicar_Click;
+        btnAplicar.Click += BtnAplicar_Click;
         // 
         // btnEliminar
         // 
@@ -185,7 +185,7 @@ partial class FormTratamientos
         btnEliminar.TabIndex = 18;
         btnEliminar.Text = "Eliminar";
         btnEliminar.UseVisualStyleBackColor = false;
-        btnEliminar.Click += btnEliminar_Click;
+        btnEliminar.Click += BtnEliminar_Click;
         // 
         // grpTratamientosAplicados
         // 
@@ -340,7 +340,7 @@ partial class FormTratamientos
         cboMascotas.Name = "cboMascotas";
         cboMascotas.Size = new Size(500, 23);
         cboMascotas.TabIndex = 1;
-        cboMascotas.SelectedIndexChanged += cboMascotas_SelectedIndexChanged;
+        cboMascotas.SelectedIndexChanged += CboMascotas_SelectedIndexChanged;
         // 
         // lblInfoMascota
         // 
@@ -378,7 +378,7 @@ partial class FormTratamientos
         cboConsultas.Name = "cboConsultas";
         cboConsultas.Size = new Size(500, 23);
         cboConsultas.TabIndex = 4;
-        cboConsultas.SelectedIndexChanged += cboConsultas_SelectedIndexChanged;
+        cboConsultas.SelectedIndexChanged += CboConsultas_SelectedIndexChanged;
         // 
         // lblTratamiento
         // 
@@ -402,7 +402,7 @@ partial class FormTratamientos
         cboTratamientos.Name = "cboTratamientos";
         cboTratamientos.Size = new Size(500, 23);
         cboTratamientos.TabIndex = 6;
-        cboTratamientos.SelectedIndexChanged += cboTratamientos_SelectedIndexChanged;
+        cboTratamientos.SelectedIndexChanged += CboTratamientos_SelectedIndexChanged;
         // 
         // btnAltaTratamiento
         // 
@@ -418,7 +418,7 @@ partial class FormTratamientos
         btnAltaTratamiento.TabIndex = 7;
         btnAltaTratamiento.Text = "Alta Trat.";
         btnAltaTratamiento.UseVisualStyleBackColor = false;
-        btnAltaTratamiento.Click += btnAltaTratamiento_Click;
+        btnAltaTratamiento.Click += BtnAltaTratamiento_Click;
         // 
         // btnModificarTratamiento
         // 
@@ -434,7 +434,7 @@ partial class FormTratamientos
         btnModificarTratamiento.TabIndex = 8;
         btnModificarTratamiento.Text = "Mod. Trat.";
         btnModificarTratamiento.UseVisualStyleBackColor = false;
-        btnModificarTratamiento.Click += btnModificarTratamiento_Click;
+        btnModificarTratamiento.Click += BtnModificarTratamiento_Click;
         // 
         // lblCantidad
         // 
@@ -460,7 +460,7 @@ partial class FormTratamientos
         numCantidad.TabIndex = 10;
         numCantidad.TextAlign = HorizontalAlignment.Right;
         numCantidad.Value = new decimal(new int[] { 1, 0, 0, 0 });
-        numCantidad.ValueChanged += numCantidad_ValueChanged;
+        numCantidad.ValueChanged += NumCantidad_ValueChanged;
         // 
         // lblIndicaciones
         // 
