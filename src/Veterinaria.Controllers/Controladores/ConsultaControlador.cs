@@ -75,7 +75,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 Tratamiento = c.DetallesConsulta.Any()
                     ? string.Join(", ", c.DetallesConsulta.Where(d => d.Tratamiento != null).Select(d => d.Tratamiento.Descripcion))
                     : (c.Observaciones ?? "-"),
-                ProximoControl = null
+                ProximoControl = c.ProximoControl
             }).ToList();
 
             return Resultado<IEnumerable<ConsultaRespuestaDto>>.Exito(dtos);
@@ -135,6 +135,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 Temperatura = solicitud.Temperatura,
                 Diagnostico = solicitud.Diagnostico.Trim(),
                 Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim(),
+                ProximoControl = solicitud.ProximoControl?.Date,
                 Importe = precio.Value,
                 Activo = true
             };
@@ -189,6 +190,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
             entidad.Temperatura = solicitud.Temperatura;
             entidad.Diagnostico = solicitud.Diagnostico.Trim();
             entidad.Observaciones = string.IsNullOrWhiteSpace(solicitud.Observaciones) ? null : solicitud.Observaciones.Trim();
+            entidad.ProximoControl = solicitud.ProximoControl?.Date;
 
             if (!context.ChangeTracker.HasChanges())
                 return Resultado.Falla("No se detectaron cambios para guardar.");
@@ -244,6 +246,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 Temperatura = c.Temperatura,
                 Diagnostico = c.Diagnostico,
                 Observaciones = c.Observaciones,
+                ProximoControl = c.ProximoControl,
                 Importe = c.Importe,
                 Activo = c.Activo,
                 CantidadTratamientos = c.DetallesConsulta.Count,
@@ -265,11 +268,11 @@ public class ConsultaControlador(ContextoVeterinaria context)
         if (solicitud.Motivo?.Trim().Length > 250)
             return "El motivo de la consulta no puede superar los 250 caracteres.";
 
-        if (solicitud.PesoKg.HasValue && (solicitud.PesoKg.Value <= 0 || solicitud.PesoKg.Value > 150))
-            return "El peso debe ser mayor a 0 y no superar los 150 kg.";
+        if (solicitud.PesoKg.HasValue && (solicitud.PesoKg.Value < 0.1m || solicitud.PesoKg.Value > 100m))
+            return "El peso ingresado no es válido.";
 
-        if (solicitud.Temperatura.HasValue && (solicitud.Temperatura.Value < 34 || solicitud.Temperatura.Value > 44))
-            return "La temperatura debe estar entre 34 y 44 °C.";
+        if (solicitud.Temperatura.HasValue && (solicitud.Temperatura.Value < 36m || solicitud.Temperatura.Value > 41m))
+            return "La temperatura ingresada no es válida.";
 
         return null;
     }

@@ -87,14 +87,176 @@ public partial class FormConsultas : Form
     /// </summary>
     private void ConfigurarRestriccionesTeclado()
     {
-        // Peso: hasta 150,00 kg (3 enteros, 2 decimales). Temperatura: 34,0 a 44,0 °C (2 enteros, 1 decimal).
+        // Peso: 0,10–100,00 kg. Temperatura: 36,0–41,0 °C. No se permite tipear fuera de rango.
         txtPeso.MaxLength = 6;
         txtTemperatura.MaxLength = 4;
         txtPeso.KeyPress += (s, e) => ValidarDecimalLimitado_KeyPress(s, e, 3, 2);
         txtTemperatura.KeyPress += (s, e) => ValidarDecimalLimitado_KeyPress(s, e, 2, 1);
+        txtPeso.TextChanged += TxtPeso_TextChanged;
+        txtTemperatura.TextChanged += TxtTemperatura_TextChanged;
+        txtPeso.Leave += (_, _) => CompletarOLimpiarPeso();
+        txtTemperatura.Leave += (_, _) => CompletarOLimpiarTemperatura();
         txtMotivo.KeyPress += ValidarTextoGeneral_KeyPress;
         cboMascota.KeyPress += ValidarSoloLetras_KeyPress;
         cboPropietario.KeyPress += ValidarSoloLetras_KeyPress;
+    }
+
+    private const decimal PesoMinimoKg = 0.1m;
+    private const decimal PesoMaximoKg = 100m;
+    private const decimal TemperaturaMinimaC = 36.0m;
+    private const decimal TemperaturaMaximaC = 41.0m;
+
+    private string _textoPesoAnterior = string.Empty;
+    private string _textoTemperaturaAnterior = string.Empty;
+    private bool _ajustandoPeso;
+    private bool _ajustandoTemperatura;
+
+    private void TxtPeso_TextChanged(object? sender, EventArgs e)
+    {
+        if (_ajustandoPeso)
+            return;
+
+        var texto = txtPeso.Text;
+        if (EsEntradaPesoPermitida(texto))
+        {
+            _textoPesoAnterior = texto;
+            return;
+        }
+
+        _ajustandoPeso = true;
+        txtPeso.Text = _textoPesoAnterior;
+        txtPeso.SelectionStart = txtPeso.Text.Length;
+        _ajustandoPeso = false;
+    }
+
+    private void TxtTemperatura_TextChanged(object? sender, EventArgs e)
+    {
+        if (_ajustandoTemperatura)
+            return;
+
+        var texto = txtTemperatura.Text;
+        if (EsEntradaTemperaturaPermitida(texto))
+        {
+            _textoTemperaturaAnterior = texto;
+            return;
+        }
+
+        _ajustandoTemperatura = true;
+        txtTemperatura.Text = _textoTemperaturaAnterior;
+        txtTemperatura.SelectionStart = txtTemperatura.Text.Length;
+        _ajustandoTemperatura = false;
+    }
+
+    private void CompletarOLimpiarPeso()
+    {
+        if (string.IsNullOrWhiteSpace(txtPeso.Text))
+        {
+            _textoPesoAnterior = string.Empty;
+            return;
+        }
+
+        if (!TryParsePeso(txtPeso.Text, out _))
+        {
+            _ajustandoPeso = true;
+            txtPeso.Clear();
+            _textoPesoAnterior = string.Empty;
+            _ajustandoPeso = false;
+        }
+    }
+
+    private void CompletarOLimpiarTemperatura()
+    {
+        if (string.IsNullOrWhiteSpace(txtTemperatura.Text))
+        {
+            _textoTemperaturaAnterior = string.Empty;
+            return;
+        }
+
+        if (!TryParseTemperatura(txtTemperatura.Text, out _))
+        {
+            _ajustandoTemperatura = true;
+            txtTemperatura.Clear();
+            _textoTemperaturaAnterior = string.Empty;
+            _ajustandoTemperatura = false;
+        }
+    }
+
+    private static bool EsEntradaPesoPermitida(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return true;
+
+        var limpio = texto.Trim().Replace(',', '.');
+        if (limpio is ".")
+            return true;
+        if (limpio.EndsWith('.'))
+        {
+            var parte = limpio[..^1];
+            return parte.Length == 0
+                   || (decimal.TryParse(parte, NumberStyles.Any, CultureInfo.InvariantCulture, out var prefijo)
+                       && prefijo <= PesoMaximoKg);
+        }
+
+        if (!decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out var valor))
+            return false;
+
+        if (valor > PesoMaximoKg)
+            return false;
+
+        if (valor >= PesoMinimoKg)
+            return true;
+
+        // Prefijos válidos hacia 0,1 (0 / 0,0)
+        return limpio.StartsWith('0');
+    }
+
+    private static bool EsEntradaTemperaturaPermitida(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return true;
+
+        var limpio = texto.Trim().Replace(',', '.');
+        if (limpio is ".")
+            return true;
+        if (limpio.EndsWith('.'))
+        {
+            var parte = limpio[..^1];
+            return parte.Length == 0
+                   || (decimal.TryParse(parte, NumberStyles.Any, CultureInfo.InvariantCulture, out var prefijo)
+                       && prefijo <= TemperaturaMaximaC
+                       && (prefijo >= TemperaturaMinimaC || parte is "3" or "4"));
+        }
+
+        if (!decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out var valor))
+            return false;
+
+        if (valor > TemperaturaMaximaC)
+            return false;
+
+        if (valor >= TemperaturaMinimaC)
+            return true;
+
+        // Solo permitir el primer dígito 3 o 4 mientras se escribe 36–41
+        var enteros = limpio.Split('.')[0];
+        return enteros is "3" or "4";
+    }
+
+    private static bool TryParsePeso(string texto, out decimal peso)
+    {
+        peso = 0;
+        var limpio = texto.Trim().Replace(',', '.');
+        return decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out peso)
+               && peso >= PesoMinimoKg
+               && peso <= PesoMaximoKg;
+    }
+
+    private static bool TryParseTemperatura(string texto, out decimal temperatura)
+    {
+        temperatura = 0;
+        var limpio = texto.Trim().Replace(',', '.');
+        return decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out temperatura)
+               && temperatura >= TemperaturaMinimaC
+               && temperatura <= TemperaturaMaximaC;
     }
 
     /// <summary>
@@ -278,7 +440,7 @@ public partial class FormConsultas : Form
                     c.NombrePropietario,
                     c.Motivo ?? "-",
                     c.Diagnostico,
-                    "-"
+                    c.ProximoControl?.ToString("dd/MM/yyyy") ?? "-"
                 );
                 dgvConsultas.Rows[idx].Tag = c;
             }
@@ -426,10 +588,9 @@ public partial class FormConsultas : Form
         decimal? peso = null;
         if (!string.IsNullOrWhiteSpace(txtPeso.Text))
         {
-            var textoPeso = txtPeso.Text.Trim().Replace(',', '.');
-            if (!decimal.TryParse(textoPeso, NumberStyles.Any, CultureInfo.InvariantCulture, out var p) || p <= 0 || p > 150)
+            if (!TryParsePeso(txtPeso.Text, out var p))
             {
-                MarcarControlConError(txtPeso, "El peso debe ser un valor numérico válido mayor a 0 y menor o igual a 150 kg.");
+                MarcarControlConError(txtPeso, "El peso ingresado no es válido.");
                 return false;
             }
             peso = p;
@@ -438,10 +599,9 @@ public partial class FormConsultas : Form
         decimal? temp = null;
         if (!string.IsNullOrWhiteSpace(txtTemperatura.Text))
         {
-            var textoTemp = txtTemperatura.Text.Trim().Replace(',', '.');
-            if (!decimal.TryParse(textoTemp, NumberStyles.Any, CultureInfo.InvariantCulture, out var t) || t < 34 || t > 44)
+            if (!TryParseTemperatura(txtTemperatura.Text, out var t))
             {
-                MarcarControlConError(txtTemperatura, "La temperatura debe ser un valor biológico válido entre 34.0 °C y 44.0 °C.");
+                MarcarControlConError(txtTemperatura, "La temperatura ingresada no es válida.");
                 return false;
             }
             temp = t;
@@ -477,6 +637,7 @@ public partial class FormConsultas : Form
             Temperatura = temp,
             Diagnostico = diagnostico,
             Observaciones = string.IsNullOrWhiteSpace(txtObservaciones.Text) ? null : txtObservaciones.Text.Trim(),
+            ProximoControl = dtpProximoControl.Value.Date,
             Importe = decimal.Round(importe, 2)
         };
 
@@ -637,6 +798,7 @@ public partial class FormConsultas : Form
         txtImporte.Text = consulta.Importe > 0 ? consulta.Importe.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
         txtDiagnostico.Text = consulta.Diagnostico;
         txtObservaciones.Text = consulta.Observaciones ?? string.Empty;
+        dtpProximoControl.Value = consulta.ProximoControl?.Date ?? DateTime.Today.AddDays(15);
 
         btnGuardar.Enabled = false;
         btnModificar.Enabled = true;

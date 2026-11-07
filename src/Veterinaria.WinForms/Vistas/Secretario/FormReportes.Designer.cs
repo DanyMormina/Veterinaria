@@ -22,8 +22,6 @@ partial class FormReportes
         dtpFechaDesde = new DateTimePicker();
         lblFechaHasta = new Label();
         dtpFechaHasta = new DateTimePicker();
-        lblEstado = new Label();
-        cboEstado = new ComboBox();
         btnHoy = new Button();
         btnSemana = new Button();
         btnMes = new Button();
@@ -38,7 +36,6 @@ partial class FormReportes
         colPropietario = new DataGridViewTextBoxColumn();
         colMetodo = new DataGridViewTextBoxColumn();
         colImporte = new DataGridViewTextBoxColumn();
-        colEstado = new DataGridViewTextBoxColumn();
         lblTotal = new Label();
         pnlEncabezado.SuspendLayout();
         pnlContenido.SuspendLayout();
@@ -101,8 +98,6 @@ partial class FormReportes
         grpFiltros.Controls.Add(dtpFechaDesde);
         grpFiltros.Controls.Add(lblFechaHasta);
         grpFiltros.Controls.Add(dtpFechaHasta);
-        grpFiltros.Controls.Add(lblEstado);
-        grpFiltros.Controls.Add(cboEstado);
         grpFiltros.Controls.Add(btnHoy);
         grpFiltros.Controls.Add(btnSemana);
         grpFiltros.Controls.Add(btnMes);
@@ -150,23 +145,9 @@ partial class FormReportes
         dtpFechaHasta.Name = "dtpFechaHasta";
         dtpFechaHasta.Size = new Size(120, 23);
         // 
-        // lblEstado
-        // 
-        lblEstado.Location = new Point(400, 28);
-        lblEstado.Name = "lblEstado";
-        lblEstado.Size = new Size(50, 23);
-        lblEstado.Text = "Estado";
-        lblEstado.TextAlign = ContentAlignment.MiddleLeft;
-        // 
-        // cboEstado
-        // 
-        cboEstado.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboEstado.Location = new Point(454, 28);
-        cboEstado.Name = "cboEstado";
-        cboEstado.Size = new Size(140, 23);
-        // 
         // btnHoy
         // 
+
         btnHoy.BackColor = Color.FromArgb(220, 200, 204);
         btnHoy.FlatStyle = FlatStyle.Flat;
         btnHoy.Location = new Point(20, 62);
@@ -255,7 +236,7 @@ partial class FormReportes
         dgvReporte.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dgvReporte.BackgroundColor = Color.White;
         dgvReporte.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dgvReporte.Columns.AddRange(new DataGridViewColumn[] { colFecha, colConsulta, colMascota, colPropietario, colMetodo, colImporte, colEstado });
+        dgvReporte.Columns.AddRange(new DataGridViewColumn[] { colFecha, colConsulta, colMascota, colPropietario, colMetodo, colImporte });
         dgvReporte.Location = new Point(16, 130);
         dgvReporte.MultiSelect = false;
         dgvReporte.Name = "dgvReporte";
@@ -279,11 +260,10 @@ partial class FormReportes
         colMetodo.Name = "colMetodo";
         colImporte.HeaderText = "Importe";
         colImporte.Name = "colImporte";
-        colEstado.HeaderText = "Estado";
-        colEstado.Name = "colEstado";
         // 
         // FormReportes
         // 
+
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(1100, 650);
@@ -309,8 +289,6 @@ partial class FormReportes
     private DateTimePicker dtpFechaDesde;
     private Label lblFechaHasta;
     private DateTimePicker dtpFechaHasta;
-    private Label lblEstado;
-    private ComboBox cboEstado;
     private Button btnHoy;
     private Button btnSemana;
     private Button btnMes;
@@ -325,6 +303,5 @@ partial class FormReportes
     private DataGridViewTextBoxColumn colPropietario;
     private DataGridViewTextBoxColumn colMetodo;
     private DataGridViewTextBoxColumn colImporte;
-    private DataGridViewTextBoxColumn colEstado;
     private Label lblTotal;
 }

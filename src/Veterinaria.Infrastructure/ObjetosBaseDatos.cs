@@ -183,10 +183,14 @@ public static class ObjetosBaseDatos
         """,
         """
         CREATE OR ALTER PROCEDURE dbo.sp_ReporteCensoMascotas
+            @FechaDesde DATE,
+            @FechaHasta DATE,
+            @IdVeterinario BIGINT = NULL,
             @IdEspecie BIGINT = NULL
         AS
         BEGIN
             SET NOCOUNT ON;
+            -- Mascotas activas atendidas en el rango (consulta) y, opcionalmente, por veterinario/especie.
             SELECT m.Id,
                    m.Nombre,
                    e.Nombre AS Especie,
@@ -201,6 +205,15 @@ public static class ObjetosBaseDatos
             JOIN dbo.Propietario p ON p.Id = m.IdPropietario AND p.Activo = 1
             WHERE m.Activo = 1
               AND (@IdEspecie IS NULL OR r.IdEspecie = @IdEspecie)
+              AND EXISTS (
+                    SELECT 1
+                    FROM dbo.Consulta c
+                    WHERE c.IdMascota = m.Id
+                      AND c.Activo = 1
+                      AND c.FechaHora >= @FechaDesde
+                      AND c.FechaHora < DATEADD(DAY, 1, @FechaHasta)
+                      AND (@IdVeterinario IS NULL OR c.IdUsuario = @IdVeterinario)
+              )
             ORDER BY m.Nombre;
         END
         """

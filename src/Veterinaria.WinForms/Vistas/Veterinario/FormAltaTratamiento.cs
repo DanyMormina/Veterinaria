@@ -20,7 +20,9 @@ public partial class FormAltaTratamiento : Form
         "Dermatológico",
         "Odontológico",
         "Higiene y Estética",
-        "Nutricional"
+        "Nutricional",
+        "Diagnóstico",
+        "Servicio"
     ];
 
     public FormAltaTratamiento() : this(null)
@@ -36,13 +38,25 @@ public partial class FormAltaTratamiento : Form
 
     private void InicializarControles()
     {
-        // 1. Cargar tipos de tratamiento en el selector
         cboTipo.Items.Clear();
         cboTipo.Items.AddRange(TiposTratamientoPredefinidos);
         cboTipo.SelectedIndex = 0;
 
-        // 2. Establecer foco inicial en la descripción
+        chkUsaStock.Checked = false;
+        chkUsaStock.CheckedChanged += (_, _) => ActualizarVisibilidadStock();
+        ActualizarVisibilidadStock();
+
         ActiveControl = txtDescripcion;
+    }
+
+    private void ActualizarVisibilidadStock()
+    {
+        var usaStock = chkUsaStock.Checked;
+        lblStock.Visible = usaStock;
+        numStock.Visible = usaStock;
+        numStock.Enabled = usaStock;
+        if (!usaStock)
+            numStock.Value = 0;
     }
 
     private async void btnGuardar_Click(object? sender, EventArgs e)
@@ -76,13 +90,26 @@ public partial class FormAltaTratamiento : Form
         var precio = numPrecio.Value;
 
         // 3. Crear DTO de solicitud
+        var usaStock = chkUsaStock.Checked;
+        if (usaStock && numStock.Value <= 0)
+        {
+            MessageBox.Show(
+                "Si el tratamiento controla stock, indique una cantidad mayor a 0.",
+                "Stock requerido",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            numStock.Focus();
+            return;
+        }
+
         var solicitud = new TratamientoSolicitudDto
         {
             TipoTratamiento = tipo,
             Descripcion = descripcion,
             Dosis = dosis,
             Precio = precio,
-            Stock = (int)numStock.Value
+            UsaStock = usaStock,
+            Stock = usaStock ? (int)numStock.Value : 0
         };
 
         btnGuardar.Enabled = false;

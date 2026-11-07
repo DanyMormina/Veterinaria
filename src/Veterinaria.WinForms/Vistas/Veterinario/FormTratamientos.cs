@@ -153,7 +153,7 @@ public partial class FormTratamientos : Form
             var items = _listaTratamientos.Select(t => new TratamientoComboItem
             {
                 Id = t.Id,
-                Texto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", CulturaArgentina)} - Stock: {t.Stock}",
+                Texto = FormatearTextoCatalogo(t),
                 Precio = t.Precio
             }).ToList();
 
@@ -250,10 +250,7 @@ public partial class FormTratamientos : Form
             _totalAplicados = 0;
 
             if (!resultado.EsExitoso || resultado.Valor is null)
-            {
-                ActualizarTotal();
                 return;
-            }
 
             var detalles = resultado.Valor.ToList();
             decimal totalAcumulado = 0;
@@ -275,9 +272,7 @@ public partial class FormTratamientos : Form
             dgvTratamientosAplicados.ClearSelection();
             dgvTratamientosAplicados.CurrentCell = null;
 
-            // 3. Actualizar etiqueta de total ejecutivo (consulta + tratamientos aplicados + selección en curso)
             _totalAplicados = totalAcumulado;
-            ActualizarTotal();
             lblInfoEstado.Text = $"Consulta: {_importeConsulta.ToString("C2", CulturaArgentina)} + {detalles.Count} tratamiento(s) aplicado(s): {totalAcumulado.ToString("C2", CulturaArgentina)}";
         }
         catch (Exception ex)
@@ -378,32 +373,12 @@ public partial class FormTratamientos : Form
             txtSubtotal.Text = "$ 0,00";
         }
 
-        ActualizarTotal();
-    }
-
-    /// <summary>
-    /// Total = importe de la consulta + tratamientos ya aplicados + tratamiento en curso (cantidad × precio).
-    /// </summary>
-    private void ActualizarTotal()
-    {
-        decimal subtotalEnCurso = 0;
-        var idTratamiento = ObtenerIdSeleccionado(cboTratamientos);
-        var idConsulta = ObtenerIdSeleccionado(cboConsultas);
-        if (idConsulta is > 0 && idTratamiento is > 0)
-        {
-            var precio = _listaTratamientos.FirstOrDefault(t => t.Id == idTratamiento.Value)?.Precio ?? 0;
-            subtotalEnCurso = (int)numCantidad.Value * precio;
-        }
-
-        var total = _importeConsulta + _totalAplicados + subtotalEnCurso;
-        lblTotal.Text = $"Total: {total.ToString("C2", CulturaArgentina)}";
     }
 
     private void ReiniciarTotal()
     {
         _importeConsulta = 0;
         _totalAplicados = 0;
-        ActualizarTotal();
     }
 
     #endregion
@@ -507,9 +482,40 @@ public partial class FormTratamientos : Form
 
         // Obtener datos de precio unitario del catálogo
         var tratamiento = _listaTratamientos.FirstOrDefault(t => t.Id == idTratamiento.Value);
-        var precioUnitario = tratamiento?.Precio ?? 0;
+        if (tratamiento is null)
+        {
+            MessageBox.Show(
+                "No se encontró el tratamiento seleccionado en el catálogo.",
+                "Tratamiento no disponible",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            cboTratamientos.Focus();
+            return;
+        }
+
+        if (tratamiento.UsaStock && tratamiento.Stock < cantidad)
+        {
+            MessageBox.Show(
+                $"No hay stock suficiente de este tratamiento. Stock actual: {tratamiento.Stock}.",
+                "Sin stock",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            cboTratamientos.Focus();
+            return;
+        }
+
+        var precioUnitario = tratamiento.Precio;
         var subtotal = cantidad * precioUnitario;
         var indicaciones = string.IsNullOrWhiteSpace(txtIndicaciones.Text) ? null : txtIndicaciones.Text.Trim();
+
+        var confirmar = MessageBox.Show(
+            $"¿Confirma agregar el tratamiento \"{tratamiento?.Descripcion ?? "seleccionado"}\" (cantidad: {cantidad}, subtotal: $ {subtotal:N2})?\n\nSi confirma, el registro quedará guardado y no habrá vuelta atrás (no se podrá modificar ni eliminar).",
+            "Confirmar tratamiento",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question,
+            MessageBoxDefaultButton.Button2);
+        if (confirmar != DialogResult.Yes)
+            return;
 
         // 2. Construir DTO de aplicación
         var solicitud = new DetalleConsultaSolicitudDto
@@ -540,15 +546,16 @@ public partial class FormTratamientos : Form
                 return;
             }
 
-            // 4. Recargar el catálogo maestro para reflejar el descuento de stock inmediatamente
+            // 4. Mantener mascota y consulta; recargar catálogo y grilla solo de esa consulta/animal
+            var idMascotaActual = ObtenerIdSeleccionado(cboMascotas);
             cboTratamientos.SelectedIndex = -1;
             cboTratamientos.Text = string.Empty;
             await CargarCatalogoTratamientosAsync();
 
-            // 5. Recargar la grilla con los detalles actualizados de la consulta activa y totalizar
+            // 5. Recargar la grilla con los detalles actualizados de la consulta activa (mismo animal)
             await CargarTratamientosConsultaAsync(idConsulta.Value);
 
-            // 6. Dejar listo para agregar otro tratamiento a la misma consulta
+            // 6. Dejar listo para agregar otro tratamiento a la misma consulta del mismo animal
             numCantidad.Value = 1;
             txtIndicaciones.Clear();
             cboTratamientos.SelectedIndex = -1;
@@ -556,7 +563,10 @@ public partial class FormTratamientos : Form
             RecalcularSubtotal();
             cboTratamientos.Focus();
 
-            lblInfoEstado.Text = $"Tratamiento agregado. Puede agregar otro a la misma consulta. Total ítems: {dgvTratamientosAplicados.Rows.Count}";
+            var nombreMascota = idMascotaActual is > 0
+                ? _listaMascotas.FirstOrDefault(m => m.Id == idMascotaActual.Value)?.Nombre ?? "seleccionada"
+                : "seleccionada";
+            lblInfoEstado.Text = $"Tratamiento agregado a {nombreMascota}. Solo se muestran los de esta consulta. Ítems: {dgvTratamientosAplicados.Rows.Count}";
         }
         catch (Exception ex)
         {
@@ -570,46 +580,6 @@ public partial class FormTratamientos : Form
         {
             btnAplicar.Enabled = true;
         }
-    }
-
-    private async void BtnEliminar_Click(object? sender, EventArgs e)
-    {
-        if (_tratamientoControlador is null)
-            return;
-
-        if (dgvTratamientosAplicados.CurrentRow?.Tag is not long idDetalle || idDetalle <= 0)
-        {
-            MessageBox.Show(
-                "Seleccione en la grilla el tratamiento aplicado que desea eliminar.",
-                "Selección requerida",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-            return;
-        }
-
-        var confirmar = MessageBox.Show(
-            "¿Eliminar el tratamiento seleccionado de esta consulta?",
-            "Confirmar eliminación",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-        if (confirmar != DialogResult.Yes)
-            return;
-
-        var resultado = await _tratamientoControlador.EliminarDetalleAplicadoAsync(idDetalle);
-        if (!resultado.EsExitoso)
-        {
-            MessageBox.Show(resultado.Mensaje, "Error al eliminar", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        // Recargar el catálogo maestro para reflejar la restitución del stock inmediatamente
-        await CargarCatalogoTratamientosAsync();
-
-        var idConsulta = ObtenerIdSeleccionado(cboConsultas);
-        if (idConsulta.HasValue && idConsulta.Value > 0)
-            await CargarTratamientosConsultaAsync(idConsulta.Value);
-
-        lblInfoEstado.Text = "Tratamiento eliminado de la consulta y stock restituido.";
     }
 
     /// <summary>
@@ -679,8 +649,12 @@ public partial class FormTratamientos : Form
     {
         cboMascotas.KeyPress += ValidarSoloLetras_KeyPress;
 
-        // Leer Value valida el texto tipeado y dispara ValueChanged, así el total se actualiza al escribir.
-        numCantidad.KeyUp += (_, _) => _ = numCantidad.Value;
+        // Al tipear la cantidad, forzar el valor y recalcular subtotal + total al instante.
+        numCantidad.KeyUp += (_, _) =>
+        {
+            _ = numCantidad.Value;
+            RecalcularSubtotal();
+        };
     }
 
     /// <summary>
@@ -710,6 +684,16 @@ public partial class FormTratamientos : Form
     private void BtnVolver_Click(object? sender, EventArgs e)
     {
         Close();
+    }
+
+    private static string FormatearTextoCatalogo(TratamientoRespuestaDto t)
+    {
+        var baseTexto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", CulturaArgentina)}";
+        if (!t.UsaStock)
+            return baseTexto;
+        return t.Stock > 0
+            ? $"{baseTexto} - Stock: {t.Stock}"
+            : $"{baseTexto} - Sin stock";
     }
 
     private static long? ObtenerIdSeleccionado(ComboBox combo)

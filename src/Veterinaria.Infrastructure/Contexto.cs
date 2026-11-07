@@ -168,6 +168,9 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
             b.Property(t => t.Precio)
                 .HasColumnType("decimal(18,2)");
 
+            b.Property(t => t.UsaStock)
+                .HasDefaultValue(false);
+
             b.Property(t => t.Stock)
                 .HasDefaultValue(0);
         });

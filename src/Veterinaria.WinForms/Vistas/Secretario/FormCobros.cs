@@ -123,26 +123,7 @@ public partial class FormCobros : Form
         _cargando = true;
         try
         {
-            cboConsultaClinica.Items.Clear();
-            cboConsultaClinica.Items.Add(new ItemCombo(null, "Seleccione una consulta clínica"));
-
-            if (_consultaControlador is not null)
-            {
-                var res = await ConsultarAsync(_consultaControlador.ObtenerTodosAsync);
-                if (IsDisposed)
-                    return;
-                if (res.EsExitoso && res.Valor is not null)
-                {
-                    foreach (var c in res.Valor.OrderByDescending(x => x.FechaHora))
-                    {
-                        var texto = $"Consulta #{c.Id} - {c.NombreMascota} ({c.NombrePropietario}) - {c.FechaHora:dd/MM/yyyy HH:mm}";
-                        cboConsultaClinica.Items.Add(new ItemCombo(c.Id, texto));
-                    }
-                }
-            }
-
-            cboConsultaClinica.SelectedIndex = 0;
-
+            // Primero métodos (rápido) y cobros vigentes, para listar solo consultas pendientes
             cboMetodoPago.Items.Clear();
             cboMetodoPago.Items.Add(new ItemCombo(null, "Seleccione un método de pago"));
             if (_metodoPagoControlador is not null)
@@ -158,6 +139,47 @@ public partial class FormCobros : Form
             }
 
             cboMetodoPago.SelectedIndex = 0;
+
+            var idsYaCobradas = new HashSet<long>();
+            if (_pagoControlador is not null)
+            {
+                var resPagos = await ConsultarAsync(_pagoControlador.ObtenerTodosAsync);
+                if (IsDisposed)
+                    return;
+                if (resPagos.EsExitoso && resPagos.Valor is not null)
+                {
+                    foreach (var p in resPagos.Valor.Where(x =>
+                                 x.Activo &&
+                                 !string.Equals(x.Estado, "Anulado", StringComparison.OrdinalIgnoreCase)))
+                        idsYaCobradas.Add(p.IdConsulta);
+                }
+            }
+
+            cboConsultaClinica.Items.Clear();
+            cboConsultaClinica.Items.Add(new ItemCombo(null, "Seleccione una consulta clínica pendiente"));
+
+            if (_consultaControlador is not null)
+            {
+                var res = await ConsultarAsync(_consultaControlador.ObtenerTodosAsync);
+                if (IsDisposed)
+                    return;
+                if (res.EsExitoso && res.Valor is not null)
+                {
+                    foreach (var c in res.Valor
+                                 .Where(x => x.Activo && !idsYaCobradas.Contains(x.Id))
+                                 .OrderByDescending(x => x.FechaHora))
+                    {
+                        var texto = $"Consulta #{c.Id} - {c.NombreMascota} ({c.NombrePropietario}) - {c.FechaHora:dd/MM/yyyy HH:mm}";
+                        cboConsultaClinica.Items.Add(new ItemCombo(c.Id, texto));
+                    }
+                }
+            }
+
+            cboConsultaClinica.SelectedIndex = 0;
+            var pendientes = Math.Max(0, cboConsultaClinica.Items.Count - 1);
+            lblInfoEstado.Text = pendientes > 0
+                ? $"{pendientes} consulta(s) clínica(s) pendiente(s) de cobro."
+                : "No hay consultas pendientes de cobro.";
         }
         finally
         {
@@ -581,6 +603,8 @@ public partial class FormCobros : Form
         try
         {
             _idPagoSeleccionado = pago.Id;
+            // La consulta ya cobrada no está en el listado de pendientes: se agrega solo para reimpresión
+            AsegurarConsultaEnCombo(pago.IdConsulta, pago.DescripcionConsulta);
             SeleccionarComboPorId(cboConsultaClinica, pago.IdConsulta);
             SeleccionarComboPorId(cboMetodoPago, pago.IdMetodoPago);
             ActualizarVisibilidadCuotas();
@@ -635,6 +659,20 @@ public partial class FormCobros : Form
         dgvCobros.CurrentCell = null;
         RestaurarEstiloImporte();
         cboConsultaClinica.Focus();
+    }
+
+    private void AsegurarConsultaEnCombo(long idConsulta, string descripcion)
+    {
+        foreach (var obj in cboConsultaClinica.Items)
+        {
+            if (obj is ItemCombo item && item.Id == idConsulta)
+                return;
+        }
+
+        var texto = string.IsNullOrWhiteSpace(descripcion)
+            ? $"Consulta #{idConsulta}"
+            : descripcion;
+        cboConsultaClinica.Items.Add(new ItemCombo(idConsulta, texto));
     }
 
     private static void SeleccionarComboPorId(ComboBox cbo, long id)

@@ -26,6 +26,7 @@ partial class FormAltaTratamiento
         txtDosis = new TextBox();
         lblPrecio = new Label();
         numPrecio = new NumericUpDown();
+        chkUsaStock = new CheckBox();
         lblStock = new Label();
         numStock = new NumericUpDown();
         pnlBotones = new Panel();
@@ -72,13 +73,14 @@ partial class FormAltaTratamiento
         pnlContenedor.Controls.Add(txtDosis);
         pnlContenedor.Controls.Add(lblPrecio);
         pnlContenedor.Controls.Add(numPrecio);
+        pnlContenedor.Controls.Add(chkUsaStock);
         pnlContenedor.Controls.Add(lblStock);
         pnlContenedor.Controls.Add(numStock);
         pnlContenedor.Dock = DockStyle.Fill;
         pnlContenedor.Location = new Point(0, 45);
         pnlContenedor.Name = "pnlContenedor";
         pnlContenedor.Padding = new Padding(24, 20, 24, 16);
-        pnlContenedor.Size = new Size(484, 310);
+        pnlContenedor.Size = new Size(484, 340);
         pnlContenedor.TabIndex = 1;
         // 
         // lblTipo
@@ -171,27 +173,41 @@ partial class FormAltaTratamiento
         numPrecio.TabIndex = 7;
         numPrecio.TextAlign = HorizontalAlignment.Right;
         // 
+        // chkUsaStock
+        // 
+        chkUsaStock.AutoSize = true;
+        chkUsaStock.Font = new Font("Segoe UI", 9F);
+        chkUsaStock.ForeColor = Color.FromArgb(58, 53, 59);
+        chkUsaStock.Location = new Point(24, 246);
+        chkUsaStock.Name = "chkUsaStock";
+        chkUsaStock.Size = new Size(360, 19);
+        chkUsaStock.TabIndex = 8;
+        chkUsaStock.Text = "¿Controla stock? (sí: productos; no: servicios como ecografía)";
+        chkUsaStock.UseVisualStyleBackColor = true;
+        // 
         // lblStock
         // 
         lblStock.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         lblStock.ForeColor = Color.FromArgb(58, 53, 59);
-        lblStock.Location = new Point(24, 246);
+        lblStock.Location = new Point(24, 276);
         lblStock.Name = "lblStock";
         lblStock.Size = new Size(436, 18);
-        lblStock.TabIndex = 8;
-        lblStock.Text = "Stock:";
+        lblStock.TabIndex = 9;
+        lblStock.Text = "Cantidad en stock:";
+        lblStock.Visible = false;
         // 
         // numStock
         // 
         numStock.BackColor = Color.White;
         numStock.Font = new Font("Segoe UI", 9.5F);
         numStock.ForeColor = Color.FromArgb(58, 53, 59);
-        numStock.Location = new Point(24, 267);
+        numStock.Location = new Point(24, 297);
         numStock.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
         numStock.Name = "numStock";
         numStock.Size = new Size(200, 24);
-        numStock.TabIndex = 9;
+        numStock.TabIndex = 10;
         numStock.TextAlign = HorizontalAlignment.Right;
+        numStock.Visible = false;
         // 
         // pnlBotones
         // 
@@ -199,7 +215,7 @@ partial class FormAltaTratamiento
         pnlBotones.Controls.Add(btnGuardar);
         pnlBotones.Controls.Add(btnCancelar);
         pnlBotones.Dock = DockStyle.Bottom;
-        pnlBotones.Location = new Point(0, 300);
+        pnlBotones.Location = new Point(0, 330);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Padding = new Padding(16, 10, 16, 10);
         pnlBotones.Size = new Size(484, 52);
@@ -247,7 +263,7 @@ partial class FormAltaTratamiento
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
         CancelButton = btnCancelar;
-        ClientSize = new Size(484, 407);
+        ClientSize = new Size(484, 437);
         Controls.Add(pnlContenedor);
         Controls.Add(pnlBotones);
         Controls.Add(pnlEncabezado);
@@ -280,6 +296,7 @@ partial class FormAltaTratamiento
     private TextBox txtDosis;
     private Label lblPrecio;
     private NumericUpDown numPrecio;
+    private CheckBox chkUsaStock;
     private Label lblStock;
     private NumericUpDown numStock;
     private Panel pnlBotones;

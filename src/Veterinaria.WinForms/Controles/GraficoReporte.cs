@@ -335,51 +335,11 @@ public sealed class GraficoReporte : Control
                     Rectangulo = new RectangleF(rect.Left, rect.Top - 8, Math.Max(rect.Width, 8), Math.Max(rect.Height + 8, 16)),
                     TextoTooltip = $"{_categorias[c]}\n{_series[s].Nombre}: {_formato(valor)}"
                 });
-
-                // Comprobar si entra la etiqueta sobre la barra sin solapamiento
-                if (valor > 0 && alto > 2)
-                {
-                    var textoCompleto = _formato(valor);
-                    var anchoCompleto = g.MeasureString(textoCompleto, fuente).Width;
-                    var espacioDisponible = (_series.Count == 1) ? anchoGrupo - 2 : anchoBarra + 2;
-
-                    if (anchoCompleto <= espacioDisponible)
-                    {
-                        g.DrawString(textoCompleto, fuente, pincelTexto,
-                            new RectangleF(rect.Left + (rect.Width - anchoCompleto) / 2, rect.Top - 16, anchoCompleto, 16));
-                    }
-                    else
-                    {
-                        var textoCompacto = FormatearCompacto(valor);
-                        var anchoCompacto = g.MeasureString(textoCompacto, fuente).Width;
-                        if (anchoCompacto <= espacioDisponible)
-                        {
-                            g.DrawString(textoCompacto, fuente, pincelTexto,
-                                new RectangleF(rect.Left + (rect.Width - anchoCompacto) / 2, rect.Top - 16, anchoCompacto, 16));
-                        }
-                    }
-                }
+                // Sin etiquetas encima de las barras: el valor se lee en el eje Y y al pasar el mouse
             }
         }
 
         DibujarEtiquetasCategorias(g, trazado, fuente, pincelTexto, anchoGrupo, true);
-    }
-
-    private static string FormatearCompacto(decimal valor)
-    {
-        if (valor >= 1_000_000m)
-        {
-            var millones = valor / 1_000_000m;
-            return millones >= 10m
-                ? $"$ {millones:0.#}M"
-                : $"$ {millones:0.##}M";
-        }
-        if (valor >= 10_000m)
-        {
-            var miles = valor / 1_000m;
-            return $"$ {miles:0.#}k";
-        }
-        return valor.ToString("N0", Cultura);
     }
 
     private void DibujarLinea(Graphics g, Rectangle cuerpo, Font fuente, Brush pincelTexto)
@@ -413,14 +373,10 @@ public sealed class GraficoReporte : Control
 
             using var pincelPunto = new SolidBrush(serie.Color);
             var radio = puntos.Length > 40 ? 2.5f : 4f;
-            var mostrarValores = !variasSeries && puntos.Length <= 16;
             for (var i = 0; i < puntos.Length; i++)
             {
                 g.FillEllipse(pincelPunto, puntos[i].X - radio, puntos[i].Y - radio, radio * 2, radio * 2);
-                if (mostrarValores)
-                {
-                    g.DrawString(_formato(serie.Valores[i]), fuente, pincelTexto, new RectangleF(puntos[i].X - 50, puntos[i].Y - 20, 100, 16), formatoCentro);
-                }
+                // Sin etiquetas encima de la línea: el valor se lee en el eje Y y al pasar el mouse
 
                 _elementosInteractivos.Add(new ElementoInteractivo
                 {

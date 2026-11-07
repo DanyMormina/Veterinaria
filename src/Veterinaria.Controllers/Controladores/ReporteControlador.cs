@@ -194,7 +194,7 @@ public class ReporteControlador(ContextoVeterinaria context)
     }
 
     /// <summary>
-    /// Genera el Censo Demográfico de Pacientes (Mascotas registradas activas) con filtro de especie.
+    /// Censo de pacientes atendidos en el rango (opcional: veterinario y especie).
     /// Procedimiento: dbo.sp_ReporteCensoMascotas.
     /// </summary>
     public async Task<Resultado<IEnumerable<ReporteCensoMascotaDto>>> ObtenerReporteCensoMascotasAsync(FiltroReporteDto filtro)
@@ -203,8 +203,8 @@ public class ReporteControlador(ContextoVeterinaria context)
         {
             var resultados = await context.Database
                 .SqlQueryRaw<ReporteCensoMascotaDto>(
-                    "EXEC dbo.sp_ReporteCensoMascotas @IdEspecie",
-                    ParametroId("@IdEspecie", filtro.IdEspecie))
+                    "EXEC dbo.sp_ReporteCensoMascotas @FechaDesde, @FechaHasta, @IdVeterinario, @IdEspecie",
+                    ParametrosRango(filtro.FechaDesde, filtro.FechaHasta, filtro.IdVeterinario, filtro.IdEspecie))
                 .ToListAsync();
 
             return Resultado<IEnumerable<ReporteCensoMascotaDto>>.Exito(resultados);

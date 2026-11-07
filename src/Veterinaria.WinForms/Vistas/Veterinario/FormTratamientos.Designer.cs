@@ -26,7 +26,6 @@ partial class FormTratamientos
         btnLimpiar = new Button();
         btnVolver = new Button();
         btnAplicar = new Button();
-        btnEliminar = new Button();
         grpTratamientosAplicados = new GroupBox();
         dgvTratamientosAplicados = new DataGridView();
         colTratamiento = new DataGridViewTextBoxColumn();
@@ -51,7 +50,6 @@ partial class FormTratamientos
         txtIndicaciones = new TextBox();
         lblSubtotal = new Label();
         txtSubtotal = new TextBox();
-        lblTotal = new Label();
         barraEstado = new StatusStrip();
         lblInfoEstado = new ToolStripStatusLabel();
         pnlEncabezado.SuspendLayout();
@@ -117,7 +115,6 @@ partial class FormTratamientos
         pnlBotones.Controls.Add(btnLimpiar);
         pnlBotones.Controls.Add(btnVolver);
         pnlBotones.Controls.Add(btnAplicar);
-        pnlBotones.Controls.Add(btnEliminar);
         pnlBotones.Location = new Point(16, 207);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Size = new Size(1068, 40);
@@ -131,7 +128,7 @@ partial class FormTratamientos
         btnLimpiar.FlatStyle = FlatStyle.Flat;
         btnLimpiar.Font = new Font("Segoe UI", 9F);
         btnLimpiar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnLimpiar.Location = new Point(298, 3);
+        btnLimpiar.Location = new Point(158, 3);
         btnLimpiar.Name = "btnLimpiar";
         btnLimpiar.Size = new Size(120, 32);
         btnLimpiar.TabIndex = 16;
@@ -147,7 +144,7 @@ partial class FormTratamientos
         btnVolver.FlatStyle = FlatStyle.Flat;
         btnVolver.Font = new Font("Segoe UI", 9F);
         btnVolver.ForeColor = Color.Black;
-        btnVolver.Location = new Point(436, 3);
+        btnVolver.Location = new Point(296, 3);
         btnVolver.Name = "btnVolver";
         btnVolver.Size = new Size(140, 32);
         btnVolver.TabIndex = 2;
@@ -170,22 +167,6 @@ partial class FormTratamientos
         btnAplicar.Text = "Agregar";
         btnAplicar.UseVisualStyleBackColor = false;
         btnAplicar.Click += BtnAplicar_Click;
-        // 
-        // btnEliminar
-        // 
-        btnEliminar.BackColor = Color.FromArgb(184, 93, 105);
-        btnEliminar.Cursor = Cursors.Hand;
-        btnEliminar.FlatAppearance.BorderSize = 0;
-        btnEliminar.FlatStyle = FlatStyle.Flat;
-        btnEliminar.Font = new Font("Segoe UI", 9F);
-        btnEliminar.ForeColor = Color.White;
-        btnEliminar.Location = new Point(158, 3);
-        btnEliminar.Name = "btnEliminar";
-        btnEliminar.Size = new Size(120, 32);
-        btnEliminar.TabIndex = 18;
-        btnEliminar.Text = "Eliminar";
-        btnEliminar.UseVisualStyleBackColor = false;
-        btnEliminar.Click += BtnEliminar_Click;
         // 
         // grpTratamientosAplicados
         // 
@@ -308,7 +289,6 @@ partial class FormTratamientos
         grpAplicarTratamiento.Controls.Add(txtIndicaciones);
         grpAplicarTratamiento.Controls.Add(lblSubtotal);
         grpAplicarTratamiento.Controls.Add(txtSubtotal);
-        grpAplicarTratamiento.Controls.Add(lblTotal);
         grpAplicarTratamiento.Font = new Font("Segoe UI", 9.5F);
         grpAplicarTratamiento.ForeColor = Color.FromArgb(58, 53, 59);
         grpAplicarTratamiento.Location = new Point(16, 10);
@@ -510,17 +490,6 @@ partial class FormTratamientos
         txtSubtotal.Text = "$ 0,00";
         txtSubtotal.TextAlign = HorizontalAlignment.Right;
         // 
-        // lblTotal
-        // 
-        lblTotal.Font = new Font("Segoe UI", 11F);
-        lblTotal.ForeColor = Color.FromArgb(58, 53, 59);
-        lblTotal.Location = new Point(942, 158);
-        lblTotal.Name = "lblTotal";
-        lblTotal.Size = new Size(120, 26);
-        lblTotal.TabIndex = 15;
-        lblTotal.Text = "Total: $ 0,00";
-        lblTotal.TextAlign = ContentAlignment.MiddleLeft;
-        // 
         // barraEstado
         // 
         barraEstado.BackColor = Color.FromArgb(249, 240, 242);
@@ -587,10 +556,8 @@ partial class FormTratamientos
     private Label lblIndicaciones;
     private TextBox txtIndicaciones;
     private TextBox txtSubtotal;
-    private Label lblTotal;
     private Button btnLimpiar;
     private Button btnAplicar;
-    private Button btnEliminar;
     private GroupBox grpTratamientosAplicados;
     private DataGridView dgvTratamientosAplicados;
     private DataGridViewTextBoxColumn colTratamiento;

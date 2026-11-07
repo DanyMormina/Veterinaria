@@ -181,9 +181,9 @@ partial class FormModificarVacuna
         lblStock.ForeColor = Color.FromArgb(58, 53, 59);
         lblStock.Location = new Point(24, 186);
         lblStock.Name = "lblStock";
-        lblStock.Size = new Size(228, 18);
+        lblStock.Size = new Size(420, 18);
         lblStock.TabIndex = 8;
-        lblStock.Text = "Stock:";
+        lblStock.Text = "Stock (solo aumentar):";
         // 
         // numStock
         // 

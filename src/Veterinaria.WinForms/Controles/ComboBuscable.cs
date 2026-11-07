@@ -236,48 +236,69 @@ public static class ComboBuscable
         {
             var texto = Normalizar(_combo.Text);
 
-            if (texto.Length == 0 && _permitirVacio)
+            // Vacío: dejar sin selección si se permite, o volver a la última válida
+            if (texto.Length == 0)
             {
-                if (_combo.SelectedIndex != -1)
-                    _combo.SelectedIndex = -1;
+                if (_permitirVacio)
+                {
+                    LimpiarSeleccion();
+                    return;
+                }
+
+                if (_ultimoTextoValido is not null)
+                {
+                    var idx = _combo.FindStringExact(_ultimoTextoValido);
+                    if (idx >= 0)
+                    {
+                        AplicarIndice(idx);
+                        return;
+                    }
+                }
+
+                LimpiarSeleccion();
                 return;
             }
 
+            // Texto escrito: solo aceptar coincidencia exacta o una única parcial.
+            // Si no hay match, limpiar (no restaurar el valor anterior: eso hacía aparecer otro propietario).
             var indice = -1;
-            if (texto.Length > 0)
+            var coincidencias = new List<int>();
+            for (var i = 0; i < _combo.Items.Count; i++)
             {
-                var coincidencias = new List<int>();
-                for (var i = 0; i < _combo.Items.Count; i++)
+                var item = Normalizar(_combo.GetItemText(_combo.Items[i]));
+                if (item == texto)
                 {
-                    var item = Normalizar(_combo.GetItemText(_combo.Items[i]));
-                    if (item == texto)
-                    {
-                        indice = i;
-                        break;
-                    }
-                    if (item.Contains(texto, StringComparison.Ordinal))
-                        coincidencias.Add(i);
+                    indice = i;
+                    break;
                 }
 
-                if (indice < 0 && coincidencias.Count == 1)
-                    indice = coincidencias[0];
+                if (item.Contains(texto, StringComparison.Ordinal))
+                    coincidencias.Add(i);
             }
 
-            if (indice < 0 && _ultimoTextoValido is not null)
-                indice = _combo.FindStringExact(_ultimoTextoValido);
+            if (indice < 0 && coincidencias.Count == 1)
+                indice = coincidencias[0];
 
             if (indice >= 0)
-            {
-                if (_combo.SelectedIndex != indice)
-                    _combo.SelectedIndex = indice;
-                _combo.Text = _combo.GetItemText(_combo.Items[indice]);
-            }
+                AplicarIndice(indice);
             else
-            {
-                if (_combo.SelectedIndex != -1)
-                    _combo.SelectedIndex = -1;
-                _combo.Text = string.Empty;
-            }
+                LimpiarSeleccion();
+        }
+
+        private void AplicarIndice(int indice)
+        {
+            if (_combo.SelectedIndex != indice)
+                _combo.SelectedIndex = indice;
+            _combo.Text = _combo.GetItemText(_combo.Items[indice]);
+            _ultimoTextoValido = _combo.Text;
+        }
+
+        private void LimpiarSeleccion()
+        {
+            if (_combo.SelectedIndex != -1)
+                _combo.SelectedIndex = -1;
+            _combo.Text = string.Empty;
+            _ultimoTextoValido = null;
         }
 
         private static string Normalizar(string? texto)

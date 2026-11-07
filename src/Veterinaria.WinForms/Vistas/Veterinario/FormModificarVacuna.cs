@@ -138,8 +138,11 @@ public partial class FormModificarVacuna : Form
         txtNombre.Text = seleccionado.Nombre;
         numPeriodoMeses.Value = Math.Clamp(seleccionado.PeriodoMesesRecomendado, numPeriodoMeses.Minimum, numPeriodoMeses.Maximum);
         txtPrecioUnitario.Text = seleccionado.Precio.ToString("N2", CulturaArgentina);
-        numStock.Minimum = 0;
-        numStock.Value = Math.Clamp(seleccionado.Stock, 0, (int)numStock.Maximum);
+        // El stock solo puede subir desde acá; baja únicamente al aplicar la vacuna
+        var stockActual = Math.Max(0, seleccionado.Stock);
+        numStock.Minimum = stockActual;
+        numStock.Value = Math.Clamp(stockActual, (int)numStock.Minimum, (int)numStock.Maximum);
+        lblStock.Text = $"Stock (solo aumentar, actual {stockActual}):";
     }
 
     private void HabilitarEdicion(bool habilitar)
@@ -158,6 +161,7 @@ public partial class FormModificarVacuna : Form
             txtPrecioUnitario.Text = "0,00";
             numStock.Minimum = 0;
             numStock.Value = 0;
+            lblStock.Text = "Stock:";
         }
     }
 
@@ -242,6 +246,18 @@ public partial class FormModificarVacuna : Form
             return;
         }
 
+        var stockNuevo = (int)numStock.Value;
+        if (stockNuevo < seleccionado.Stock)
+        {
+            MessageBox.Show(
+                $"El stock solo se puede aumentar. Stock actual: {seleccionado.Stock}. Para bajarlo, aplique la vacuna en una consulta.",
+                "Stock inválido",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            numStock.Focus();
+            return;
+        }
+
         // 4. Preparar solicitud conservando especie original
         var solicitud = new VacunaSolicitudDto
         {
@@ -249,7 +265,7 @@ public partial class FormModificarVacuna : Form
             Nombre = nombre,
             PeriodoMesesRecomendado = (int)numPeriodoMeses.Value,
             Precio = precio,
-            Stock = (int)numStock.Value
+            Stock = stockNuevo
         };
 
         btnModificar.Enabled = false;

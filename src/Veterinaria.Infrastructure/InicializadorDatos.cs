@@ -116,6 +116,35 @@ public static class InicializadorDatos
                 ALTER TABLE dbo.Consulta ADD Importe DECIMAL(18,2) NOT NULL CONSTRAINT DF_Consulta_Importe DEFAULT(0);
             """);
         await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Consulta', 'ProximoControl') IS NULL
+                ALTER TABLE dbo.Consulta ADD ProximoControl DATE NULL;
+            """);
+        // ALTER y UPDATE en batches separados: SQL Server no ve la columna nueva en el mismo lote.
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Tratamiento', 'UsaStock') IS NULL
+                ALTER TABLE dbo.Tratamiento ADD UsaStock BIT NOT NULL CONSTRAINT DF_Tratamiento_UsaStock DEFAULT (0);
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('dbo.Tratamiento', 'UsaStock') IS NOT NULL
+            BEGIN
+                -- Productos/insumos típicos: controlan stock; servicios (eco, rx, cirugía) no
+                UPDATE dbo.Tratamiento
+                SET UsaStock = 1
+                WHERE UsaStock = 0
+                  AND (
+                        TipoTratamiento IN (N'Medicamentoso', N'Dermatológico', N'Nutricional', N'Higiene y Estética', N'Preventivo')
+                     OR Descripcion LIKE N'%pipeta%'
+                     OR Descripcion LIKE N'%pastilla%'
+                     OR Descripcion LIKE N'%crema%'
+                     OR Descripcion LIKE N'%alimento%'
+                     OR Descripcion LIKE N'%amoxicilina%'
+                     OR Descripcion LIKE N'%meloxicam%'
+                     OR Descripcion LIKE N'%gotas%'
+                     OR Descripcion LIKE N'%desparasit%'
+                  );
+            END
+            """);
+        await context.Database.ExecuteSqlRawAsync("""
             IF COL_LENGTH('dbo.Pago', 'Cuotas') IS NULL
                 ALTER TABLE dbo.Pago ADD Cuotas INT NULL;
             """);

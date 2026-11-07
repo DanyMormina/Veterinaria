@@ -180,22 +180,10 @@ public partial class FormReportes : Form
         string tipo = cboTipoReporte.SelectedItem?.ToString() ?? string.Empty;
         _vista?.PermitirAgrupacion(tipo != TipoCenso);
 
-        switch (tipo)
-        {
-            case TipoCenso:
-                dtpFechaDesde.Enabled = false; // El censo es sobre el padrón activo actual
-                dtpFechaHasta.Enabled = false;
-                cboVeterinario.Enabled = false;
-                cboEspecie.Enabled = true;
-                break;
-
-            default:
-                dtpFechaDesde.Enabled = true;
-                dtpFechaHasta.Enabled = true;
-                cboVeterinario.Enabled = true;
-                cboEspecie.Enabled = true;
-                break;
-        }
+        dtpFechaDesde.Enabled = true;
+        dtpFechaHasta.Enabled = true;
+        cboVeterinario.Enabled = true;
+        cboEspecie.Enabled = true;
     }
 
     /// <summary>
@@ -211,22 +199,16 @@ public partial class FormReportes : Form
     /// </summary>
     private bool ValidarFiltros()
     {
-        string tipo = cboTipoReporte.SelectedItem?.ToString() ?? string.Empty;
-
-        // Si el reporte actual requiere fechas, validar cronología
-        if (tipo != TipoCenso)
+        if (dtpFechaDesde.Value.Date > dtpFechaHasta.Value.Date)
         {
-            if (dtpFechaDesde.Value.Date > dtpFechaHasta.Value.Date)
-            {
-                pnlContenedorFechas.BackColor = Color.FromArgb(184, 93, 105); // Borgoña suave (#B85D69)
-                dtpFechaDesde.Focus();
-                MessageBox.Show(
-                    "La fecha inicial ('Fecha desde') no puede ser posterior a la fecha final ('Fecha hasta').",
-                    "Rango de fechas inválido",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return false;
-            }
+            pnlContenedorFechas.BackColor = Color.FromArgb(184, 93, 105); // Borgoña suave (#B85D69)
+            dtpFechaDesde.Focus();
+            MessageBox.Show(
+                "La fecha inicial ('Fecha desde') no puede ser posterior a la fecha final ('Fecha hasta').",
+                "Rango de fechas inválido",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return false;
         }
 
         RestaurarBordeFechas();
@@ -261,9 +243,8 @@ public partial class FormReportes : Form
 
             // Metadatos para encabezados impresos y exportados
             _tituloReporteActual = tipo.ToUpperInvariant();
-            _filtrosReporteActual = tipo == TipoCenso
-                ? $"Especie: {(idEsp.HasValue ? cboEspecie.Text : "Todas")}"
-                : $"Rango: {filtro.FechaDesde:dd/MM/yyyy} al {filtro.FechaHasta:dd/MM/yyyy} | Profesional: {(idVet.HasValue ? cboVeterinario.Text : "Todos")} | Especie: {(idEsp.HasValue ? cboEspecie.Text : "Todas")}";
+            _filtrosReporteActual =
+                $"Rango: {filtro.FechaDesde:dd/MM/yyyy} al {filtro.FechaHasta:dd/MM/yyyy} | Profesional: {(idVet.HasValue ? cboVeterinario.Text : "Todos")} | Especie: {(idEsp.HasValue ? cboEspecie.Text : "Todas")}";
 
             switch (tipo)
             {
@@ -378,8 +359,7 @@ public partial class FormReportes : Form
         dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Propietario", HeaderText = "Propietario", Width = 160 });
         dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "MetodoPago", HeaderText = "Método de pago", Width = 140 });
         dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Cuotas", HeaderText = "Cuotas", Width = 60 });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Importe", HeaderText = "Importe", Width = 110, DefaultCellStyle = { Format = "C2", FormatProvider = CulturaArgentina } });
-        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Estado", HeaderText = "Estado", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+        dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Importe", HeaderText = "Importe", Width = 110, DefaultCellStyle = { Format = "C2", FormatProvider = CulturaArgentina }, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
 
         var datos = res.Valor.ToList();
         dgvReporte.DataSource = datos;

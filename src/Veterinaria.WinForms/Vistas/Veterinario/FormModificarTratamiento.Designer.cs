@@ -28,6 +28,7 @@ partial class FormModificarTratamiento
         txtDosis = new TextBox();
         lblPrecio = new Label();
         numPrecio = new NumericUpDown();
+        chkUsaStock = new CheckBox();
         lblStock = new Label();
         numStock = new NumericUpDown();
         pnlBotones = new Panel();
@@ -77,13 +78,14 @@ partial class FormModificarTratamiento
         pnlContenedor.Controls.Add(txtDosis);
         pnlContenedor.Controls.Add(lblPrecio);
         pnlContenedor.Controls.Add(numPrecio);
+        pnlContenedor.Controls.Add(chkUsaStock);
         pnlContenedor.Controls.Add(lblStock);
         pnlContenedor.Controls.Add(numStock);
         pnlContenedor.Dock = DockStyle.Fill;
         pnlContenedor.Location = new Point(0, 45);
         pnlContenedor.Name = "pnlContenedor";
         pnlContenedor.Padding = new Padding(24, 16, 24, 16);
-        pnlContenedor.Size = new Size(514, 368);
+        pnlContenedor.Size = new Size(514, 398);
         pnlContenedor.TabIndex = 1;
         // 
         // lblSeleccionar
@@ -200,27 +202,41 @@ partial class FormModificarTratamiento
         numPrecio.TabIndex = 9;
         numPrecio.TextAlign = HorizontalAlignment.Right;
         // 
+        // chkUsaStock
+        // 
+        chkUsaStock.AutoSize = true;
+        chkUsaStock.Font = new Font("Segoe UI", 9F);
+        chkUsaStock.ForeColor = Color.FromArgb(58, 53, 59);
+        chkUsaStock.Location = new Point(24, 302);
+        chkUsaStock.Name = "chkUsaStock";
+        chkUsaStock.Size = new Size(360, 19);
+        chkUsaStock.TabIndex = 10;
+        chkUsaStock.Text = "¿Controla stock? (sí: productos; no: servicios como ecografía)";
+        chkUsaStock.UseVisualStyleBackColor = true;
+        // 
         // lblStock
         // 
         lblStock.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         lblStock.ForeColor = Color.FromArgb(58, 53, 59);
-        lblStock.Location = new Point(24, 302);
+        lblStock.Location = new Point(24, 332);
         lblStock.Name = "lblStock";
         lblStock.Size = new Size(466, 18);
-        lblStock.TabIndex = 10;
-        lblStock.Text = "Stock:";
+        lblStock.TabIndex = 11;
+        lblStock.Text = "Cantidad en stock:";
+        lblStock.Visible = false;
         // 
         // numStock
         // 
         numStock.BackColor = Color.White;
         numStock.Font = new Font("Segoe UI", 9.5F);
         numStock.ForeColor = Color.FromArgb(58, 53, 59);
-        numStock.Location = new Point(24, 323);
+        numStock.Location = new Point(24, 353);
         numStock.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
         numStock.Name = "numStock";
         numStock.Size = new Size(200, 24);
-        numStock.TabIndex = 11;
+        numStock.TabIndex = 12;
         numStock.TextAlign = HorizontalAlignment.Right;
+        numStock.Visible = false;
         // 
         // pnlBotones
         // 
@@ -229,7 +245,7 @@ partial class FormModificarTratamiento
         pnlBotones.Controls.Add(btnBaja);
         pnlBotones.Controls.Add(btnCancelar);
         pnlBotones.Dock = DockStyle.Bottom;
-        pnlBotones.Location = new Point(0, 358);
+        pnlBotones.Location = new Point(0, 388);
         pnlBotones.Name = "pnlBotones";
         pnlBotones.Padding = new Padding(16, 10, 16, 10);
         pnlBotones.Size = new Size(514, 52);
@@ -293,7 +309,7 @@ partial class FormModificarTratamiento
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(250, 244, 244);
         CancelButton = btnCancelar;
-        ClientSize = new Size(514, 465);
+        ClientSize = new Size(514, 495);
         Controls.Add(pnlContenedor);
         Controls.Add(pnlBotones);
         Controls.Add(pnlEncabezado);
@@ -329,6 +345,7 @@ partial class FormModificarTratamiento
     private TextBox txtDosis;
     private Label lblPrecio;
     private NumericUpDown numPrecio;
+    private CheckBox chkUsaStock;
     private Label lblStock;
     private NumericUpDown numStock;
     private Panel pnlBotones;

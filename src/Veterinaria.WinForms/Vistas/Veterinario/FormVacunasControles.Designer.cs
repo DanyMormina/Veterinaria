@@ -29,8 +29,6 @@ partial class FormVacunasControles
         colObservaciones = new DataGridViewTextBoxColumn();
         pnlBotones = new Panel();
         btnGuardar = new Button();
-        btnModificar = new Button();
-        btnEliminar = new Button();
         btnLimpiar = new Button();
         btnVolver = new Button();
         grpAplicacion = new GroupBox();
@@ -177,8 +175,6 @@ partial class FormVacunasControles
         // pnlBotones
         // 
         pnlBotones.Controls.Add(btnGuardar);
-        pnlBotones.Controls.Add(btnModificar);
-        pnlBotones.Controls.Add(btnEliminar);
         pnlBotones.Controls.Add(btnLimpiar);
         pnlBotones.Controls.Add(btnVolver);
         pnlBotones.Location = new Point(16, 192);
@@ -197,40 +193,9 @@ partial class FormVacunasControles
         btnGuardar.Name = "btnGuardar";
         btnGuardar.Size = new Size(100, 32);
         btnGuardar.TabIndex = 0;
-        btnGuardar.Text = "Guardar";
+        btnGuardar.Text = "Aplicar";
         btnGuardar.UseVisualStyleBackColor = false;
         btnGuardar.Click += btnGuardar_Click;
-        // 
-        // btnModificar
-        // 
-        btnModificar.BackColor = Color.FromArgb(148, 176, 214);
-        btnModificar.FlatAppearance.BorderColor = Color.FromArgb(112, 142, 182);
-        btnModificar.FlatStyle = FlatStyle.Flat;
-        btnModificar.Font = new Font("Segoe UI", 9F);
-        btnModificar.ForeColor = Color.Black;
-        btnModificar.Location = new Point(124, 5);
-        btnModificar.Name = "btnModificar";
-        btnModificar.Size = new Size(100, 32);
-        btnModificar.TabIndex = 1;
-        btnModificar.Text = "Modificar";
-        btnModificar.UseVisualStyleBackColor = false;
-        btnModificar.Click += btnModificar_Click;
-        // 
-        // btnEliminar
-        // 
-        btnEliminar.BackColor = Color.FromArgb(184, 93, 105);
-        btnEliminar.Cursor = Cursors.Hand;
-        btnEliminar.FlatAppearance.BorderSize = 0;
-        btnEliminar.FlatStyle = FlatStyle.Flat;
-        btnEliminar.Font = new Font("Segoe UI", 9F);
-        btnEliminar.ForeColor = Color.White;
-        btnEliminar.Location = new Point(232, 5);
-        btnEliminar.Name = "btnEliminar";
-        btnEliminar.Size = new Size(100, 32);
-        btnEliminar.TabIndex = 2;
-        btnEliminar.Text = "Eliminar";
-        btnEliminar.UseVisualStyleBackColor = false;
-        btnEliminar.Click += btnEliminar_Click;
         // 
         // btnLimpiar
         // 
@@ -240,10 +205,10 @@ partial class FormVacunasControles
         btnLimpiar.FlatStyle = FlatStyle.Flat;
         btnLimpiar.Font = new Font("Segoe UI", 9F);
         btnLimpiar.ForeColor = Color.FromArgb(58, 53, 59);
-        btnLimpiar.Location = new Point(340, 5);
+        btnLimpiar.Location = new Point(124, 5);
         btnLimpiar.Name = "btnLimpiar";
         btnLimpiar.Size = new Size(100, 32);
-        btnLimpiar.TabIndex = 3;
+        btnLimpiar.TabIndex = 1;
         btnLimpiar.Text = "Limpiar";
         btnLimpiar.UseVisualStyleBackColor = false;
         btnLimpiar.Click += btnLimpiar_Click;
@@ -255,10 +220,10 @@ partial class FormVacunasControles
         btnVolver.FlatStyle = FlatStyle.Flat;
         btnVolver.Font = new Font("Segoe UI", 9F);
         btnVolver.ForeColor = Color.Black;
-        btnVolver.Location = new Point(448, 5);
+        btnVolver.Location = new Point(232, 5);
         btnVolver.Name = "btnVolver";
         btnVolver.Size = new Size(140, 32);
-        btnVolver.TabIndex = 4;
+        btnVolver.TabIndex = 2;
         btnVolver.Text = "Volver al panel";
         btnVolver.UseVisualStyleBackColor = false;
         btnVolver.Click += btnVolver_Click;
@@ -539,8 +504,6 @@ partial class FormVacunasControles
     private TextBox txtObservaciones;
     private Panel pnlBotones;
     private Button btnGuardar;
-    private Button btnModificar;
-    private Button btnEliminar;
     private Button btnLimpiar;
     private Button btnVolver;
     private Button btnAltaVacuna;

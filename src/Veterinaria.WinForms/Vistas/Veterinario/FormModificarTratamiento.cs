@@ -24,7 +24,9 @@ public partial class FormModificarTratamiento : Form
         "Dermatológico",
         "Odontológico",
         "Higiene y Estética",
-        "Nutricional"
+        "Nutricional",
+        "Diagnóstico",
+        "Servicio"
     ];
 
     public FormModificarTratamiento() : this(null, null)
@@ -43,8 +45,22 @@ public partial class FormModificarTratamiento : Form
     {
         cboTipo.Items.Clear();
         cboTipo.Items.AddRange(TiposTratamientoPredefinidos);
+        chkUsaStock.CheckedChanged += (_, _) => ActualizarVisibilidadStock();
 
         await CargarTratamientosAsync();
+    }
+
+    private void ActualizarVisibilidadStock()
+    {
+        var usaStock = chkUsaStock.Checked;
+        lblStock.Visible = usaStock;
+        numStock.Visible = usaStock;
+        numStock.Enabled = usaStock && cboTipo.Enabled;
+        if (!usaStock)
+        {
+            numStock.Minimum = 0;
+            numStock.Value = 0;
+        }
     }
 
     private async Task CargarTratamientosAsync()
@@ -82,7 +98,7 @@ public partial class FormModificarTratamiento : Form
             var items = _tratamientos.Select(t => new TratamientoItemVista
             {
                 Id = t.Id,
-                Texto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", new CultureInfo("es-AR"))} - Stock: {t.Stock}"
+                Texto = FormatearTextoCatalogo(t)
             }).ToList();
 
             cboSeleccionarTratamiento.DataSource = items;
@@ -144,8 +160,12 @@ public partial class FormModificarTratamiento : Form
         txtDescripcion.Text = seleccionado.Descripcion;
         txtDosis.Text = seleccionado.Dosis ?? string.Empty;
         numPrecio.Value = Math.Clamp(seleccionado.Precio, numPrecio.Minimum, numPrecio.Maximum);
-        numStock.Minimum = 0;
-        numStock.Value = Math.Clamp(seleccionado.Stock, 0, (int)numStock.Maximum);
+        chkUsaStock.Checked = seleccionado.UsaStock;
+        numStock.Minimum = seleccionado.UsaStock ? seleccionado.Stock : 0;
+        numStock.Value = seleccionado.UsaStock
+            ? Math.Clamp(seleccionado.Stock, (int)numStock.Minimum, (int)numStock.Maximum)
+            : 0;
+        ActualizarVisibilidadStock();
     }
 
     private void HabilitarEdicion(bool habilitar)
@@ -154,7 +174,8 @@ public partial class FormModificarTratamiento : Form
         txtDescripcion.Enabled = habilitar;
         txtDosis.Enabled = habilitar;
         numPrecio.Enabled = habilitar;
-        numStock.Enabled = habilitar;
+        chkUsaStock.Enabled = habilitar;
+        numStock.Enabled = habilitar && chkUsaStock.Checked;
         btnModificar.Enabled = habilitar;
         btnBaja.Enabled = habilitar;
 
@@ -163,8 +184,10 @@ public partial class FormModificarTratamiento : Form
             txtDescripcion.Clear();
             txtDosis.Clear();
             numPrecio.Value = 0;
+            chkUsaStock.Checked = false;
             numStock.Minimum = 0;
             numStock.Value = 0;
+            ActualizarVisibilidadStock();
         }
     }
 
@@ -198,13 +221,26 @@ public partial class FormModificarTratamiento : Form
         var dosis = string.IsNullOrWhiteSpace(txtDosis.Text) ? null : txtDosis.Text.Trim();
         var precio = numPrecio.Value;
 
+        var usaStock = chkUsaStock.Checked;
+        if (usaStock && numStock.Value < 0)
+        {
+            MessageBox.Show(
+                "Si el tratamiento controla stock, la cantidad no puede ser negativa.",
+                "Stock inválido",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            numStock.Focus();
+            return;
+        }
+
         var solicitud = new TratamientoSolicitudDto
         {
             TipoTratamiento = tipo,
             Descripcion = descripcion,
             Dosis = dosis,
             Precio = precio,
-            Stock = (int)numStock.Value
+            UsaStock = usaStock,
+            Stock = usaStock ? (int)numStock.Value : 0
         };
 
         btnModificar.Enabled = false;
@@ -310,6 +346,17 @@ public partial class FormModificarTratamiento : Form
     {
         DialogResult = DialogResult.Cancel;
         Close();
+    }
+
+    private static string FormatearTextoCatalogo(TratamientoRespuestaDto t)
+    {
+        var cultura = new CultureInfo("es-AR");
+        var baseTexto = $"{t.Descripcion} - Precio: {t.Precio.ToString("C2", cultura)}";
+        if (!t.UsaStock)
+            return baseTexto;
+        return t.Stock > 0
+            ? $"{baseTexto} - Stock: {t.Stock}"
+            : $"{baseTexto} - Sin stock";
     }
 
     private sealed class TratamientoItemVista
