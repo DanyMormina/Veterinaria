@@ -77,7 +77,7 @@ partial class FormVeterinarioPrincipal
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(398, 50);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- ATENCIÓN CLÍNICA";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion

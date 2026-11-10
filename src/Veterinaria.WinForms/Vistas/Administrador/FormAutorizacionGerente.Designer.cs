@@ -53,7 +53,7 @@ partial class FormAutorizacionGerente
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(488, 44);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "AUTORIZACIÓN DEL GERENTE — RESTAURAR BASE DE DATOS";
+        lblTitulo.Text = "AUTORIZACIÓN DEL GERENTE --- RESTAURAR BASE DE DATOS";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // pnlContenido

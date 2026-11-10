@@ -182,7 +182,29 @@ public class PagoControlador(ContextoVeterinaria context)
     }
 
     /// <summary>
-    /// Indica si la consulta ya tiene un cobro vigente (no anulado), opcionalmente excluyendo un pago.
+    /// Calcula el costo total de la consulta clínica incluyendo consulta base, tratamientos y vacunas.
+    /// </summary>
+    public async Task<decimal> ObtenerTotalConsultaAsync(long idConsulta)
+    {
+        var consulta = await context.Consultas
+            .IgnoreQueryFilters()
+            .Where(c => c.Id == idConsulta)
+            .Select(c => new
+            {
+                Base = c.Importe,
+                Tratamientos = c.DetallesConsulta.Where(d => d.Activo).Sum(d => (decimal?)d.Subtotal) ?? 0m,
+                Vacunas = c.AplicacionesVacuna.Sum(v => (decimal?)v.PrecioUnitario) ?? 0m
+            })
+            .FirstOrDefaultAsync();
+
+        if (consulta is null)
+            return 0m;
+
+        return consulta.Base + consulta.Tratamientos + consulta.Vacunas;
+    }
+
+    /// <summary>
+    /// Indica si la consulta ya tiene un cobro registrado vigente (no anulado), opcionalmente excluyendo un pago.
     /// </summary>
     public async Task<bool> ConsultaYaCobradaAsync(long idConsulta, long? idPagoExcluido = null) =>
         await context.Pagos

@@ -78,7 +78,7 @@ partial class FormBackup
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(720, 48);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — ADMINISTRADOR — GESTIÓN DE BACKUPS";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- ADMINISTRADOR --- GESTIÓN DE BACKUPS";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -325,7 +325,7 @@ partial class FormBackup
         MinimumSize = new Size(1220, 720);
         Name = "FormBackup";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "CLÍNICA VETERINARIA — ADMINISTRADOR — GESTIÓN DE BACKUPS";
+        Text = "CLÍNICA VETERINARIA --- ADMINISTRADOR --- GESTIÓN DE BACKUPS";
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);
         grpConfiguracion.ResumeLayout(false);

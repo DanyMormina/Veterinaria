@@ -281,7 +281,7 @@ partial class FormModificarVacuna
         Name = "FormModificarVacuna";
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        Text = "Modificar Vacuna — Catálogo Veterinario";
+        Text = "Modificar Vacuna --- Catálogo Veterinario";
         pnlEncabezado.ResumeLayout(false);
         pnlContenedor.ResumeLayout(false);
         pnlContenedor.PerformLayout();

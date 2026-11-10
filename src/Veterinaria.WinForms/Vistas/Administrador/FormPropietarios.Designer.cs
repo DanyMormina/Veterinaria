@@ -89,7 +89,7 @@ partial class FormPropietarios
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(680, 48);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — GESTIÓN DE PROPIETARIOS";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- GESTIÓN DE PROPIETARIOS";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -546,7 +546,7 @@ partial class FormPropietarios
         MinimumSize = new Size(1220, 720);
         Name = "FormPropietarios";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "CLÍNICA VETERINARIA — GESTIÓN DE PROPIETARIOS";
+        Text = "CLÍNICA VETERINARIA --- GESTIÓN DE PROPIETARIOS";
         Load += FormPropietarios_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);

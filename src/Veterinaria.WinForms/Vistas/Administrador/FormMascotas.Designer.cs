@@ -84,7 +84,7 @@ partial class FormMascotas
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(760, 48);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — ADMINISTRADOR — GESTIÓN DE MASCOTAS";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- ADMINISTRADOR --- GESTIÓN DE MASCOTAS";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -482,7 +482,7 @@ partial class FormMascotas
         MinimumSize = new Size(1220, 720);
         Name = "FormMascotas";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "CLÍNICA VETERINARIA — ADMINISTRADOR — GESTIÓN DE MASCOTAS";
+        Text = "CLÍNICA VETERINARIA --- ADMINISTRADOR --- GESTIÓN DE MASCOTAS";
         Load += FormMascotas_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);

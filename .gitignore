@@ -84,3 +84,5 @@ secrets.json
 !.vscode/extensions.json
 *.code-workspace
 *.md
+!README.md
+!MANUAL_USUARIO.md

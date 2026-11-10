@@ -82,8 +82,8 @@ public partial class FormModificarVacuna : Form
             {
                 Id = v.Id,
                 Texto = string.IsNullOrWhiteSpace(v.NombreEspecie)
-                    ? $"{v.Nombre} — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
-                    : $"{v.Nombre} ({v.NombreEspecie}) — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
+                    ? $"{v.Nombre} --- Precio: {v.Precio.ToString("C2", CulturaArgentina)} --- Stock: {v.Stock}"
+                    : $"{v.Nombre} ({v.NombreEspecie}) --- Precio: {v.Precio.ToString("C2", CulturaArgentina)} --- Stock: {v.Stock}"
             }).ToList();
 
             cboSeleccionarVacuna.DataSource = items;

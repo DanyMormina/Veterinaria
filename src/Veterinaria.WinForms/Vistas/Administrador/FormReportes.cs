@@ -516,7 +516,7 @@ public partial class FormReportes : Form
                 Width = 1050,
                 Height = 720,
                 StartPosition = FormStartPosition.CenterScreen,
-                Text = $"Vista Previa de Impresión — {_tituloReporteActual}"
+                Text = $"Vista Previa de Impresión --- {_tituloReporteActual}"
             };
             printDialog.ShowDialog(this);
         }
@@ -670,7 +670,7 @@ public partial class FormReportes : Form
         // Encabezado institucional
         if (_paginaActual == 1)
         {
-            g.DrawString("CLÍNICA VETERINARIA — GESTIÓN ADMINISTRATIVA", fontTitulo, brushPrimario, bounds.Left, y);
+            g.DrawString("CLÍNICA VETERINARIA --- GESTIÓN ADMINISTRATIVA", fontTitulo, brushPrimario, bounds.Left, y);
             y += 20;
 
             g.DrawString($"REPORTE: {_tituloReporteActual}", fontSubtitulo, brushTexto, bounds.Left, y);
@@ -687,7 +687,7 @@ public partial class FormReportes : Form
         }
         else
         {
-            g.DrawString($"CLÍNICA VETERINARIA — {_tituloReporteActual} (Pág. {_paginaActual})", fontSubtitulo, brushPrimario, bounds.Left, y);
+            g.DrawString($"CLÍNICA VETERINARIA --- {_tituloReporteActual} (Pág. {_paginaActual})", fontSubtitulo, brushPrimario, bounds.Left, y);
             y += 18;
             g.DrawLine(penSeparador, bounds.Left, y, bounds.Right, y);
             y += 8;

@@ -166,7 +166,7 @@ public partial class FormReportes : Form
                 return;
             }
 
-            _filtrosActuales = $"{cboTipoReporte.SelectedItem} — Desde {filtro.FechaDesde:dd/MM/yyyy} hasta {filtro.FechaHasta:dd/MM/yyyy}";
+            _filtrosActuales = $"{cboTipoReporte.SelectedItem} --- Desde {filtro.FechaDesde:dd/MM/yyyy} hasta {filtro.FechaHasta:dd/MM/yyyy}";
             btnImprimir.Enabled = dgvReporte.Rows.Count > 0;
             btnExportarPdf.Enabled = dgvReporte.Rows.Count > 0;
         }
@@ -226,7 +226,7 @@ public partial class FormReportes : Form
                 Width = 1050,
                 Height = 720,
                 StartPosition = FormStartPosition.CenterScreen,
-                Text = $"Vista previa — {cboTipoReporte.SelectedItem}"
+                Text = $"Vista previa --- {cboTipoReporte.SelectedItem}"
             };
             vista.ShowDialog(this);
         }
@@ -354,7 +354,7 @@ public partial class FormReportes : Form
         float y = bounds.Top;
         if (_paginaActualImpresion == 1)
         {
-            g.DrawString($"CLÍNICA VETERINARIA — {_tituloReporte}", fontTitulo, brushRosa, bounds.Left, y);
+            g.DrawString($"CLÍNICA VETERINARIA --- {_tituloReporte}", fontTitulo, brushRosa, bounds.Left, y);
             y += 22;
             g.DrawString(_filtrosActuales, fontInfo, brush, bounds.Left, y);
             y += 15;

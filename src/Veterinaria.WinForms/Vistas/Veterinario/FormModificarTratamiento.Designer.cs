@@ -110,7 +110,7 @@ partial class FormModificarTratamiento
         cboSeleccionarTratamiento.Name = "cboSeleccionarTratamiento";
         cboSeleccionarTratamiento.Size = new Size(466, 25);
         cboSeleccionarTratamiento.TabIndex = 1;
-        cboSeleccionarTratamiento.SelectedIndexChanged += cboSeleccionarTratamiento_SelectedIndexChanged;
+        cboSeleccionarTratamiento.SelectedIndexChanged += CboSeleccionarTratamiento_SelectedIndexChanged;
         // 
         // lblTipo
         // 
@@ -266,7 +266,7 @@ partial class FormModificarTratamiento
         btnModificar.TabIndex = 0;
         btnModificar.Text = "Modificar";
         btnModificar.UseVisualStyleBackColor = false;
-        btnModificar.Click += btnModificar_Click;
+        btnModificar.Click += BtnModificar_Click;
         // 
         // btnBaja
         // 
@@ -283,7 +283,7 @@ partial class FormModificarTratamiento
         btnBaja.TabIndex = 1;
         btnBaja.Text = "Dar de Baja";
         btnBaja.UseVisualStyleBackColor = false;
-        btnBaja.Click += btnBaja_Click;
+        btnBaja.Click += BtnBaja_Click;
         // 
         // btnCancelar
         // 
@@ -301,7 +301,7 @@ partial class FormModificarTratamiento
         btnCancelar.TabIndex = 2;
         btnCancelar.Text = "Cancelar";
         btnCancelar.UseVisualStyleBackColor = false;
-        btnCancelar.Click += btnCancelar_Click;
+        btnCancelar.Click += BtnCancelar_Click;
         // 
         // FormModificarTratamiento
         // 
@@ -321,7 +321,7 @@ partial class FormModificarTratamiento
         Name = "FormModificarTratamiento";
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        Text = "Modificar Tratamiento — Clínica Veterinaria";
+        Text = "Modificar Tratamiento --- Clínica Veterinaria";
         Load += FormModificarTratamiento_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenedor.ResumeLayout(false);

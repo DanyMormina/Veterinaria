@@ -96,6 +96,8 @@ public partial class FormConsultas : Form
         txtTemperatura.TextChanged += TxtTemperatura_TextChanged;
         txtPeso.Leave += (_, _) => CompletarOLimpiarPeso();
         txtTemperatura.Leave += (_, _) => CompletarOLimpiarTemperatura();
+        txtPeso.Enter += (_, _) => RestablecerAyudaPeso();
+        txtTemperatura.Enter += (_, _) => RestablecerAyudaTemperatura();
         txtMotivo.KeyPress += ValidarTextoGeneral_KeyPress;
         cboMascota.KeyPress += ValidarSoloLetras_KeyPress;
         cboPropietario.KeyPress += ValidarSoloLetras_KeyPress;
@@ -120,6 +122,7 @@ public partial class FormConsultas : Form
         if (EsEntradaPesoPermitida(texto))
         {
             _textoPesoAnterior = texto;
+            RestablecerAyudaPeso();
             return;
         }
 
@@ -127,6 +130,8 @@ public partial class FormConsultas : Form
         txtPeso.Text = _textoPesoAnterior;
         txtPeso.SelectionStart = txtPeso.Text.Length;
         _ajustandoPeso = false;
+        lblAyudaPeso.Text = "¡Máximo permitido: 100,00 kg!";
+        lblAyudaPeso.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
     }
 
     private void TxtTemperatura_TextChanged(object? sender, EventArgs e)
@@ -138,6 +143,7 @@ public partial class FormConsultas : Form
         if (EsEntradaTemperaturaPermitida(texto))
         {
             _textoTemperaturaAnterior = texto;
+            RestablecerAyudaTemperatura();
             return;
         }
 
@@ -145,6 +151,8 @@ public partial class FormConsultas : Form
         txtTemperatura.Text = _textoTemperaturaAnterior;
         txtTemperatura.SelectionStart = txtTemperatura.Text.Length;
         _ajustandoTemperatura = false;
+        lblAyudaTemperatura.Text = "¡Rango: 36,0 a 41,0 °C!";
+        lblAyudaTemperatura.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
     }
 
     private void CompletarOLimpiarPeso()
@@ -152,6 +160,7 @@ public partial class FormConsultas : Form
         if (string.IsNullOrWhiteSpace(txtPeso.Text))
         {
             _textoPesoAnterior = string.Empty;
+            RestablecerAyudaPeso();
             return;
         }
 
@@ -161,6 +170,12 @@ public partial class FormConsultas : Form
             txtPeso.Clear();
             _textoPesoAnterior = string.Empty;
             _ajustandoPeso = false;
+            lblAyudaPeso.Text = "¡Borrado: no alcanzaba 0,10 kg!";
+            lblAyudaPeso.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
+        }
+        else
+        {
+            RestablecerAyudaPeso();
         }
     }
 
@@ -169,6 +184,7 @@ public partial class FormConsultas : Form
         if (string.IsNullOrWhiteSpace(txtTemperatura.Text))
         {
             _textoTemperaturaAnterior = string.Empty;
+            RestablecerAyudaTemperatura();
             return;
         }
 
@@ -178,7 +194,27 @@ public partial class FormConsultas : Form
             txtTemperatura.Clear();
             _textoTemperaturaAnterior = string.Empty;
             _ajustandoTemperatura = false;
+            lblAyudaTemperatura.Text = "¡Borrado: no alcanzaba 36,0 °C!";
+            lblAyudaTemperatura.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
         }
+        else
+        {
+            RestablecerAyudaTemperatura();
+        }
+    }
+
+    private void RestablecerAyudaPeso()
+    {
+        lblAyudaPeso.Text = "Rango: 0,10 a 100,00 kg";
+        lblAyudaPeso.Font = new Font("Segoe UI", 7.5F, FontStyle.Regular);
+        lblAyudaPeso.ForeColor = Color.FromArgb(184, 93, 105);
+    }
+
+    private void RestablecerAyudaTemperatura()
+    {
+        lblAyudaTemperatura.Text = "Rango: 36,0 a 41,0 °C";
+        lblAyudaTemperatura.Font = new Font("Segoe UI", 7.5F, FontStyle.Regular);
+        lblAyudaTemperatura.ForeColor = Color.FromArgb(184, 93, 105);
     }
 
     private static bool EsEntradaPesoPermitida(string texto)
@@ -903,6 +939,8 @@ public partial class FormConsultas : Form
         txtMotivo.Clear();
         txtPeso.Clear();
         txtTemperatura.Clear();
+        RestablecerAyudaPeso();
+        RestablecerAyudaTemperatura();
         txtImporte.Clear();
         txtDiagnostico.Clear();
         txtObservaciones.Clear();
@@ -924,3 +962,6 @@ public partial class FormConsultas : Form
         Close();
     }
 }
+
+
+

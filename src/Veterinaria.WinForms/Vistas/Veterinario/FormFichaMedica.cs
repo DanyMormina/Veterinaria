@@ -434,7 +434,7 @@ public partial class FormFichaMedica : Form
                 Width = 1050,
                 Height = 720,
                 StartPosition = FormStartPosition.CenterScreen,
-                Text = $"Vista previa — Ficha médica de {_mascotaSeleccionada.Nombre}"
+                Text = $"Vista previa --- Ficha médica de {_mascotaSeleccionada.Nombre}"
             };
             vistaPrevia.ShowDialog(this);
             lblInfoEstado.Text = $"Vista previa de ficha médica lista: {_mascotaSeleccionada.Nombre}.";
@@ -494,7 +494,7 @@ public partial class FormFichaMedica : Form
 
         if (_paginaActualImpresion == 1)
         {
-            g.DrawString("CLÍNICA VETERINARIA — FICHA MÉDICA", fontTitulo, brushPrimario, bounds.Left, y);
+            g.DrawString("CLÍNICA VETERINARIA --- FICHA MÉDICA", fontTitulo, brushPrimario, bounds.Left, y);
             y += 22;
             g.DrawString($"Paciente: {_mascotaSeleccionada.Nombre}", fontSubtitulo, brushTexto, bounds.Left, y);
             y += 18;
@@ -518,7 +518,7 @@ public partial class FormFichaMedica : Form
         else
         {
             g.DrawString(
-                $"CLÍNICA VETERINARIA — Ficha de {_mascotaSeleccionada.Nombre} (Pág. {_paginaActualImpresion})",
+                $"CLÍNICA VETERINARIA --- Ficha de {_mascotaSeleccionada.Nombre} (Pág. {_paginaActualImpresion})",
                 fontSubtitulo, brushPrimario, bounds.Left, y);
             y += 18;
             g.DrawLine(penSeparador, bounds.Left, y, bounds.Right, y);
@@ -539,14 +539,20 @@ public partial class FormFichaMedica : Form
         float totalAncho = columnas.Sum(c => Math.Max(c.Width, 40));
         var anchos = columnas.Select(c => (Math.Max(c.Width, 40) / totalAncho) * bounds.Width).ToArray();
         const float altoCabecera = 22f;
-        const float altoFila = 20f;
 
-        using var formatTexto = new StringFormat
+        using var formatCabecera = new StringFormat
         {
             Alignment = StringAlignment.Near,
             LineAlignment = StringAlignment.Center,
             Trimming = StringTrimming.EllipsisCharacter,
             FormatFlags = StringFormatFlags.NoWrap
+        };
+
+        using var formatCelda = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            LineAlignment = StringAlignment.Near,
+            Trimming = StringTrimming.Word
         };
 
         g.FillRectangle(brushCabeceraFondo, bounds.Left, y, bounds.Width, altoCabecera);
@@ -555,7 +561,7 @@ public partial class FormFichaMedica : Form
         for (var i = 0; i < columnas.Count; i++)
         {
             g.DrawString(columnas[i].HeaderText, fontCabecera, brushTexto,
-                new RectangleF(x + 3, y, anchos[i] - 6, altoCabecera), formatTexto);
+                new RectangleF(x + 3, y, anchos[i] - 6, altoCabecera), formatCabecera);
             x += anchos[i];
             if (i < columnas.Count - 1)
                 g.DrawLine(penLinea, x, y, x, y + altoCabecera);
@@ -564,7 +570,23 @@ public partial class FormFichaMedica : Form
 
         while (_filaActualImpresion < dgvHistorialClinico.Rows.Count)
         {
-            if (y + altoFila > bounds.Bottom - 30)
+            var fila = dgvHistorialClinico.Rows[_filaActualImpresion];
+
+            // Medir altura dinámica de la fila para permitir texto multilínea sin cortes
+            float altoFilaDinamico = 20f;
+            for (var i = 0; i < columnas.Count; i++)
+            {
+                var valor = fila.Cells[columnas[i].Index].FormattedValue?.ToString() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(valor))
+                {
+                    var tam = g.MeasureString(valor, fontCelda, (int)Math.Max(anchos[i] - 6, 20));
+                    float altoNecesario = tam.Height + 6f;
+                    if (altoNecesario > altoFilaDinamico)
+                        altoFilaDinamico = altoNecesario;
+                }
+            }
+
+            if (y + altoFilaDinamico > bounds.Bottom - 30)
             {
                 e.HasMorePages = true;
                 g.DrawLine(penSeparador, bounds.Left, bounds.Bottom - 22, bounds.Right, bounds.Bottom - 22);
@@ -572,23 +594,22 @@ public partial class FormFichaMedica : Form
                 return;
             }
 
-            var fila = dgvHistorialClinico.Rows[_filaActualImpresion];
             if (_filaActualImpresion % 2 == 1)
-                g.FillRectangle(brushFilaAlt, bounds.Left, y, bounds.Width, altoFila);
+                g.FillRectangle(brushFilaAlt, bounds.Left, y, bounds.Width, altoFilaDinamico);
 
-            g.DrawRectangle(penLinea, bounds.Left, y, bounds.Width, altoFila);
+            g.DrawRectangle(penLinea, bounds.Left, y, bounds.Width, altoFilaDinamico);
             x = bounds.Left;
             for (var i = 0; i < columnas.Count; i++)
             {
                 var valor = fila.Cells[columnas[i].Index].FormattedValue?.ToString() ?? string.Empty;
                 g.DrawString(valor, fontCelda, brushTexto,
-                    new RectangleF(x + 3, y, anchos[i] - 6, altoFila), formatTexto);
+                    new RectangleF(x + 3, y + 3, anchos[i] - 6, altoFilaDinamico - 6), formatCelda);
                 x += anchos[i];
                 if (i < columnas.Count - 1)
-                    g.DrawLine(penLinea, x, y, x, y + altoFila);
+                    g.DrawLine(penLinea, x, y, x, y + altoFilaDinamico);
             }
 
-            y += altoFila;
+            y += altoFilaDinamico;
             _filaActualImpresion++;
         }
 

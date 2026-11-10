@@ -100,7 +100,7 @@ namespace Veterinaria.WinForms.Vistas.Administrador
             lblTitulo.Name = "lblTitulo";
             lblTitulo.Size = new Size(809, 48);
             lblTitulo.TabIndex = 0;
-            lblTitulo.Text = "CLÍNICA VETERINARIA — GESTIÓN DE USUARIOS";
+            lblTitulo.Text = "CLÍNICA VETERINARIA --- GESTIÓN DE USUARIOS";
             lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // lblUsuarioSesion
@@ -685,7 +685,7 @@ namespace Veterinaria.WinForms.Vistas.Administrador
             MinimumSize = new Size(1220, 720);
             Name = "FormUsuarios";
             StartPosition = FormStartPosition.CenterParent;
-            Text = "CLÍNICA VETERINARIA — GESTIÓN DE USUARIOS";
+            Text = "CLÍNICA VETERINARIA --- GESTIÓN DE USUARIOS";
             Load += FormUsuarios_Load;
             pnlEncabezado.ResumeLayout(false);
             pnlContenido.ResumeLayout(false);

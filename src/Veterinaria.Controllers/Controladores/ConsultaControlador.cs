@@ -45,37 +45,60 @@ public class ConsultaControlador(ContextoVeterinaria context)
                 .Include(c => c.Mascota).ThenInclude(m => m.Propietario)
                 .Include(c => c.Usuario)
                 .Include(c => c.DetallesConsulta).ThenInclude(d => d.Tratamiento)
+                .Include(c => c.AplicacionesVacuna).ThenInclude(a => a.Vacuna)
                 .Where(c => c.IdMascota == idMascota && c.Activo)
                 .OrderByDescending(c => c.FechaHora)
                 .ToListAsync();
 
-            var dtos = consultas.Select(c => new ConsultaRespuestaDto
+            var dtos = consultas.Select(c =>
             {
-                Id = c.Id,
-                IdMascota = c.IdMascota,
-                NombreMascota = c.Mascota != null ? c.Mascota.Nombre : string.Empty,
-                NombrePropietario = c.Mascota != null && c.Mascota.Propietario != null
-                    ? $"{c.Mascota.Propietario.Nombre} {c.Mascota.Propietario.Apellido}".Trim()
-                    : string.Empty,
-                IdUsuario = c.IdUsuario,
-                NombreUsuario = c.Usuario != null
-                    ? $"{c.Usuario.Nombre} {c.Usuario.Apellido}".Trim()
-                    : string.Empty,
-                FechaHora = c.FechaHora,
-                Motivo = c.Motivo,
-                PesoKg = c.PesoKg,
-                Temperatura = c.Temperatura,
-                Diagnostico = c.Diagnostico,
-                Observaciones = c.Observaciones,
-                Importe = c.Importe,
-                Activo = c.Activo,
-                CantidadTratamientos = c.DetallesConsulta.Count,
-                CantidadVacunas = c.AplicacionesVacuna.Count,
-                CantidadPagos = c.Pagos.Count,
-                Tratamiento = c.DetallesConsulta.Any()
-                    ? string.Join(", ", c.DetallesConsulta.Where(d => d.Tratamiento != null).Select(d => d.Tratamiento.Descripcion))
-                    : (c.Observaciones ?? "-"),
-                ProximoControl = c.ProximoControl
+                var acciones = new List<string>();
+
+                if (c.DetallesConsulta.Any())
+                {
+                    acciones.AddRange(c.DetallesConsulta
+                        .Where(d => d.Tratamiento != null)
+                        .Select(d => d.Tratamiento.Descripcion));
+                }
+
+                if (c.AplicacionesVacuna.Any())
+                {
+                    acciones.AddRange(c.AplicacionesVacuna
+                        .Where(a => a.Vacuna != null)
+                        .Select(a => $"Vacuna: {a.Vacuna.Nombre}"));
+                }
+
+                return new ConsultaRespuestaDto
+                {
+                    Id = c.Id,
+                    IdMascota = c.IdMascota,
+                    NombreMascota = c.Mascota != null ? c.Mascota.Nombre : string.Empty,
+                    NombrePropietario = c.Mascota != null && c.Mascota.Propietario != null
+                        ? $"{c.Mascota.Propietario.Nombre} {c.Mascota.Propietario.Apellido}".Trim()
+                        : string.Empty,
+                    IdUsuario = c.IdUsuario,
+                    NombreUsuario = c.Usuario != null
+                        ? $"{c.Usuario.Nombre} {c.Usuario.Apellido}".Trim()
+                        : string.Empty,
+                    FechaHora = c.FechaHora,
+                    Motivo = c.Motivo,
+                    PesoKg = c.PesoKg,
+                    Temperatura = c.Temperatura,
+                    Diagnostico = c.Diagnostico,
+                    Observaciones = c.Observaciones,
+                    Importe = c.Importe,
+                    Activo = c.Activo,
+                    CantidadTratamientos = c.DetallesConsulta.Count,
+                    CantidadVacunas = c.AplicacionesVacuna.Count,
+                    CantidadPagos = c.Pagos.Count,
+                    Tratamiento = acciones.Any()
+                        ? string.Join("; ", acciones)
+                        : (c.Observaciones ?? "-"),
+                    ProximoControl = c.ProximoControl
+                        ?? (c.AplicacionesVacuna.Any(a => a.ProximaDosis.HasValue)
+                            ? c.AplicacionesVacuna.Where(a => a.ProximaDosis.HasValue).Min(a => a.ProximaDosis)
+                            : null)
+                };
             }).ToList();
 
             return Resultado<IEnumerable<ConsultaRespuestaDto>>.Exito(dtos);

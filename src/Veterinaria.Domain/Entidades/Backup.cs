@@ -7,7 +7,7 @@ namespace Veterinaria.Domain.Entidades;
 /// </summary>
 public class Backup : ISoftDeletable
 {
-    public long IdBackup { get; set; }
+    public int IdBackup { get; set; }
     public long IdUsuario { get; set; }
     public string NombreArchivo { get; set; } = string.Empty;
     public DateTime FechaCreacion { get; set; } = DateTime.Now;

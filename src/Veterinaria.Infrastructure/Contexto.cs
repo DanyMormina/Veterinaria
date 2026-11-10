@@ -458,7 +458,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
         {
             b.ToTable("Backup", "dbo");
             b.HasKey(x => x.IdBackup);
-            b.Property(x => x.IdBackup).ValueGeneratedOnAdd();
+            b.Property(x => x.IdBackup).HasColumnType("int").ValueGeneratedOnAdd();
             b.Property(x => x.IdUsuario).IsRequired();
             b.Property(x => x.NombreArchivo).HasMaxLength(260).IsRequired();
             b.Property(x => x.FechaCreacion).HasColumnType("datetime2(0)").HasDefaultValueSql("SYSDATETIME()").IsRequired();

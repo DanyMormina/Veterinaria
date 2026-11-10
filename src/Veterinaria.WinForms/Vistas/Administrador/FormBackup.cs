@@ -89,18 +89,27 @@ public partial class FormBackup : Form
     /// </summary>
     private async Task CargarHistorialAsync()
     {
-        var resultadoHistorial = await _backupController.CargarHistorialAsync();
+        try
+        {
+            var resultadoHistorial = await _backupController.CargarHistorialAsync();
 
-        if (resultadoHistorial.EsExitoso && resultadoHistorial.Valor != null)
-        {
-            var lista = resultadoHistorial.Valor.ToList();
-            dgvBackups.DataSource = lista;
-            lblTotalBackups.Text = $"Total de copias registradas: {lista.Count}";
+            if (resultadoHistorial.EsExitoso && resultadoHistorial.Valor != null)
+            {
+                var lista = resultadoHistorial.Valor.ToList();
+                dgvBackups.DataSource = lista;
+                lblTotalBackups.Text = $"Total de copias registradas: {lista.Count}";
+            }
+            else
+            {
+                dgvBackups.DataSource = new List<BackupHistorialDto>();
+                lblTotalBackups.Text = "No se pudieron obtener registros históricos.";
+            }
         }
-        else
+        finally
         {
-            dgvBackups.DataSource = new List<BackupHistorialDto>();
-            lblTotalBackups.Text = "No se pudieron obtener registros históricos.";
+            Cursor = Cursors.Default;
+            Cursor.Current = Cursors.Default;
+            dgvBackups.Cursor = Cursors.Default;
         }
     }
 
@@ -113,6 +122,7 @@ public partial class FormBackup : Form
         btnGenerarBackup.Enabled = false;
         btnVolver.Enabled = false;
         Cursor = Cursors.WaitCursor;
+        Cursor.Current = Cursors.WaitCursor;
 
         try
         {
@@ -164,6 +174,8 @@ public partial class FormBackup : Form
             btnExaminarRestaurar.Enabled = true;
             btnVolver.Enabled = true;
             Cursor = Cursors.Default;
+            Cursor.Current = Cursors.Default;
+            dgvBackups.Cursor = Cursors.Default;
         }
     }
 

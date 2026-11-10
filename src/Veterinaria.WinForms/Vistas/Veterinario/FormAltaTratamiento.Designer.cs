@@ -275,7 +275,7 @@ partial class FormAltaTratamiento
         Name = "FormAltaTratamiento";
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        Text = "Nuevo Tratamiento — Clínica Veterinaria";
+        Text = "Nuevo Tratamiento --- Clínica Veterinaria";
         pnlEncabezado.ResumeLayout(false);
         pnlContenedor.ResumeLayout(false);
         pnlContenedor.PerformLayout();

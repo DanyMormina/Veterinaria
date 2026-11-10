@@ -61,6 +61,21 @@ public partial class FormModificarTratamiento : Form
             numStock.Minimum = 0;
             numStock.Value = 0;
         }
+        else
+        {
+            var id = cboSeleccionarTratamiento.SelectedValue as long?;
+            var seleccionado = id.HasValue ? _tratamientos.FirstOrDefault(t => t.Id == id.Value) : null;
+            if (seleccionado is not null && seleccionado.UsaStock)
+            {
+                numStock.Minimum = seleccionado.Stock;
+                if (numStock.Value < seleccionado.Stock)
+                    numStock.Value = Math.Clamp(seleccionado.Stock, (int)numStock.Minimum, (int)numStock.Maximum);
+            }
+            else
+            {
+                numStock.Minimum = 0;
+            }
+        }
     }
 
     private async Task CargarTratamientosAsync()
@@ -89,7 +104,7 @@ public partial class FormModificarTratamiento : Form
                 return;
             }
 
-            _tratamientos = resultado.Valor.Where(t => t.Activo).OrderBy(t => t.Descripcion).ToList();
+            _tratamientos = [.. resultado.Valor.Where(t => t.Activo).OrderBy(t => t.Descripcion)];
 
             cboSeleccionarTratamiento.DataSource = null;
             cboSeleccionarTratamiento.DisplayMember = nameof(TratamientoItemVista.Texto);
@@ -127,7 +142,7 @@ public partial class FormModificarTratamiento : Form
         }
     }
 
-    private void cboSeleccionarTratamiento_SelectedIndexChanged(object? sender, EventArgs e)
+    private void CboSeleccionarTratamiento_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoDatos) return;
         PoblarCamposEdicion();
@@ -161,6 +176,11 @@ public partial class FormModificarTratamiento : Form
         txtDosis.Text = seleccionado.Dosis ?? string.Empty;
         numPrecio.Value = Math.Clamp(seleccionado.Precio, numPrecio.Minimum, numPrecio.Maximum);
         chkUsaStock.Checked = seleccionado.UsaStock;
+        // Inmutabilidad de tipo: si ya controla stock, no puede convertirse en servicio sin stock
+        chkUsaStock.Enabled = !seleccionado.UsaStock;
+        chkUsaStock.Text = seleccionado.UsaStock
+            ? "¿Controla stock? (Producto inventariable - para discontinuar use 'Dar de Baja')"
+            : "¿Controla stock? (sí: productos; no: servicios)";
         numStock.Minimum = seleccionado.UsaStock ? seleccionado.Stock : 0;
         numStock.Value = seleccionado.UsaStock
             ? Math.Clamp(seleccionado.Stock, (int)numStock.Minimum, (int)numStock.Maximum)
@@ -185,13 +205,14 @@ public partial class FormModificarTratamiento : Form
             txtDosis.Clear();
             numPrecio.Value = 0;
             chkUsaStock.Checked = false;
+            chkUsaStock.Text = "¿Controla stock? (sí: productos; no: servicios)";
             numStock.Minimum = 0;
             numStock.Value = 0;
             ActualizarVisibilidadStock();
         }
     }
 
-    private async void btnModificar_Click(object? sender, EventArgs e)
+    private async void BtnModificar_Click(object? sender, EventArgs e)
     {
         if (_tratamientoControlador is null) return;
 
@@ -279,7 +300,7 @@ public partial class FormModificarTratamiento : Form
         }
     }
 
-    private async void btnBaja_Click(object? sender, EventArgs e)
+    private async void BtnBaja_Click(object? sender, EventArgs e)
     {
         if (_tratamientoControlador is null) return;
 
@@ -342,7 +363,7 @@ public partial class FormModificarTratamiento : Form
         }
     }
 
-    private void btnCancelar_Click(object? sender, EventArgs e)
+    private void BtnCancelar_Click(object? sender, EventArgs e)
     {
         DialogResult = DialogResult.Cancel;
         Close();
@@ -365,3 +386,4 @@ public partial class FormModificarTratamiento : Form
         public string Texto { get; init; } = string.Empty;
     }
 }
+

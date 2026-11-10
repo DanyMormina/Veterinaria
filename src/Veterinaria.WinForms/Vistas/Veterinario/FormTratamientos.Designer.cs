@@ -83,7 +83,7 @@ partial class FormTratamientos
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(680, 50);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — TRATAMIENTOS";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- ATENCIÓN CLÍNICA --- TRATAMIENTOS";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -334,7 +334,7 @@ partial class FormTratamientos
         lblInfoMascota.Padding = new Padding(6, 0, 6, 0);
         lblInfoMascota.Size = new Size(500, 24);
         lblInfoMascota.TabIndex = 2;
-        lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
+        lblInfoMascota.Text = "Especie: --- | Raza: --- | Propietario: ---";
         lblInfoMascota.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblConsulta
@@ -521,7 +521,7 @@ partial class FormTratamientos
         MinimumSize = new Size(1100, 700);
         Name = "FormTratamientos";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "CLÍNICA VETERINARIA — ATENCIÓN CLÍNICA — TRATAMIENTOS";
+        Text = "CLÍNICA VETERINARIA --- ATENCIÓN CLÍNICA --- TRATAMIENTOS";
         Load += FormTratamientos_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);

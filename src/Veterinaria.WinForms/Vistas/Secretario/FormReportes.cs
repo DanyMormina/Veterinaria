@@ -177,7 +177,7 @@ public partial class FormReportes : Form
                 Width = 1050,
                 Height = 720,
                 StartPosition = FormStartPosition.CenterScreen,
-                Text = "Vista previa — Reportes de cobros"
+                Text = "Vista previa --- Reportes de cobros"
             };
             vista.ShowDialog(this);
         }
@@ -305,7 +305,7 @@ public partial class FormReportes : Form
         float y = bounds.Top;
         if (_paginaActualImpresion == 1)
         {
-            g.DrawString("CLÍNICA VETERINARIA — REPORTES DE COBROS", fontTitulo, brushRosa, bounds.Left, y);
+            g.DrawString("CLÍNICA VETERINARIA --- REPORTES DE COBROS", fontTitulo, brushRosa, bounds.Left, y);
             y += 22;
             g.DrawString(_filtrosActuales, fontInfo, brush, bounds.Left, y);
             y += 15;

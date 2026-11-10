@@ -63,13 +63,13 @@ public partial class FormTratamientos : Form
             ? $"Dr./Dra. {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Dr./Dra. Veterinario | Atención Clínica";
 
-        lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} — {DateTime.Now:dd/MM/yyyy}";
+        lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} --- {DateTime.Now:dd/MM/yyyy}";
 
         // 2. Formulario y grilla limpios; el total corresponde solo a la consulta seleccionada
         dgvTratamientosAplicados.Rows.Clear();
         ReiniciarTotal();
         txtSubtotal.Text = "$ 0,00";
-        lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
+        lblInfoMascota.Text = "Especie: --- | Raza: --- | Propietario: ---";
 
         // 3. Cargar catálogos (sin precargar selecciones del formulario)
         await CargarCatalogoMascotasAsync();
@@ -113,7 +113,7 @@ public partial class FormTratamientos : Form
 
             cboMascotas.DataSource = items;
             cboMascotas.SelectedIndex = -1;
-            lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
+            lblInfoMascota.Text = "Especie: --- | Raza: --- | Propietario: ---";
             cboConsultas.DataSource = null;
         }
         finally
@@ -213,7 +213,7 @@ public partial class FormTratamientos : Form
                 return new ConsultaComboItem
                 {
                     Id = c.Id,
-                    Texto = $"{c.FechaHora:dd/MM/yyyy HH:mm} — Diagnóstico: {diagCorto}"
+                    Texto = $"{c.FechaHora:dd/MM/yyyy HH:mm} --- Diagnóstico: {diagCorto}"
                 };
             }).ToList();
 
@@ -295,7 +295,7 @@ public partial class FormTratamientos : Form
         var idMascota = ObtenerIdSeleccionado(cboMascotas);
         if (!idMascota.HasValue || idMascota.Value <= 0)
         {
-            lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
+            lblInfoMascota.Text = "Especie: --- | Raza: --- | Propietario: ---";
             cboConsultas.DataSource = null;
             dgvTratamientosAplicados.Rows.Clear();
             ReiniciarTotal();
@@ -309,7 +309,7 @@ public partial class FormTratamientos : Form
         }
         else
         {
-            lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
+            lblInfoMascota.Text = "Especie: --- | Raza: --- | Propietario: ---";
         }
 
         // Recargar catálogo de tratamientos para asegurar stock y precios vigentes
@@ -610,7 +610,7 @@ public partial class FormTratamientos : Form
         cboMascotas.SelectedIndex = -1;
         cboMascotas.Text = string.Empty;
         _cargandoMascotas = false;
-        lblInfoMascota.Text = "Especie: — | Raza: — | Propietario: —";
+        lblInfoMascota.Text = "Especie: --- | Raza: --- | Propietario: ---";
 
         // 2. Limpiar consultas asociadas
         _cargandoConsultas = true;

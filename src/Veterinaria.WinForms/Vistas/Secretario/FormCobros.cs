@@ -8,13 +8,15 @@ namespace Veterinaria.WinForms.Vistas.Secretario;
 
 /// <summary>
 /// Gestión de cobros en Secretaría vinculada a consultas clínicas.
+/// Cobro en pago único con importe no modificable y calculadora de vuelto en efectivo.
 /// </summary>
 public partial class FormCobros : Form
 {
     private static readonly Color ColorFondoError = ColorTranslator.FromHtml("#FDECEF");
     private static readonly Color ColorEtiquetaError = ColorTranslator.FromHtml("#B85D69");
     private static readonly Color ColorTextoNormal = ColorTranslator.FromHtml("#3A353B");
-    private static readonly Color ColorExito = ColorTranslator.FromHtml("#8FA89B");
+    private static readonly Color ColorExito = ColorTranslator.FromHtml("#2E7D32");
+    private static readonly Color ColorFondoBloqueado = ColorTranslator.FromHtml("#F7F5F8");
 
     // Datos fiscales del comercio (ficticios) impresos en el encabezado del ticket
     private const string EmpresaNombreFantasia = "VETERINARIA PATITAS FELICES";
@@ -74,23 +76,30 @@ public partial class FormCobros : Form
 
     private void ConfigurarEventos()
     {
-        txtImporte.KeyPress += TxtImporte_KeyPress;
-        txtImporte.TextChanged += TxtImporte_TextChanged;
-        txtImporte.Leave += TxtImporte_Leave;
+        // El importe a cobrar es de solo lectura y calculado por el sistema
+        txtImporte.ReadOnly = true;
+        txtImporte.TabStop = false;
+        pnlImporte.BackColor = ColorFondoBloqueado;
+        txtImporte.BackColor = ColorFondoBloqueado;
+        lblSimboloPeso.BackColor = ColorFondoBloqueado;
+
+        txtAbonaCon.KeyPress += TxtAbonaCon_KeyPress;
+        txtAbonaCon.TextChanged += TxtAbonaCon_TextChanged;
+        txtAbonaCon.Leave += TxtAbonaCon_Leave;
 
         btnCobrar.Click += async (_, _) => await CobrarAsync();
         btnLimpiar.Click += (_, _) => LimpiarFormulario();
         txtBuscarCobro.TextChanged += (_, _) => MostrarCobros();
         btnImprimirTicket.Click += async (_, _) => await ImprimirTicketSeleccionadoAsync();
         cboConsultaClinica.SelectedIndexChanged += async (_, _) => await OnConsultaSeleccionadaAsync();
-        cboMetodoPago.SelectedIndexChanged += (_, _) => ActualizarVisibilidadCuotas();
+        cboMetodoPago.SelectedIndexChanged += (_, _) => ActualizarVisibilidadMetodoPago();
         dgvCobros.CellClick += (_, _) => CargarPagoSeleccionado();
         dgvCobros.SelectionChanged += (_, _) => CargarPagoSeleccionado();
 
         cboCuotas.Items.Clear();
         cboCuotas.Items.AddRange(["1 pago", "3 cuotas", "6 cuotas", "9 cuotas", "12 cuotas"]);
         cboCuotas.SelectedIndex = 0;
-        ActualizarVisibilidadCuotas();
+        ActualizarVisibilidadMetodoPago();
     }
 
     private async void FormCobros_Load(object? sender, EventArgs e)
@@ -102,7 +111,7 @@ public partial class FormCobros : Form
         await CargarCatalogosAsync();
         await CargarCobrosAsync();
         LimpiarFormulario();
-        lblInfoEstado.Text = "Módulo de cobros — recepción";
+        lblInfoEstado.Text = "Módulo de cobros --- recepción";
     }
 
     private async Task<T> ConsultarAsync<T>(Func<Task<T>> consulta)
@@ -123,7 +132,7 @@ public partial class FormCobros : Form
         _cargando = true;
         try
         {
-            // Primero métodos (rápido) y cobros vigentes, para listar solo consultas pendientes
+            // Métodos de pago
             cboMetodoPago.Items.Clear();
             cboMetodoPago.Items.Add(new ItemCombo(null, "Seleccione un método de pago"));
             if (_metodoPagoControlador is not null)
@@ -140,6 +149,7 @@ public partial class FormCobros : Form
 
             cboMetodoPago.SelectedIndex = 0;
 
+            // Consultas ya cobradas (pago único registrado y vigente)
             var idsYaCobradas = new HashSet<long>();
             if (_pagoControlador is not null)
             {
@@ -256,6 +266,8 @@ public partial class FormCobros : Form
         {
             txtDetalleImporte.Clear();
             txtImporte.Clear();
+            txtAbonaCon.Clear();
+            CalcularVuelto();
             return;
         }
 
@@ -264,24 +276,31 @@ public partial class FormCobros : Form
             return;
 
         txtDetalleImporte.Text = detalle;
-        txtImporte.Text = total > 0 ? total.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
 
-        if (!_idPagoSeleccionado.HasValue && _pagoControlador is not null)
+        if (!_idPagoSeleccionado.HasValue)
         {
-            var yaCobrada = await ConsultarAsync(() => _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value));
-            if (!EsVigente() || _idPagoSeleccionado.HasValue)
-                return;
+            txtImporte.Text = total > 0 ? total.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
+            if (string.IsNullOrWhiteSpace(txtAbonaCon.Text) || txtAbonaCon.Text == "0.00")
+                txtAbonaCon.Text = txtImporte.Text;
+            CalcularVuelto();
 
-            btnCobrar.Enabled = !yaCobrada;
-            if (yaCobrada)
+            if (_pagoControlador is not null)
             {
-                lblInfoEstado.ForeColor = ColorEtiquetaError;
-                lblInfoEstado.Text = $"La consulta #{item.Id.Value} ya fue cobrada. No se puede volver a cobrar.";
-            }
-            else
-            {
-                lblInfoEstado.ForeColor = ColorTextoNormal;
-                lblInfoEstado.Text = "Módulo de cobros — recepción";
+                var yaCobrada = await ConsultarAsync(() => _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value));
+                if (!EsVigente() || _idPagoSeleccionado.HasValue)
+                    return;
+
+                btnCobrar.Enabled = !yaCobrada;
+                if (yaCobrada)
+                {
+                    lblInfoEstado.ForeColor = ColorEtiquetaError;
+                    lblInfoEstado.Text = $"La consulta #{item.Id.Value} ya fue cobrada. No se puede volver a cobrar.";
+                }
+                else
+                {
+                    lblInfoEstado.ForeColor = ColorTextoNormal;
+                    lblInfoEstado.Text = "Módulo de cobros --- recepción";
+                }
             }
         }
     }
@@ -389,9 +408,19 @@ public partial class FormCobros : Form
                 lblInfoEstado.Text = resultado.Mensaje;
 
                 var metodoTexto = (cboMetodoPago.SelectedItem as ItemCombo)?.Texto ?? string.Empty;
-                var ticket = await ArmarTicketAsync(resultado.Valor, dto, metodoTexto);
+
+                decimal? abonaCon = null;
+                if (EsEfectivo(metodoTexto))
+                {
+                    var textoAbona = txtAbonaCon.Text.Trim().Replace(',', '.');
+                    if (decimal.TryParse(textoAbona, CultureInfo.InvariantCulture, out var vAbona))
+                        abonaCon = vAbona;
+                }
+
+                var ticket = await ArmarTicketAsync(resultado.Valor, dto, metodoTexto, abonaCon: abonaCon);
 
                 LimpiarFormulario();
+                await CargarCatalogosAsync();
                 await CargarCobrosAsync();
 
                 using var vistaTicket = new FormTicket(ticket);
@@ -432,7 +461,7 @@ public partial class FormCobros : Form
         vistaTicket.ShowDialog(this);
     }
 
-    private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago, bool reimpresion = false)
+    private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago, decimal? abonaCon = null, bool reimpresion = false)
     {
         const int ancho = 52;
         var separador = new string('=', ancho);
@@ -487,6 +516,14 @@ public partial class FormCobros : Form
         sb.AppendLine($"Método de pago: {metodoPago}");
         if (pago.Cuotas is > 1)
             sb.AppendLine($"Cuotas: {pago.Cuotas} de $ {pago.Importe / pago.Cuotas.Value:N2}");
+
+        if (abonaCon.HasValue && abonaCon.Value >= pago.Importe && EsEfectivo(metodoPago))
+        {
+            var vuelto = abonaCon.Value - pago.Importe;
+            sb.AppendLine(FormatearLineaTicket("Abonó con (Efectivo)", abonaCon.Value, ancho));
+            sb.AppendLine(FormatearLineaTicket("Su vuelto", vuelto, ancho));
+        }
+
         sb.AppendLine(separador);
         sb.Append(Centrar("¡Gracias por su visita!", ancho));
 
@@ -534,6 +571,30 @@ public partial class FormCobros : Form
                 return false;
             }
         }
+        else if (EsEfectivo(metodo.Texto))
+        {
+            var textoAbona = txtAbonaCon.Text.Trim().Replace(',', '.');
+            if (string.IsNullOrWhiteSpace(textoAbona))
+            {
+                mensaje = "Debe ingresar el importe con el que abona el cliente.";
+                txtAbonaCon.Focus();
+                return false;
+            }
+
+            if (!decimal.TryParse(textoAbona, CultureInfo.InvariantCulture, out var abonaCon))
+            {
+                mensaje = "El importe abonado en efectivo debe ser un número decimal válido.";
+                txtAbonaCon.Focus();
+                return false;
+            }
+
+            if (abonaCon < importe)
+            {
+                mensaje = $"El importe abonado en efectivo (${abonaCon:N2}) no puede ser menor al total a cobrar (${importe:N2}).";
+                txtAbonaCon.Focus();
+                return false;
+            }
+        }
 
         dto = new PagoSolicitudDto
         {
@@ -547,20 +608,44 @@ public partial class FormCobros : Form
         return true;
     }
 
-    private void ActualizarVisibilidadCuotas()
+    private void ActualizarVisibilidadMetodoPago()
     {
         var metodo = cboMetodoPago.SelectedItem as ItemCombo;
         var esCredito = metodo is not null && EsTarjetaCredito(metodo.Texto);
+        var esEfectivo = metodo is not null && EsEfectivo(metodo.Texto);
+
         lblCuotas.Visible = esCredito;
         cboCuotas.Visible = esCredito;
         if (esCredito && cboCuotas.SelectedIndex < 0 && cboCuotas.Items.Count > 0)
             cboCuotas.SelectedIndex = 0;
+
+        lblAbonaCon.Visible = esEfectivo;
+        pnlAbonaCon.Visible = esEfectivo;
+        lblVueltoEtiqueta.Visible = esEfectivo;
+        lblVuelto.Visible = esEfectivo;
+
+        if (esEfectivo)
+        {
+            if (string.IsNullOrWhiteSpace(txtAbonaCon.Text) && !string.IsNullOrWhiteSpace(txtImporte.Text))
+                txtAbonaCon.Text = txtImporte.Text;
+            CalcularVuelto();
+        }
+        else
+        {
+            txtAbonaCon.Clear();
+            lblVuelto.Text = "$ 0,00";
+            lblVuelto.ForeColor = ColorTextoNormal;
+        }
     }
 
     private static bool EsTarjetaCredito(string? nombre) =>
         !string.IsNullOrWhiteSpace(nombre) &&
         (nombre.Contains("Crédito", StringComparison.OrdinalIgnoreCase) ||
          nombre.Contains("Credito", StringComparison.OrdinalIgnoreCase));
+
+    private static bool EsEfectivo(string? nombre) =>
+        !string.IsNullOrWhiteSpace(nombre) &&
+        nombre.Contains("Efectivo", StringComparison.OrdinalIgnoreCase);
 
     private int? ObtenerCuotasSeleccionadas()
     {
@@ -603,14 +688,15 @@ public partial class FormCobros : Form
         try
         {
             _idPagoSeleccionado = pago.Id;
-            // La consulta ya cobrada no está en el listado de pendientes: se agrega solo para reimpresión
             AsegurarConsultaEnCombo(pago.IdConsulta, pago.DescripcionConsulta);
             SeleccionarComboPorId(cboConsultaClinica, pago.IdConsulta);
             SeleccionarComboPorId(cboMetodoPago, pago.IdMetodoPago);
-            ActualizarVisibilidadCuotas();
+            ActualizarVisibilidadMetodoPago();
             SeleccionarCuotas(pago.Cuotas);
             dtpFecha.Value = pago.Fecha.Date;
             txtImporte.Text = pago.Importe.ToString("0.00", CultureInfo.InvariantCulture);
+            txtAbonaCon.Text = pago.Importe.ToString("0.00", CultureInfo.InvariantCulture);
+            CalcularVuelto();
             _estadoPagoSeleccionado = pago.Estado;
 
             btnCobrar.Enabled = false;
@@ -627,7 +713,7 @@ public partial class FormCobros : Form
     }
 
     /// <summary>
-    /// Un cobro ya registrado se muestra bloqueado: por seguridad no se puede editar.
+    /// Configura los campos del formulario cuando se visualiza un pago ya registrado o uno nuevo.
     /// </summary>
     private void EstablecerSoloLectura(bool soloLectura)
     {
@@ -635,7 +721,8 @@ public partial class FormCobros : Form
         cboMetodoPago.Enabled = !soloLectura;
         cboCuotas.Enabled = !soloLectura;
         dtpFecha.Enabled = !soloLectura;
-        txtImporte.ReadOnly = soloLectura;
+        txtImporte.ReadOnly = true; // El importe siempre es de solo lectura (calculado automáticamente)
+        txtAbonaCon.ReadOnly = soloLectura;
     }
 
     private void LimpiarFormulario()
@@ -649,9 +736,12 @@ public partial class FormCobros : Form
             cboMetodoPago.SelectedIndex = 0;
         if (cboCuotas.Items.Count > 0)
             cboCuotas.SelectedIndex = 0;
-        ActualizarVisibilidadCuotas();
+        ActualizarVisibilidadMetodoPago();
         dtpFecha.Value = DateTime.Today;
         txtImporte.Clear();
+        txtAbonaCon.Clear();
+        lblVuelto.Text = "$ 0,00";
+        lblVuelto.ForeColor = ColorTextoNormal;
         txtDetalleImporte.Clear();
         btnCobrar.Enabled = true;
         btnImprimirTicket.Enabled = false;
@@ -687,7 +777,7 @@ public partial class FormCobros : Form
         }
     }
 
-    private void TxtImporte_KeyPress(object? sender, KeyPressEventArgs e)
+    private void TxtAbonaCon_KeyPress(object? sender, KeyPressEventArgs e)
     {
         if (char.IsControl(e.KeyChar) || char.IsDigit(e.KeyChar))
             return;
@@ -708,13 +798,16 @@ public partial class FormCobros : Form
         e.Handled = true;
     }
 
-    private void TxtImporte_TextChanged(object? sender, EventArgs e)
+    private void TxtAbonaCon_TextChanged(object? sender, EventArgs e)
     {
-        RestaurarEstiloImporte();
-        if (string.IsNullOrEmpty(txtImporte.Text))
+        if (string.IsNullOrEmpty(txtAbonaCon.Text))
+        {
+            lblVuelto.Text = "$ 0,00";
+            lblVuelto.ForeColor = ColorTextoNormal;
             return;
+        }
 
-        var texto = txtImporte.Text;
+        var texto = txtAbonaCon.Text;
         var textoLimpio = new StringBuilder();
         var tieneSeparador = false;
         foreach (var c in texto)
@@ -730,19 +823,54 @@ public partial class FormCobros : Form
 
         if (textoLimpio.ToString() != texto)
         {
-            var cursor = txtImporte.SelectionStart;
-            txtImporte.Text = textoLimpio.ToString();
-            txtImporte.SelectionStart = Math.Min(cursor, txtImporte.Text.Length);
+            var cursor = txtAbonaCon.SelectionStart;
+            txtAbonaCon.Text = textoLimpio.ToString();
+            txtAbonaCon.SelectionStart = Math.Min(cursor, txtAbonaCon.Text.Length);
+        }
+
+        CalcularVuelto();
+    }
+
+    private void TxtAbonaCon_Leave(object? sender, EventArgs e)
+    {
+        var texto = txtAbonaCon.Text.Trim().Replace(',', '.');
+        if (decimal.TryParse(texto, CultureInfo.InvariantCulture, out var valor) && valor >= 0)
+        {
+            txtAbonaCon.Text = valor.ToString("0.00", CultureInfo.InvariantCulture);
+            CalcularVuelto();
         }
     }
 
-    private void TxtImporte_Leave(object? sender, EventArgs e)
+    private void CalcularVuelto()
     {
-        var texto = txtImporte.Text.Trim().Replace(',', '.');
-        if (decimal.TryParse(texto, CultureInfo.InvariantCulture, out var valor) && valor > 0)
+        var metodo = cboMetodoPago.SelectedItem as ItemCombo;
+        if (metodo is null || !EsEfectivo(metodo.Texto))
+            return;
+
+        var textoImporte = txtImporte.Text.Trim().Replace(',', '.');
+        var textoAbona = txtAbonaCon.Text.Trim().Replace(',', '.');
+
+        decimal.TryParse(textoImporte, CultureInfo.InvariantCulture, out var importe);
+        decimal.TryParse(textoAbona, CultureInfo.InvariantCulture, out var abona);
+
+        if (abona <= 0 || importe <= 0)
         {
-            txtImporte.Text = valor.ToString("0.00", CultureInfo.InvariantCulture);
-            RestaurarEstiloImporte();
+            lblVuelto.ForeColor = ColorTextoNormal;
+            lblVuelto.Text = "$ 0,00";
+            return;
+        }
+
+        if (abona >= importe)
+        {
+            var vuelto = abona - importe;
+            lblVuelto.ForeColor = ColorExito;
+            lblVuelto.Text = $"$ {vuelto:N2}";
+        }
+        else
+        {
+            var falta = importe - abona;
+            lblVuelto.ForeColor = ColorEtiquetaError;
+            lblVuelto.Text = $"Faltan $ {falta:N2}";
         }
     }
 
@@ -752,7 +880,7 @@ public partial class FormCobros : Form
         var texto = txtImporte.Text.Trim().Replace(',', '.');
         if (string.IsNullOrWhiteSpace(texto))
         {
-            MarcarErrorImporte("El importe es obligatorio.");
+            MarcarErrorImporte("Debe seleccionar una consulta con importe a cobrar.");
             return false;
         }
 
@@ -768,25 +896,16 @@ public partial class FormCobros : Form
 
     private void MarcarErrorImporte(string mensaje)
     {
-        pnlImporte.BackColor = ColorFondoError;
-        txtImporte.BackColor = ColorFondoError;
-        lblSimboloPeso.BackColor = ColorFondoError;
-        lblImporte.ForeColor = ColorEtiquetaError;
         lblInfoEstado.ForeColor = ColorEtiquetaError;
         lblInfoEstado.Text = mensaje;
-        txtImporte.Focus();
-        txtImporte.SelectAll();
     }
 
     private void RestaurarEstiloImporte()
     {
-        pnlImporte.BackColor = Color.White;
-        txtImporte.BackColor = Color.White;
-        lblSimboloPeso.BackColor = Color.White;
         lblImporte.ForeColor = ColorTextoNormal;
         lblInfoEstado.ForeColor = ColorTextoNormal;
         if (_idPagoSeleccionado is null)
-            lblInfoEstado.Text = "Módulo de cobros — recepción";
+            lblInfoEstado.Text = "Módulo de cobros --- recepción";
     }
 
     private void btnCancelar_Click(object? sender, EventArgs e)

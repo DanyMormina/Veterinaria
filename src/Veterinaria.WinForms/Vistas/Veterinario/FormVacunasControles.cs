@@ -69,7 +69,7 @@ public partial class FormVacunasControles : Form
             ? $"Dr./Dra. {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Dr./Dra. Lucía Pérez | Veterinario";
 
-        lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} — {DateTime.Now:dd/MM/yyyy}";
+        lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} --- {DateTime.Now:dd/MM/yyyy}";
 
         // 2. Establecer fechas predeterminadas
         dtpFechaAplicacion.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
@@ -195,8 +195,8 @@ public partial class FormVacunasControles : Form
         {
             Id = v.Id,
             Texto = string.IsNullOrWhiteSpace(v.NombreEspecie)
-                ? $"{v.Nombre} — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
-                : $"{v.Nombre} ({v.NombreEspecie}) — Precio: {v.Precio.ToString("C2", CulturaArgentina)} — Stock: {v.Stock}"
+                ? $"{v.Nombre} --- Precio: {v.Precio.ToString("C2", CulturaArgentina)} --- Stock: {v.Stock}"
+                : $"{v.Nombre} ({v.NombreEspecie}) --- Precio: {v.Precio.ToString("C2", CulturaArgentina)} --- Stock: {v.Stock}"
         }).ToList();
 
         cboVacunas.DataSource = items;
@@ -248,7 +248,7 @@ public partial class FormVacunasControles : Form
                 return new ComboItemGenerico
                 {
                     Id = c.Id,
-                    Texto = $"{c.FechaHora:dd/MM/yyyy HH:mm} — Diagnóstico: {diagCorto}"
+                    Texto = $"{c.FechaHora:dd/MM/yyyy HH:mm} --- Diagnóstico: {diagCorto}"
                 };
             }).ToList();
 
@@ -310,13 +310,13 @@ public partial class FormVacunasControles : Form
             {
                 var nombreMascota = !string.IsNullOrWhiteSpace(a.NombreMascota)
                     ? a.NombreMascota
-                    : (cboMascotas.SelectedItem as ComboItemGenerico)?.Texto.Split('-')[0].Trim() ?? "—";
+                    : (cboMascotas.SelectedItem as ComboItemGenerico)?.Texto.Split('-')[0].Trim() ?? "---";
 
                 var rowIndex = dgvVacunas.Rows.Add(
                     nombreMascota,
                     a.NombreVacuna,
                     a.FechaAplicacion.ToString("dd/MM/yyyy"),
-                    a.ProximaDosis?.ToString("dd/MM/yyyy") ?? "—",
+                    a.ProximaDosis?.ToString("dd/MM/yyyy") ?? "---",
                     a.Observaciones ?? string.Empty);
 
                 dgvVacunas.Rows[rowIndex].Tag = a.Id;

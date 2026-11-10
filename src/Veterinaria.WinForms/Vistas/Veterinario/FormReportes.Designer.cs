@@ -61,7 +61,7 @@ partial class FormReportes
         lblTitulo.Location = new Point(16, 0);
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(560, 50);
-        lblTitulo.Text = "CLÍNICA VETERINARIA — VETERINARIO — REPORTES";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- VETERINARIO --- REPORTES";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -202,7 +202,7 @@ partial class FormReportes
         Controls.Add(pnlEncabezado);
         Name = "FormReportes";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "CLÍNICA VETERINARIA — VETERINARIO — REPORTES";
+        Text = "CLÍNICA VETERINARIA --- VETERINARIO --- REPORTES";
         Load += FormReportes_Load;
         pnlEncabezado.ResumeLayout(false);
         pnlContenido.ResumeLayout(false);

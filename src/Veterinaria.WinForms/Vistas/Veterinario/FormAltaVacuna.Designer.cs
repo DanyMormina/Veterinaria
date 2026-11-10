@@ -261,7 +261,7 @@ partial class FormAltaVacuna
         Name = "FormAltaVacuna";
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        Text = "Nueva Vacuna — Catálogo Veterinario";
+        Text = "Nueva Vacuna --- Catálogo Veterinario";
         pnlEncabezado.ResumeLayout(false);
         pnlContenedor.ResumeLayout(false);
         pnlContenedor.PerformLayout();

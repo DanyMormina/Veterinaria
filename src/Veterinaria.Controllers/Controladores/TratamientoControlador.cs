@@ -219,8 +219,14 @@ public class TratamientoControlador(ContextoVeterinaria context)
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el tratamiento con ID {id}.");
 
-            if (solicitud.UsaStock && solicitud.Stock < entidad.Stock)
-                return Resultado.Falla("El stock solo se puede aumentar.");
+            // Inmutabilidad de producto inventariable: si ya controlaba stock, no puede convertirse en servicio sin stock.
+            if (entidad.UsaStock && !solicitud.UsaStock)
+                return Resultado.Falla("Un tratamiento que controla stock no puede transformarse en un servicio sin stock. Para discontinuarlo debe darse de baja.");
+
+            // El stock solo se puede aumentar si el tratamiento ya controlaba stock previamente.
+            // Si antes no usaba stock (ej. era un servicio), se está fijando el inventario inicial por primera vez.
+            if (entidad.UsaStock && solicitud.UsaStock && solicitud.Stock < entidad.Stock)
+                return Resultado.Falla($"El stock solo se puede aumentar (stock actual: {entidad.Stock}).");
 
             entidad.TipoTratamiento = string.IsNullOrWhiteSpace(solicitud.TipoTratamiento) ? "General" : solicitud.TipoTratamiento.Trim();
             entidad.Descripcion = solicitud.Descripcion.Trim();

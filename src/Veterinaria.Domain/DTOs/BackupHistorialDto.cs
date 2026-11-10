@@ -5,7 +5,7 @@ namespace Veterinaria.Domain.Dtos;
 /// </summary>
 public class BackupHistorialDto
 {
-    public long IdBackup { get; set; }
+    public int IdBackup { get; set; }
     public string NombreArchivo { get; set; } = string.Empty;
     public DateTime FechaCreacion { get; set; }
     public string FechaHoraFormateada => FechaCreacion.ToString("dd/MM/yyyy HH:mm:ss");

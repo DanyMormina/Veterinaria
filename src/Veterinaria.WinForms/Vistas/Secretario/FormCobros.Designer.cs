@@ -42,6 +42,12 @@ partial class FormCobros
         pnlImporte = new Panel();
         lblSimboloPeso = new Label();
         txtImporte = new TextBox();
+        lblAbonaCon = new Label();
+        pnlAbonaCon = new Panel();
+        lblSimboloPesoAbonaCon = new Label();
+        txtAbonaCon = new TextBox();
+        lblVueltoEtiqueta = new Label();
+        lblVuelto = new Label();
         pnlListado = new Panel();
         lblBuscarCobro = new Label();
         txtBuscarCobro = new TextBox();
@@ -84,7 +90,7 @@ partial class FormCobros
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(680, 50);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — COBROS";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- COBROS";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
@@ -181,9 +187,13 @@ partial class FormCobros
         grpPago.Controls.Add(lblCuotas);
         grpPago.Controls.Add(cboCuotas);
         grpPago.Controls.Add(lblImporte);
+        grpPago.Controls.Add(pnlImporte);
+        grpPago.Controls.Add(lblAbonaCon);
+        grpPago.Controls.Add(pnlAbonaCon);
+        grpPago.Controls.Add(lblVueltoEtiqueta);
+        grpPago.Controls.Add(lblVuelto);
         grpPago.Font = new Font("Segoe UI", 9F);
         grpPago.ForeColor = Color.FromArgb(58, 53, 59);
-        grpPago.Controls.Add(pnlImporte);
         grpPago.Location = new Point(16, 212);
         grpPago.Name = "grpPago";
         grpPago.Size = new Size(1072, 110);
@@ -254,7 +264,7 @@ partial class FormCobros
         lblImporte.Name = "lblImporte";
         lblImporte.Size = new Size(118, 23);
         lblImporte.TabIndex = 4;
-        lblImporte.Text = "Importe";
+        lblImporte.Text = "Importe a cobrar";
         lblImporte.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // pnlImporte
@@ -289,6 +299,70 @@ partial class FormCobros
         txtImporte.Size = new Size(172, 16);
         txtImporte.TabIndex = 1;
         txtImporte.TabStop = false;
+        // 
+        // lblAbonaCon
+        // 
+        lblAbonaCon.Location = new Point(380, 68);
+        lblAbonaCon.Name = "lblAbonaCon";
+        lblAbonaCon.Size = new Size(118, 23);
+        lblAbonaCon.TabIndex = 6;
+        lblAbonaCon.Text = "Abona con";
+        lblAbonaCon.TextAlign = ContentAlignment.MiddleLeft;
+        lblAbonaCon.Visible = false;
+        // 
+        // pnlAbonaCon
+        // 
+        pnlAbonaCon.BackColor = Color.White;
+        pnlAbonaCon.BorderStyle = BorderStyle.FixedSingle;
+        pnlAbonaCon.Controls.Add(lblSimboloPesoAbonaCon);
+        pnlAbonaCon.Controls.Add(txtAbonaCon);
+        pnlAbonaCon.Location = new Point(504, 68);
+        pnlAbonaCon.Name = "pnlAbonaCon";
+        pnlAbonaCon.Size = new Size(200, 23);
+        pnlAbonaCon.TabIndex = 7;
+        pnlAbonaCon.Visible = false;
+        // 
+        // lblSimboloPesoAbonaCon
+        // 
+        lblSimboloPesoAbonaCon.AutoSize = true;
+        lblSimboloPesoAbonaCon.Font = new Font("Segoe UI", 9F);
+        lblSimboloPesoAbonaCon.ForeColor = Color.FromArgb(58, 53, 59);
+        lblSimboloPesoAbonaCon.Location = new Point(6, 4);
+        lblSimboloPesoAbonaCon.Name = "lblSimboloPesoAbonaCon";
+        lblSimboloPesoAbonaCon.Size = new Size(13, 15);
+        lblSimboloPesoAbonaCon.TabIndex = 0;
+        lblSimboloPesoAbonaCon.Text = "$";
+        // 
+        // txtAbonaCon
+        // 
+        txtAbonaCon.BackColor = Color.White;
+        txtAbonaCon.BorderStyle = BorderStyle.None;
+        txtAbonaCon.Location = new Point(22, 4);
+        txtAbonaCon.Name = "txtAbonaCon";
+        txtAbonaCon.Size = new Size(172, 16);
+        txtAbonaCon.TabIndex = 1;
+        // 
+        // lblVueltoEtiqueta
+        // 
+        lblVueltoEtiqueta.Location = new Point(720, 68);
+        lblVueltoEtiqueta.Name = "lblVueltoEtiqueta";
+        lblVueltoEtiqueta.Size = new Size(60, 23);
+        lblVueltoEtiqueta.TabIndex = 8;
+        lblVueltoEtiqueta.Text = "Vuelto:";
+        lblVueltoEtiqueta.TextAlign = ContentAlignment.MiddleLeft;
+        lblVueltoEtiqueta.Visible = false;
+        // 
+        // lblVuelto
+        // 
+        lblVuelto.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+        lblVuelto.ForeColor = Color.FromArgb(46, 125, 50);
+        lblVuelto.Location = new Point(784, 68);
+        lblVuelto.Name = "lblVuelto";
+        lblVuelto.Size = new Size(150, 23);
+        lblVuelto.TabIndex = 9;
+        lblVuelto.Text = "$ 0,00";
+        lblVuelto.TextAlign = ContentAlignment.MiddleLeft;
+        lblVuelto.Visible = false;
         // 
         // pnlBotones
         // 
@@ -502,6 +576,8 @@ partial class FormCobros
         grpPago.ResumeLayout(false);
         pnlImporte.ResumeLayout(false);
         pnlImporte.PerformLayout();
+        pnlAbonaCon.ResumeLayout(false);
+        pnlAbonaCon.PerformLayout();
         pnlListado.ResumeLayout(false);
         pnlListado.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dgvCobros).EndInit();
@@ -531,6 +607,12 @@ partial class FormCobros
     private Panel pnlImporte;
     private Label lblSimboloPeso;
     private TextBox txtImporte;
+    private Label lblAbonaCon;
+    private Panel pnlAbonaCon;
+    private Label lblSimboloPesoAbonaCon;
+    private TextBox txtAbonaCon;
+    private Label lblVueltoEtiqueta;
+    private Label lblVuelto;
     private Panel pnlBotones;
     private Button btnLimpiar;
     private Button btnCobrar;

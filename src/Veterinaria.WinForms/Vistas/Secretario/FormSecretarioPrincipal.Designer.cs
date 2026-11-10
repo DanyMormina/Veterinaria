@@ -78,7 +78,7 @@ partial class FormSecretarioPrincipal
         lblTitulo.Name = "lblTitulo";
         lblTitulo.Size = new Size(350, 50);
         lblTitulo.TabIndex = 0;
-        lblTitulo.Text = "CLÍNICA VETERINARIA — RECEPCIÓN";
+        lblTitulo.Text = "CLÍNICA VETERINARIA --- RECEPCIÓN";
         lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // lblUsuarioSesion
