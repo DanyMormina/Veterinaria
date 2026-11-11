@@ -60,14 +60,12 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             if (!consultaExiste)
                 return Resultado<long>.Falla($"No existe la consulta con ID {solicitud.IdConsulta}.");
 
-            var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
+            var tratamiento = await context.Tratamientos.AsNoTracking().FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
             if (tratamiento is null)
                 return Resultado<long>.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
 
-            if (tratamiento.Stock < solicitud.Cantidad)
+            if (tratamiento.UsaStock && tratamiento.Stock < solicitud.Cantidad)
                 return Resultado<long>.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamiento.Stock}.");
-
-            tratamiento.Stock -= solicitud.Cantidad;
 
             var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : tratamiento.Precio;
             var subtotal = solicitud.Subtotal > 0 ? solicitud.Subtotal : (precioUnitario * solicitud.Cantidad);
@@ -83,9 +81,38 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
                 Activo = true
             };
 
-            context.DetalleConsultas.Add(entidad);
-            await context.SaveChangesAsync();
-            return Resultado<long>.Exito(entidad.Id, "Detalle de tratamiento agregado a la consulta.");
+            var strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                using var transaction = await context.Database.BeginTransactionAsync();
+                try
+                {
+                    if (tratamiento.UsaStock)
+                    {
+                        // Descuento atómico condicional en el motor de base de datos
+                        var filasAfectadas = await context.Tratamientos
+                            .Where(t => t.Id == solicitud.IdTratamiento && t.Stock >= solicitud.Cantidad)
+                            .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock - solicitud.Cantidad));
+
+                        if (filasAfectadas == 0)
+                        {
+                            await transaction.RollbackAsync();
+                            return Resultado<long>.Falla("No hay stock suficiente de este tratamiento (puede haber sido consumido simultáneamente por otro usuario).");
+                        }
+                    }
+
+                    context.DetalleConsultas.Add(entidad);
+                    await context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Resultado<long>.Exito(entidad.Id, "Detalle de tratamiento agregado a la consulta.");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return Resultado<long>.Falla($"Error al agregar el detalle: {ex.Message}");
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -110,48 +137,83 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             if (solicitud.Cantidad <= 0)
                 return Resultado.Falla("La cantidad debe ser mayor a cero.");
 
-            var tratamientoNuevo = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
+            var tratamientoNuevo = await context.Tratamientos.AsNoTracking().FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
             if (tratamientoNuevo is null)
                 return Resultado.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
 
-            var cantidadAnterior = entidad.Activo ? entidad.Cantidad : 0;
-            if (entidad.IdTratamiento == solicitud.IdTratamiento)
+            var strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var delta = solicitud.Cantidad - cantidadAnterior;
-                if (delta > 0 && tratamientoNuevo.Stock < delta)
-                    return Resultado.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamientoNuevo.Stock}.");
-
-                tratamientoNuevo.Stock -= delta;
-            }
-            else
-            {
-                if (tratamientoNuevo.Stock < solicitud.Cantidad)
-                    return Resultado.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamientoNuevo.Stock}.");
-
-                if (cantidadAnterior > 0)
+                using var transaction = await context.Database.BeginTransactionAsync();
+                try
                 {
-                    var tratamientoAnterior = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == entidad.IdTratamiento);
-                    if (tratamientoAnterior is not null)
-                        tratamientoAnterior.Stock += cantidadAnterior;
+                    var cantidadAnterior = entidad.Activo ? entidad.Cantidad : 0;
+                    if (entidad.IdTratamiento == solicitud.IdTratamiento)
+                    {
+                        var delta = solicitud.Cantidad - cantidadAnterior;
+                        if (tratamientoNuevo.UsaStock && delta > 0)
+                        {
+                            var filas = await context.Tratamientos
+                                .Where(t => t.Id == solicitud.IdTratamiento && t.Stock >= delta)
+                                .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock - delta));
+
+                            if (filas == 0)
+                            {
+                                await transaction.RollbackAsync();
+                                return Resultado.Falla("No hay stock suficiente de este tratamiento para aumentar la cantidad (insuficiente en el servidor).");
+                            }
+                        }
+                        else if (tratamientoNuevo.UsaStock && delta < 0)
+                        {
+                            var devolver = -delta;
+                            await context.Tratamientos
+                                .Where(t => t.Id == solicitud.IdTratamiento)
+                                .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock + devolver));
+                        }
+                    }
+                    else
+                    {
+                        if (tratamientoNuevo.UsaStock)
+                        {
+                            var filas = await context.Tratamientos
+                                .Where(t => t.Id == solicitud.IdTratamiento && t.Stock >= solicitud.Cantidad)
+                                .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock - solicitud.Cantidad));
+
+                            if (filas == 0)
+                            {
+                                await transaction.RollbackAsync();
+                                return Resultado.Falla("No hay stock suficiente del nuevo tratamiento seleccionado (insuficiente en el servidor).");
+                            }
+                        }
+
+                        if (cantidadAnterior > 0)
+                        {
+                            await context.Tratamientos
+                                .Where(t => t.Id == entidad.IdTratamiento && t.UsaStock)
+                                .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock + cantidadAnterior));
+                        }
+                    }
+
+                    var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : entidad.PrecioUnitario;
+                    var subtotal = solicitud.Subtotal > 0 ? solicitud.Subtotal : (precioUnitario * solicitud.Cantidad);
+
+                    entidad.IdTratamiento = solicitud.IdTratamiento;
+                    entidad.Cantidad = solicitud.Cantidad;
+                    entidad.PrecioUnitario = precioUnitario;
+                    entidad.Subtotal = subtotal;
+                    entidad.Indicaciones = string.IsNullOrWhiteSpace(solicitud.Indicaciones) ? null : solicitud.Indicaciones.Trim();
+
+                    await context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Resultado.Exito("Detalle de consulta actualizado exitosamente.");
                 }
-
-                tratamientoNuevo.Stock -= solicitud.Cantidad;
-            }
-
-            var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : entidad.PrecioUnitario;
-            var subtotal = solicitud.Subtotal > 0 ? solicitud.Subtotal : (precioUnitario * solicitud.Cantidad);
-
-            entidad.IdTratamiento = solicitud.IdTratamiento;
-            entidad.Cantidad = solicitud.Cantidad;
-            entidad.PrecioUnitario = precioUnitario;
-            entidad.Subtotal = subtotal;
-            entidad.Indicaciones = string.IsNullOrWhiteSpace(solicitud.Indicaciones) ? null : solicitud.Indicaciones.Trim();
-
-            if (!context.ChangeTracker.HasChanges())
-                return Resultado.Falla("No se detectaron cambios para guardar.");
-
-            await context.SaveChangesAsync();
-            return Resultado.Exito("Detalle de consulta actualizado exitosamente.");
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return Resultado.Falla($"Error al actualizar el detalle: {ex.Message}");
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -170,16 +232,31 @@ public class DetalleConsultaControlador(ContextoVeterinaria context)
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el detalle con ID {id}.");
 
-            if (entidad.Activo)
+            var strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == entidad.IdTratamiento);
-                if (tratamiento is not null)
-                    tratamiento.Stock += entidad.Cantidad;
-            }
+                using var transaction = await context.Database.BeginTransactionAsync();
+                try
+                {
+                    if (entidad.Activo)
+                    {
+                        await context.Tratamientos
+                            .Where(t => t.Id == entidad.IdTratamiento && t.UsaStock)
+                            .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock + entidad.Cantidad));
+                    }
 
-            context.DetalleConsultas.Remove(entidad);
-            await context.SaveChangesAsync();
-            return Resultado.Exito("Detalle eliminado exitosamente.");
+                    context.DetalleConsultas.Remove(entidad);
+                    await context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Resultado.Exito("Detalle eliminado exitosamente.");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return Resultado.Falla($"Error al eliminar el detalle: {ex.Message}");
+                }
+            });
         }
         catch (Exception ex)
         {

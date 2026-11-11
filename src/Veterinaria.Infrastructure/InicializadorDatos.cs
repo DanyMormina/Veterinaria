@@ -174,6 +174,21 @@ public static class InicializadorDatos
             IF COL_LENGTH('dbo.Tratamiento', 'Stock') IS NULL
                 ALTER TABLE dbo.Tratamiento ADD Stock INT NOT NULL CONSTRAINT DF_Tratamiento_Stock DEFAULT (0);
             """);
+
+        // Normalizar valores inconsistentes menores a cero si existieran antes de aplicar la restricción CHECK
+        await context.Database.ExecuteSqlRawAsync("""
+            UPDATE dbo.Vacuna SET Stock = 0 WHERE Stock < 0;
+            UPDATE dbo.Tratamiento SET Stock = 0 WHERE Stock < 0;
+            """);
+
+        // Asegurar restricciones CHECK a nivel de motor SQL Server para prevenir stock negativo por concurrencia
+        await context.Database.ExecuteSqlRawAsync("""
+            IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_Vacuna_Stock_NoNegativo' AND parent_object_id = OBJECT_ID('dbo.Vacuna'))
+                ALTER TABLE dbo.Vacuna ADD CONSTRAINT CK_Vacuna_Stock_NoNegativo CHECK (Stock >= 0);
+
+            IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_Tratamiento_Stock_NoNegativo' AND parent_object_id = OBJECT_ID('dbo.Tratamiento'))
+                ALTER TABLE dbo.Tratamiento ADD CONSTRAINT CK_Tratamiento_Stock_NoNegativo CHECK (Stock >= 0);
+            """);
     }
 
     public static async Task AsegurarTablaPrecioConsultaAsync(ContextoVeterinaria context)

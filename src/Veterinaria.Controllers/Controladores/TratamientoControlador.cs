@@ -90,17 +90,12 @@ public class TratamientoControlador(ContextoVeterinaria context)
             if (!consultaExiste)
                 return Resultado<long>.Falla($"No existe la consulta con ID {solicitud.IdConsulta}.");
 
-            var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
+            var tratamiento = await context.Tratamientos.AsNoTracking().FirstOrDefaultAsync(t => t.Id == solicitud.IdTratamiento);
             if (tratamiento is null)
                 return Resultado<long>.Falla($"No existe el tratamiento con ID {solicitud.IdTratamiento}.");
 
-            if (tratamiento.UsaStock)
-            {
-                if (tratamiento.Stock < solicitud.Cantidad)
-                    return Resultado<long>.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamiento.Stock}.");
-
-                tratamiento.Stock -= solicitud.Cantidad;
-            }
+            if (tratamiento.UsaStock && tratamiento.Stock < solicitud.Cantidad)
+                return Resultado<long>.Falla($"No hay stock suficiente de este tratamiento. Stock actual: {tratamiento.Stock}.");
 
             // 2. Cálculo de importes unitario y subtotal
             var precioUnitario = solicitud.PrecioUnitario > 0 ? solicitud.PrecioUnitario : tratamiento.Precio;
@@ -118,9 +113,38 @@ public class TratamientoControlador(ContextoVeterinaria context)
                 Activo = true
             };
 
-            context.DetalleConsultas.Add(entidad);
-            await context.SaveChangesAsync();
-            return Resultado<long>.Exito(entidad.Id, "Tratamiento aplicado exitosamente a la consulta.");
+            var strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                using var transaction = await context.Database.BeginTransactionAsync();
+                try
+                {
+                    if (tratamiento.UsaStock)
+                    {
+                        // Descuento atómico condicional en el motor de base de datos
+                        var filasAfectadas = await context.Tratamientos
+                            .Where(t => t.Id == solicitud.IdTratamiento && t.Stock >= solicitud.Cantidad)
+                            .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock - solicitud.Cantidad));
+
+                        if (filasAfectadas == 0)
+                        {
+                            await transaction.RollbackAsync();
+                            return Resultado<long>.Falla("No hay stock suficiente de este tratamiento (puede haber sido consumido simultáneamente por otro usuario).");
+                        }
+                    }
+
+                    context.DetalleConsultas.Add(entidad);
+                    await context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Resultado<long>.Exito(entidad.Id, "Tratamiento aplicado exitosamente a la consulta.");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return Resultado<long>.Falla($"Error interno al aplicar el tratamiento: {ex.Message}");
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -270,16 +294,31 @@ public class TratamientoControlador(ContextoVeterinaria context)
             if (entidad is null)
                 return Resultado.Falla($"No se encontró el tratamiento aplicado con ID {idDetalle}.");
 
-            if (entidad.Activo)
+            var strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var tratamiento = await context.Tratamientos.FirstOrDefaultAsync(t => t.Id == entidad.IdTratamiento);
-                if (tratamiento is not null && tratamiento.UsaStock)
-                    tratamiento.Stock += entidad.Cantidad;
-            }
+                using var transaction = await context.Database.BeginTransactionAsync();
+                try
+                {
+                    if (entidad.Activo)
+                    {
+                        await context.Tratamientos
+                            .Where(t => t.Id == entidad.IdTratamiento && t.UsaStock)
+                            .ExecuteUpdateAsync(s => s.SetProperty(t => t.Stock, t => t.Stock + entidad.Cantidad));
+                    }
 
-            entidad.Activo = false;
-            await context.SaveChangesAsync();
-            return Resultado.Exito("Tratamiento eliminado de la consulta.");
+                    entidad.Activo = false;
+                    await context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Resultado.Exito("Tratamiento eliminado de la consulta.");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return Resultado.Falla($"Error al eliminar el tratamiento aplicado: {ex.Message}");
+                }
+            });
         }
         catch (Exception ex)
         {

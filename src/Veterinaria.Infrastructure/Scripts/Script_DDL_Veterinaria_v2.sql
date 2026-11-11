@@ -119,7 +119,8 @@ CREATE TABLE dbo.Vacuna (
     Stock INT NOT NULL CONSTRAINT DF_Vacuna_Stock DEFAULT (0),
     Activo BIT NOT NULL CONSTRAINT DF_Vacuna_Activo DEFAULT (1),
     CONSTRAINT PK_Vacuna PRIMARY KEY CLUSTERED (Id ASC),
-    CONSTRAINT FK_Vacuna_Especie FOREIGN KEY (IdEspecie) REFERENCES dbo.Especie (Id)
+    CONSTRAINT FK_Vacuna_Especie FOREIGN KEY (IdEspecie) REFERENCES dbo.Especie (Id),
+    CONSTRAINT CK_Vacuna_Stock_NoNegativo CHECK (Stock >= 0)
 );
 GO
 
@@ -141,7 +142,8 @@ CREATE TABLE dbo.Tratamiento (
     Precio DECIMAL(18,2) NOT NULL CONSTRAINT DF_Tratamiento_Precio DEFAULT (0),
     Stock INT NOT NULL CONSTRAINT DF_Tratamiento_Stock DEFAULT (0),
     Activo BIT NOT NULL CONSTRAINT DF_Tratamiento_Activo DEFAULT (1),
-    CONSTRAINT PK_Tratamiento PRIMARY KEY CLUSTERED (Id ASC)
+    CONSTRAINT PK_Tratamiento PRIMARY KEY CLUSTERED (Id ASC),
+    CONSTRAINT CK_Tratamiento_Stock_NoNegativo CHECK (Stock >= 0)
 );
 GO
 

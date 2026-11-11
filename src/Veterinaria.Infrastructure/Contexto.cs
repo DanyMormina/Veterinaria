@@ -116,7 +116,10 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
         // Vacuna
         builder.Entity<Vacuna>(b =>
         {
-            b.ToTable("Vacuna");
+            b.ToTable("Vacuna", t =>
+            {
+                t.HasCheckConstraint("CK_Vacuna_Stock_NoNegativo", "[Stock] >= 0");
+            });
             b.Property(v => v.Nombre)
                 .HasMaxLength(100)
                 .IsRequired();
@@ -148,7 +151,10 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
         // Tratamiento (Catálogo Maestro)
         builder.Entity<Tratamiento>(b =>
         {
-            b.ToTable("Tratamiento");
+            b.ToTable("Tratamiento", t =>
+            {
+                t.HasCheckConstraint("CK_Tratamiento_Stock_NoNegativo", "[Stock] >= 0");
+            });
             b.Property(t => t.TipoTratamiento)
                 .HasMaxLength(50)
                 .IsRequired();

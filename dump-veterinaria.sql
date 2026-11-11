@@ -681,6 +681,10 @@ REFERENCES [dbo].[Especie] ([Id])
 GO
 ALTER TABLE [dbo].[Vacuna] CHECK CONSTRAINT [FK_Vacuna_Especie]
 GO
+ALTER TABLE [dbo].[Vacuna] WITH CHECK ADD CONSTRAINT [CK_Vacuna_Stock_NoNegativo] CHECK ([Stock] >= 0)
+GO
+ALTER TABLE [dbo].[Tratamiento] WITH CHECK ADD CONSTRAINT [CK_Tratamiento_Stock_NoNegativo] CHECK ([Stock] >= 0)
+GO
 USE [master]
 GO
 ALTER DATABASE [VeterinariaDb] SET  READ_WRITE 
