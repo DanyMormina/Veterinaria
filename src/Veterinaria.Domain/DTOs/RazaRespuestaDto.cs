@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Dtos;
-
-/// <summary>
-/// DTO de respuesta para la entidad Raza.
-/// </summary>
+﻿namespace Veterinaria.Domain.Dtos;
+// DTO de respuesta para la entidad Raza.
 public class RazaRespuestaDto
 {
     public long Id { get; set; }

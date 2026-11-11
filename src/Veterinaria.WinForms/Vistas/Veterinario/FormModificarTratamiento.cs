@@ -1,12 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Diálogo modal auxiliar para modificar o dar de baja lógica tratamientos existentes en el catálogo.
-/// </summary>
+// Diálogo modal auxiliar para modificar o dar de baja lógica tratamientos existentes en el catálogo.
 public partial class FormModificarTratamiento : Form
 {
     private readonly TratamientoControlador? _tratamientoControlador;

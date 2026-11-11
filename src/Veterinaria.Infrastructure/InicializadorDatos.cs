@@ -1,11 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Entidades;
 
 namespace Veterinaria.Infrastructure;
-
-/// <summary>
-/// Seeder inicial para garantizar la existencia de tipos de usuario, catálogos base y usuario administrador (DER v2).
-/// </summary>
+// Seeder inicial para garantizar la existencia de tipos de usuario, catálogos base y usuario administrador (DER v2).
 public static class InicializadorDatos
 {
     public static async Task InicializarAsync(ContextoVeterinaria context)

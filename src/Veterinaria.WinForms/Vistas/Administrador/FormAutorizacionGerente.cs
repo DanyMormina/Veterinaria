@@ -1,9 +1,6 @@
-namespace Veterinaria.WinForms.Vistas.Administrador;
-
-/// <summary>
-/// Segundo paso de la restauración: se muestra recién cuando la contraseña del administrador
-/// fue verificada y solicita únicamente la contraseña del gerente.
-/// </summary>
+﻿namespace Veterinaria.WinForms.Vistas.Administrador;
+// Segundo paso de la restauración: se muestra recién cuando la contraseña del administrador
+// fue verificada y solicita únicamente la contraseña del gerente.
 public partial class FormAutorizacionGerente : Form
 {
     public string PasswordGerente => txtPasswordGerente.Text;

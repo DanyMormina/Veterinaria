@@ -1,16 +1,13 @@
-using System.Globalization;
+ï»¿using System.Globalization;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Formulario de atención clínica para el registro y control de vacunas en pacientes veterinarios.
-/// Adhiere al sistema de diseño "Ejecutivo Romántico Pastel", Result Pattern (.NET 10 / C#),
-/// autocompletado en tiempo real, cascadas dependientes y captura de precios históricos.
-/// </summary>
+// Formulario de atenciï¿½n clï¿½nica para el registro y control de vacunas en pacientes veterinarios.
+// Adhiere al sistema de diseï¿½o "Ejecutivo Romï¿½ntico Pastel", Result Pattern (.NET 10 / C#),
+// autocompletado en tiempo real, cascadas dependientes y captura de precios histï¿½ricos.
 public partial class FormVacunasControles : Form
 {
     private readonly MascotaControlador? _mascotaControlador;
@@ -31,17 +28,11 @@ public partial class FormVacunasControles : Form
     private bool _cargandoGrilla = false;
     private bool _cargandoSeleccion = false;
     private long? _idAplicacionSeleccionada = null;
-
-    /// <summary>
-    /// Constructor por defecto requerido para el soporte del diseñador de Windows Forms.
-    /// </summary>
+    // Constructor por defecto requerido para el soporte del diseï¿½ador de Windows Forms.
     public FormVacunasControles() : this(null, null, null, null)
     {
     }
-
-    /// <summary>
-    /// Constructor principal con inyección de dependencias de controladores clínicos.
-    /// </summary>
+    // Constructor principal con inyecciï¿½n de dependencias de controladores clï¿½nicos.
     public FormVacunasControles(
         MascotaControlador? mascotaControlador,
         ConsultaControlador? consultaControlador,
@@ -58,18 +49,15 @@ public partial class FormVacunasControles : Form
         ConfigurarRestriccionesTeclado();
         dgvVacunas.CellClick += (_, _) => dgvVacunas_SelectionChanged(null, EventArgs.Empty);
     }
-
-    /// <summary>
-    /// Inicializa la sesión del veterinario actuante, estado de controles y precarga de catálogos.
-    /// </summary>
+    // Inicializa la sesiï¿½n del veterinario actuante, estado de controles y precarga de catï¿½logos.
     private async void FormVacunasControles_Load(object? sender, EventArgs e)
     {
-        // 1. Configuración de encabezado y sesión clínica
+        // 1. Configuraciï¿½n de encabezado y sesiï¿½n clï¿½nica
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
             ? $"Dr./Dra. {SesionActual.NombreCompleto} | {SesionActual.Rol}"
-            : "Dr./Dra. Lucía Pérez | Veterinario";
+            : "Dr./Dra. Lucï¿½a Pï¿½rez | Veterinario";
 
-        lblInfoEstado.Text = $"Sesión clínica activa: {SesionActual.NombreUsuario} --- {DateTime.Now:dd/MM/yyyy}";
+        lblInfoEstado.Text = $"Sesiï¿½n clï¿½nica activa: {SesionActual.NombreUsuario} --- {DateTime.Now:dd/MM/yyyy}";
 
         // 2. Establecer fechas predeterminadas
         dtpFechaAplicacion.MaxDate = DateTime.Today.AddDays(1).AddTicks(-1);
@@ -80,7 +68,7 @@ public partial class FormVacunasControles : Form
         dgvVacunas.Rows.Clear();
         btnGuardar.Enabled = true;
 
-        // 4. Precarga asíncrona de catálogos base (sin seleccionar nada en el formulario)
+        // 4. Precarga asï¿½ncrona de catï¿½logos base (sin seleccionar nada en el formulario)
         await CargarCatalogoMascotasAsync();
         await CargarCatalogoVacunasAsync();
         await CargarAplicacionesGrillaAsync();
@@ -91,12 +79,9 @@ public partial class FormVacunasControles : Form
         cboConsultas.DataSource = null;
     }
 
-    #region Carga de Datos y Catálogos
-
-    /// <summary>
-    /// Carga el padrón de mascotas activas en el selector con búsqueda y autocompletado.
-    /// Formato: "{NombreMascota} - {NombrePropietario} {ApellidoPropietario}".
-    /// </summary>
+    #region Carga de Datos y Catï¿½logos
+    // Carga el padrï¿½n de mascotas activas en el selector con bï¿½squeda y autocompletado.
+    // Formato: "{NombreMascota} - {NombrePropietario} {ApellidoPropietario}".
     private async Task CargarCatalogoMascotasAsync()
     {
         if (_mascotaControlador is null) return;
@@ -135,10 +120,7 @@ public partial class FormVacunasControles : Form
             _cargandoMascotas = false;
         }
     }
-
-    /// <summary>
-    /// Carga el catálogo maestro de vacunas activas y las almacena en memoria local.
-    /// </summary>
+    // Carga el catï¿½logo maestro de vacunas activas y las almacena en memoria local.
     public async Task CargarCatalogoVacunasAsync()
     {
         if (_vacunaControlador is null) return;
@@ -151,7 +133,7 @@ public partial class FormVacunasControles : Form
             var resultado = await _vacunaControlador.ObtenerTodosAsync();
             if (!resultado.EsExitoso || resultado.Valor is null)
             {
-                lblInfoEstado.Text = "No se pudieron obtener las vacunas del catálogo.";
+                lblInfoEstado.Text = "No se pudieron obtener las vacunas del catï¿½logo.";
                 return;
             }
 
@@ -168,10 +150,7 @@ public partial class FormVacunasControles : Form
             _cargandoVacunas = false;
         }
     }
-
-    /// <summary>
-    /// Puebla el desplegable de vacunas activas, filtrando opcionalmente por la especie de la mascota seleccionada.
-    /// </summary>
+    // Puebla el desplegable de vacunas activas, filtrando opcionalmente por la especie de la mascota seleccionada.
     private void PoblarComboVacunas(long? idVacunaASeleccionar = null)
     {
         var idMascota = ObtenerIdSeleccionado(cboMascotas);
@@ -212,11 +191,8 @@ public partial class FormVacunasControles : Form
 
         ActualizarSugerenciaFechasVacuna();
     }
-
-    /// <summary>
-    /// Carga las consultas clínicas activas asociadas a la mascota seleccionada,
-    /// ordenadas cronológicamente de la más reciente a la más antigua.
-    /// </summary>
+    // Carga las consultas clï¿½nicas activas asociadas a la mascota seleccionada,
+    // ordenadas cronolï¿½gicamente de la mï¿½s reciente a la mï¿½s antigua.
     private async Task CargarConsultasDeMascotaAsync(long idMascota)
     {
         if (_consultaControlador is null) return;
@@ -224,7 +200,7 @@ public partial class FormVacunasControles : Form
         _cargandoConsultas = true;
         try
         {
-            // Consulta clínica ordenada por FechaHora desc
+            // Consulta clï¿½nica ordenada por FechaHora desc
             var resultado = await _consultaControlador.ObtenerPorMascotaAsync(idMascota);
             if (!resultado.EsExitoso || resultado.Valor is null)
             {
@@ -242,13 +218,13 @@ public partial class FormVacunasControles : Form
 
             var items = _listaConsultas.Select(c =>
             {
-                var diag = string.IsNullOrWhiteSpace(c.Diagnostico) ? "(Sin diagnóstico registrado)" : c.Diagnostico.Trim();
+                var diag = string.IsNullOrWhiteSpace(c.Diagnostico) ? "(Sin diagnï¿½stico registrado)" : c.Diagnostico.Trim();
                 var diagCorto = diag.Length > 40 ? string.Concat(diag.AsSpan(0, 37), "...") : diag;
 
                 return new ComboItemGenerico
                 {
                     Id = c.Id,
-                    Texto = $"{c.FechaHora:dd/MM/yyyy HH:mm} --- Diagnóstico: {diagCorto}"
+                    Texto = $"{c.FechaHora:dd/MM/yyyy HH:mm} --- Diagnï¿½stico: {diagCorto}"
                 };
             }).ToList();
 
@@ -257,7 +233,7 @@ public partial class FormVacunasControles : Form
 
             if (items.Count == 0)
             {
-                lblInfoEstado.Text = "La mascota no posee consultas clínicas activas registradas.";
+                lblInfoEstado.Text = "La mascota no posee consultas clï¿½nicas activas registradas.";
             }
         }
         finally
@@ -265,11 +241,8 @@ public partial class FormVacunasControles : Form
             _cargandoConsultas = false;
         }
     }
-
-    /// <summary>
-    /// Consulta y puebla asíncronamente en la grilla las aplicaciones de vacunas según el contexto activo.
-    /// Con mascota seleccionada solo muestra lo de ese animal.
-    /// </summary>
+    // Consulta y puebla asï¿½ncronamente en la grilla las aplicaciones de vacunas segï¿½n el contexto activo.
+    // Con mascota seleccionada solo muestra lo de ese animal.
     private async Task CargarAplicacionesGrillaAsync(long? idMascotaForzada = null, long? idConsultaForzada = null)
     {
         if (_aplicacionVacunaControlador is null) return;
@@ -322,7 +295,7 @@ public partial class FormVacunasControles : Form
                 dgvVacunas.Rows[rowIndex].Tag = a.Id;
             }
 
-            lblInfoEstado.Text = $"Se cargaron {_listaAplicaciones.Count} registro(s) de vacunación.";
+            lblInfoEstado.Text = $"Se cargaron {_listaAplicaciones.Count} registro(s) de vacunaciï¿½n.";
             dgvVacunas.ClearSelection();
             dgvVacunas.CurrentCell = null;
             _idAplicacionSeleccionada = null;
@@ -340,13 +313,10 @@ public partial class FormVacunasControles : Form
     #endregion
 
     #region Eventos Interactivos de Controles
-
-    /// <summary>
-    /// Al cambiar la mascota seleccionada:
-    /// 1. Filtra las consultas en cascada ordenadas cronológicamente de la más reciente a la más antigua.
-    /// 2. Filtra el catálogo de vacunas según la especie del paciente.
-    /// 3. Actualiza la grilla de aplicaciones históricas.
-    /// </summary>
+    // Al cambiar la mascota seleccionada:
+    // 1. Filtra las consultas en cascada ordenadas cronolï¿½gicamente de la mï¿½s reciente a la mï¿½s antigua.
+    // 2. Filtra el catï¿½logo de vacunas segï¿½n la especie del paciente.
+    // 3. Actualiza la grilla de aplicaciones histï¿½ricas.
     private async void cboMascota_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoMascotas || _cargandoSeleccion) return;
@@ -362,28 +332,22 @@ public partial class FormVacunasControles : Form
             return;
         }
 
-        // 1. Refrescar catálogo con stock actualizado y filtrar por la especie de la mascota
+        // 1. Refrescar catï¿½logo con stock actualizado y filtrar por la especie de la mascota
         await CargarCatalogoVacunasAsync();
 
-        // 2. Poblar consultas clínicas en cascada (OrderByDescending FechaHora)
+        // 2. Poblar consultas clï¿½nicas en cascada (OrderByDescending FechaHora)
         await CargarConsultasDeMascotaAsync(idMascota.Value);
 
         // 3. Sincronizar grilla con aplicaciones de la mascota
         await CargarAplicacionesGrillaAsync();
     }
-
-    /// <summary>
-    /// Al cambiar la consulta clínica seleccionada, sincroniza las vacunas aplicadas a dicha consulta.
-    /// </summary>
+    // Al cambiar la consulta clï¿½nica seleccionada, sincroniza las vacunas aplicadas a dicha consulta.
     private async void cboConsulta_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoConsultas || _cargandoSeleccion) return;
         await CargarAplicacionesGrillaAsync();
     }
-
-    /// <summary>
-    /// Al seleccionar una vacuna, actualiza automáticamente la fecha sugerida de la próxima dosis.
-    /// </summary>
+    // Al seleccionar una vacuna, actualiza automï¿½ticamente la fecha sugerida de la prï¿½xima dosis.
     private void cboVacuna_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoVacunas || _cargandoSeleccion) return;
@@ -423,19 +387,13 @@ public partial class FormVacunasControles : Form
         var vacuna = _todasLasVacunas.FirstOrDefault(v => v.Id == idVacuna.Value);
         txtImporte.Text = (vacuna?.Precio ?? 0m).ToString("N2", CulturaArgentina);
     }
-
-    /// <summary>
-    /// Al modificar la fecha de aplicación, recalcula las fechas de próxima dosis y próximo control.
-    /// </summary>
+    // Al modificar la fecha de aplicaciï¿½n, recalcula las fechas de prï¿½xima dosis y prï¿½ximo control.
     private void dtpFechaAplicacion_ValueChanged(object? sender, EventArgs e)
     {
         if (_cargandoSeleccion) return;
         ActualizarSugerenciaFechasVacuna();
     }
-
-    /// <summary>
-    /// Calcula y sugiere en los DateTimePicker de control la próxima fecha sumando el período recomendado.
-    /// </summary>
+    // Calcula y sugiere en los DateTimePicker de control la prï¿½xima fecha sumando el perï¿½odo recomendado.
     private void ActualizarSugerenciaFechasVacuna()
     {
         var idVacuna = ObtenerIdSeleccionado(cboVacunas);
@@ -447,10 +405,7 @@ public partial class FormVacunasControles : Form
         var fechaCalculada = dtpFechaAplicacion.Value.AddMonths(vacuna.PeriodoMesesRecomendado);
         dtpProximaDosis.Value = fechaCalculada;
     }
-
-    /// <summary>
-    /// Al hacer clic o cambiar fila en la grilla, carga la aplicación en los campos para eventual edición.
-    /// </summary>
+    // Al hacer clic o cambiar fila en la grilla, carga la aplicaciï¿½n en los campos para eventual ediciï¿½n.
     private async void dgvVacunas_SelectionChanged(object? sender, EventArgs e)
     {
         if (_cargandoGrilla || _cargandoSeleccion) return;
@@ -501,7 +456,7 @@ public partial class FormVacunasControles : Form
                         }
                     }
 
-                    // 3. Poblar catálogo de vacunas filtrado por la especie del paciente y seleccionar la vacuna
+                    // 3. Poblar catï¿½logo de vacunas filtrado por la especie del paciente y seleccionar la vacuna
                     PoblarComboVacunas(app.IdVacuna);
                     var itemVacuna = cboVacunas.Items.Cast<ComboItemGenerico>()
                         .FirstOrDefault(i => i.Id == app.IdVacuna);
@@ -528,7 +483,7 @@ public partial class FormVacunasControles : Form
                         : "0,00";
                     txtObservaciones.Text = app.Observaciones ?? string.Empty;
                     btnGuardar.Enabled = true;
-                    lblInfoEstado.Text = $"Aplicación #{app.Id} ({app.NombreVacuna} - {app.NombreMascota}): solo consulta. No se puede modificar ni eliminar. Para registrar otra, complete los datos y pulse Aplicar (o Limpiar antes).";
+                    lblInfoEstado.Text = $"Aplicaciï¿½n #{app.Id} ({app.NombreVacuna} - {app.NombreMascota}): solo consulta. No se puede modificar ni eliminar. Para registrar otra, complete los datos y pulse Aplicar (o Limpiar antes).";
                 }
                 finally
                 {
@@ -540,11 +495,8 @@ public partial class FormVacunasControles : Form
 
     #endregion
 
-    #region Apertura de Formularios Modales Auxiliares (Atajos de Catálogo)
-
-    /// <summary>
-    /// Abre el cuadro de diálogo modal de Alta de Vacuna (#C88A96) y refresca asíncronamente el catálogo al confirmar.
-    /// </summary>
+    #region Apertura de Formularios Modales Auxiliares (Atajos de Catï¿½logo)
+    // Abre el cuadro de diï¿½logo modal de Alta de Vacuna (#C88A96) y refresca asï¿½ncronamente el catï¿½logo al confirmar.
     private async void btnAltaVacuna_Click(object? sender, EventArgs e)
     {
         // 1. Determinar especie sugerida de la mascota actualmente seleccionada
@@ -560,17 +512,14 @@ public partial class FormVacunasControles : Form
         using var modalAlta = new FormAltaVacuna(_vacunaControlador, null, idEspecieSugerida);
         var resultadoModal = modalAlta.ShowDialog(this);
 
-        // 3. Si se confirmó el alta, refrescar catálogo de vacunas
+        // 3. Si se confirmï¿½ el alta, refrescar catï¿½logo de vacunas
         if (resultadoModal == DialogResult.OK)
         {
             await CargarCatalogoVacunasAsync();
-            lblInfoEstado.Text = "Vacuna incorporada al catálogo. Lista actualizada.";
+            lblInfoEstado.Text = "Vacuna incorporada al catï¿½logo. Lista actualizada.";
         }
     }
-
-    /// <summary>
-    /// Abre el cuadro de diálogo modal de Modificación/Baja de Vacuna (#E2D9DC) y refresca catálogo y grilla al confirmar.
-    /// </summary>
+    // Abre el cuadro de diï¿½logo modal de Modificaciï¿½n/Baja de Vacuna (#E2D9DC) y refresca catï¿½logo y grilla al confirmar.
     private async void btnModificarVacuna_Click(object? sender, EventArgs e)
     {
         var idVacuna = ObtenerIdSeleccionado(cboVacunas);
@@ -579,29 +528,26 @@ public partial class FormVacunasControles : Form
         using var modalModificar = new FormModificarVacuna(_vacunaControlador, idVacuna);
         var resultadoModal = modalModificar.ShowDialog(this);
 
-        // 2. Si se confirmó modificación o baja lógica, refrescar catálogo y grilla
+        // 2. Si se confirmï¿½ modificaciï¿½n o baja lï¿½gica, refrescar catï¿½logo y grilla
         if (resultadoModal == DialogResult.OK)
         {
             await CargarCatalogoVacunasAsync();
             btnGuardar.Enabled = true;
             await CargarAplicacionesGrillaAsync();
             dgvVacunas.ClearSelection();
-            lblInfoEstado.Text = "Catálogo de vacunas y grilla clínica actualizados.";
+            lblInfoEstado.Text = "Catï¿½logo de vacunas y grilla clï¿½nica actualizados.";
         }
     }
 
     #endregion
 
     #region Acciones Principales: Aplicar, Limpiar y Volver
-
-    /// <summary>
-    /// Aplica la vacuna capturando el precio histórico vigente en la consulta seleccionada.
-    /// </summary>
+    // Aplica la vacuna capturando el precio histï¿½rico vigente en la consulta seleccionada.
     private async void btnGuardar_Click(object? sender, EventArgs e)
     {
         if (_aplicacionVacunaControlador is null) return;
 
-        // 1. Validar selección obligatoria de mascota
+        // 1. Validar selecciï¿½n obligatoria de mascota
         var idMascota = ObtenerIdSeleccionado(cboMascotas);
         if (!idMascota.HasValue || idMascota.Value <= 0)
         {
@@ -614,12 +560,12 @@ public partial class FormVacunasControles : Form
             return;
         }
 
-        // 2. Validar selección obligatoria de consulta clínica
+        // 2. Validar selecciï¿½n obligatoria de consulta clï¿½nica
         var idConsulta = ObtenerIdSeleccionado(cboConsultas);
         if (!idConsulta.HasValue || idConsulta.Value <= 0)
         {
             MessageBox.Show(
-                "Debe seleccionar una consulta clínica activa para registrar la aplicación de la vacuna.",
+                "Debe seleccionar una consulta clï¿½nica activa para registrar la aplicaciï¿½n de la vacuna.",
                 "Consulta Requerida",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
@@ -627,7 +573,7 @@ public partial class FormVacunasControles : Form
             return;
         }
 
-        // 3. Validar selección de vacuna
+        // 3. Validar selecciï¿½n de vacuna
         var idVacuna = ObtenerIdSeleccionado(cboVacunas);
         if (!idVacuna.HasValue || idVacuna.Value <= 0)
         {
@@ -644,7 +590,7 @@ public partial class FormVacunasControles : Form
         if (dtpProximaDosis.Value.Date < dtpFechaAplicacion.Value.Date)
         {
             MessageBox.Show(
-                "La fecha de la próxima dosis no puede ser anterior a la fecha de aplicación actual.",
+                "La fecha de la prï¿½xima dosis no puede ser anterior a la fecha de aplicaciï¿½n actual.",
                 "Fechas Incoherentes",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
@@ -652,7 +598,7 @@ public partial class FormVacunasControles : Form
             return;
         }
 
-        // 5. Capturar el importe de la vacuna (precio del catálogo) o null si es vacuna previa / externa
+        // 5. Capturar el importe de la vacuna (precio del catï¿½logo) o null si es vacuna previa / externa
         decimal? precioHistorico = null;
         if (!chkVacunaPrevia.Checked)
         {
@@ -661,7 +607,7 @@ public partial class FormVacunasControles : Form
                 !decimal.TryParse(textoImporte.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out importe))
             {
                 MessageBox.Show(
-                    "El importe de la vacuna es obligatorio y debe ser un número válido.",
+                    "El importe de la vacuna es obligatorio y debe ser un nï¿½mero vï¿½lido.",
                     "Importe requerido",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
@@ -673,7 +619,7 @@ public partial class FormVacunasControles : Form
             {
                 MessageBox.Show(
                     "El importe de la vacuna debe ser mayor a 0 (o marque vacuna previa / externa).",
-                    "Importe inválido",
+                    "Importe invï¿½lido",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 txtImporte.Focus();
@@ -683,7 +629,7 @@ public partial class FormVacunasControles : Form
             precioHistorico = decimal.Round(importe, 2);
         }
 
-        // 6. Validar stock antes de pedir confirmación (las previas / externas no descuentan)
+        // 6. Validar stock antes de pedir confirmaciï¿½n (las previas / externas no descuentan)
         if (precioHistorico.HasValue)
         {
             var vacuna = _todasLasVacunas.FirstOrDefault(v => v.Id == idVacuna.Value);
@@ -702,8 +648,8 @@ public partial class FormVacunasControles : Form
 
         // 8. Confirmar: una vez guardado no se puede modificar ni eliminar
         var confirmar = MessageBox.Show(
-            "¿Confirma los datos de esta aplicación de vacuna?\n\nSi confirma, el registro quedará guardado y no habrá vuelta atrás (no se podrá modificar ni eliminar).",
-            "Confirmar aplicación de vacuna",
+            "ï¿½Confirma los datos de esta aplicaciï¿½n de vacuna?\n\nSi confirma, el registro quedarï¿½ guardado y no habrï¿½ vuelta atrï¿½s (no se podrï¿½ modificar ni eliminar).",
+            "Confirmar aplicaciï¿½n de vacuna",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question,
             MessageBoxDefaultButton.Button2);
@@ -743,12 +689,12 @@ public partial class FormVacunasControles : Form
                 : "Registrada como vacuna previa / externa (sin costo en consulta).";
 
             MessageBox.Show(
-                $"Aplicación de vacuna registrada exitosamente.\n{detallePrecio}",
+                $"Aplicaciï¿½n de vacuna registrada exitosamente.\n{detallePrecio}",
                 "Registro Exitoso",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
 
-            // 9. Mantener mascota y consulta; solo dejar listo para otra aplicación del mismo animal
+            // 9. Mantener mascota y consulta; solo dejar listo para otra aplicaciï¿½n del mismo animal
             var idMascotaActual = idMascota.Value;
             var idConsultaActual = idConsulta.Value;
             txtObservaciones.Clear();
@@ -768,7 +714,7 @@ public partial class FormVacunasControles : Form
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"Ocurrió un error inesperado al registrar la aplicación: {ex.Message}",
+                $"Ocurriï¿½ un error inesperado al registrar la aplicaciï¿½n: {ex.Message}",
                 "Error Inesperado",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
@@ -778,11 +724,8 @@ public partial class FormVacunasControles : Form
             btnGuardar.Enabled = true;
         }
     }
-
-    /// <summary>
-    /// Restablece integralmente todos los campos, selectores, controles de fecha,
-    /// estado de botones y recarga la grilla general de aplicaciones sin filtros.
-    /// </summary>
+    // Restablece integralmente todos los campos, selectores, controles de fecha,
+    // estado de botones y recarga la grilla general de aplicaciones sin filtros.
     public async Task LimpiarFormularioAsync()
     {
         _cargandoMascotas = true;
@@ -791,7 +734,7 @@ public partial class FormVacunasControles : Form
 
         try
         {
-            // 1. Deseleccionar identificador en edición y restaurar botones de acción
+            // 1. Deseleccionar identificador en ediciï¿½n y restaurar botones de acciï¿½n
             _idAplicacionSeleccionada = null;
             btnGuardar.Enabled = true;
 
@@ -799,14 +742,14 @@ public partial class FormVacunasControles : Form
             cboMascotas.SelectedIndex = -1;
             cboMascotas.Text = string.Empty;
 
-            // 3. Limpiar selector de consultas médicas en cascada
+            // 3. Limpiar selector de consultas mï¿½dicas en cascada
             _listaConsultas.Clear();
             cboConsultas.DataSource = null;
             cboConsultas.Items.Clear();
             cboConsultas.Text = string.Empty;
             cboConsultas.SelectedIndex = -1;
 
-            // 4. Restaurar catálogo de vacunas sin filtro de especie
+            // 4. Restaurar catï¿½logo de vacunas sin filtro de especie
             PoblarComboVacunas();
             cboVacunas.SelectedIndex = cboVacunas.Items.Count > 0 ? 0 : -1;
 
@@ -820,7 +763,7 @@ public partial class FormVacunasControles : Form
             dtpFechaAplicacion.Value = DateTime.Today;
             dtpProximaDosis.Value = DateTime.Today.AddMonths(12);
 
-            // 7. Si hay vacuna seleccionada por defecto, sugerir fechas según su periodicidad
+            // 7. Si hay vacuna seleccionada por defecto, sugerir fechas segï¿½n su periodicidad
             ActualizarSugerenciaFechasVacuna();
         }
         finally
@@ -830,19 +773,16 @@ public partial class FormVacunasControles : Form
             _cargandoVacunas = false;
         }
 
-        // 8. Recargar catálogo actualizado de vacunas y todas las aplicaciones generales en la grilla
+        // 8. Recargar catï¿½logo actualizado de vacunas y todas las aplicaciones generales en la grilla
         await CargarCatalogoVacunasAsync();
         await CargarAplicacionesGrillaAsync();
         dgvVacunas.ClearSelection();
 
         // 9. Actualizar estado y colocar foco en el selector de pacientes
-        lblInfoEstado.Text = "Formulario restablecido. Listo para registrar una nueva aplicación de vacuna.";
+        lblInfoEstado.Text = "Formulario restablecido. Listo para registrar una nueva aplicaciï¿½n de vacuna.";
         cboMascotas.Focus();
     }
-
-    /// <summary>
-    /// Restablece todos los campos de entrada a su estado inicial y recarga el historial general (reemplaza al botón Cancelar).
-    /// </summary>
+    // Restablece todos los campos de entrada a su estado inicial y recarga el historial general (reemplaza al botï¿½n Cancelar).
     private async void btnLimpiar_Click(object? sender, EventArgs e)
     {
         btnLimpiar.Enabled = false;
@@ -853,7 +793,7 @@ public partial class FormVacunasControles : Form
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"Ocurrió un error al restablecer el formulario: {ex.Message}",
+                $"Ocurriï¿½ un error al restablecer el formulario: {ex.Message}",
                 "Error al Limpiar",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
@@ -863,10 +803,7 @@ public partial class FormVacunasControles : Form
             btnLimpiar.Enabled = true;
         }
     }
-
-    /// <summary>
-    /// Cierra el formulario de vacunación retornando al shell principal.
-    /// </summary>
+    // Cierra el formulario de vacunaciï¿½n retornando al shell principal.
     private void btnVolver_Click(object? sender, EventArgs e)
     {
         Close();
@@ -875,25 +812,19 @@ public partial class FormVacunasControles : Form
     #endregion
 
     #region Utilidades Auxiliares
-
-    /// <summary>
-    /// Configura restricciones de tipeo en tiempo real sobre los controles del formulario.
-    /// </summary>
+    // Configura restricciones de tipeo en tiempo real sobre los controles del formulario.
     private void ConfigurarRestriccionesTeclado()
     {
         cboMascotas.KeyPress += ValidarSoloLetras_KeyPress;
     }
-
-    /// <summary>
-    /// Restringe la búsqueda en el selector de paciente exclusivamente a letras y espacios, bloqueando números y caracteres especiales.
-    /// </summary>
+    // Restringe la bï¿½squeda en el selector de paciente exclusivamente a letras y espacios, bloqueando nï¿½meros y caracteres especiales.
     private void ValidarSoloLetras_KeyPress(object? sender, KeyPressEventArgs e)
     {
         // 1. Permitir teclas de control del sistema (retroceso, cortar/copiar, etc.)
         if (char.IsControl(e.KeyChar))
             return;
 
-        // 2. Permitir exclusivamente caracteres alfabéticos (incluye vocales acentuadas áéíóú, ñ y diéresis)
+        // 2. Permitir exclusivamente caracteres alfabï¿½ticos (incluye vocales acentuadas ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ y diï¿½resis)
         if (char.IsLetter(e.KeyChar))
             return;
 
@@ -904,7 +835,7 @@ public partial class FormVacunasControles : Form
                 return;
         }
 
-        // 4. Bloquear cualquier número (0-9), símbolo o carácter especial no alfabético
+        // 4. Bloquear cualquier nï¿½mero (0-9), sï¿½mbolo o carï¿½cter especial no alfabï¿½tico
         e.Handled = true;
     }
 
@@ -919,7 +850,7 @@ public partial class FormVacunasControles : Form
         if (combo.SelectedItem is ComboItemGenerico item && item.Id > 0)
             return item.Id;
 
-        // ComboBuscable a veces deja el texto válido sin SelectedItem; resolver por coincidencia exacta
+        // ComboBuscable a veces deja el texto vï¿½lido sin SelectedItem; resolver por coincidencia exacta
         var texto = combo.Text?.Trim() ?? string.Empty;
         if (texto.Length > 0)
         {

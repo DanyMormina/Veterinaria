@@ -1,20 +1,15 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Infrastructure;
 
 namespace Veterinaria.Controllers.Controladores;
-
-/// <summary>
-/// Servicio de dominio para la gestión, filtrado avanzado y búsqueda de mascotas.
-/// Construye consultas dinámicas optimizadas con AsNoTracking para la interfaz de usuario.
-/// </summary>
+// Servicio de dominio para la gestión, filtrado avanzado y búsqueda de mascotas.
+// Construye consultas dinámicas optimizadas con AsNoTracking para la interfaz de usuario.
 public class MascotaService(ContextoVeterinaria context) : MascotaControlador(context)
 {
-    /// <summary>
-    /// Realiza una búsqueda dinámica combinando los criterios opcionales proporcionados por el usuario.
-    /// Ejecuta el filtrado directamente sobre las entidades de la base de datos para garantizar compatibilidad con SQL Server.
-    /// </summary>
+    // Realiza una búsqueda dinámica combinando los criterios opcionales proporcionados por el usuario.
+    // Ejecuta el filtrado directamente sobre las entidades de la base de datos para garantizar compatibilidad con SQL Server.
     public async Task<Resultado<IEnumerable<MascotaRespuestaDto>>> BuscarMascotasAsync(
         string? nombre,
         string? nombrePropietario,

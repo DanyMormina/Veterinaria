@@ -1,12 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Diálogo modal auxiliar para dar de alta una nueva vacuna en el catálogo médico veterinario.
-/// </summary>
+// Diálogo modal auxiliar para dar de alta una nueva vacuna en el catálogo médico veterinario.
 public partial class FormAltaVacuna : Form
 {
     private readonly VacunaControlador? _vacunaControlador;

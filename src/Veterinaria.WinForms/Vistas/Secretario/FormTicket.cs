@@ -1,10 +1,7 @@
-using System.Drawing.Printing;
+﻿using System.Drawing.Printing;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
-
-/// <summary>
-/// Muestra el ticket emitido al registrar un cobro y permite imprimirlo.
-/// </summary>
+// Muestra el ticket emitido al registrar un cobro y permite imprimirlo.
 public class FormTicket : Form
 {
     private readonly string _ticket;

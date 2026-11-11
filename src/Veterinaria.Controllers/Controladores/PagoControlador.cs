@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Domain.Entidades;
@@ -180,10 +180,7 @@ public class PagoControlador(ContextoVeterinaria context)
             return Resultado.Falla($"Error al anular el pago: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Calcula el costo total de la consulta clínica incluyendo consulta base, tratamientos y vacunas.
-    /// </summary>
+    // Calcula el costo total de la consulta clínica incluyendo consulta base, tratamientos y vacunas.
     public async Task<decimal> ObtenerTotalConsultaAsync(long idConsulta)
     {
         var consulta = await context.Consultas
@@ -202,10 +199,7 @@ public class PagoControlador(ContextoVeterinaria context)
 
         return consulta.Base + consulta.Tratamientos + consulta.Vacunas;
     }
-
-    /// <summary>
-    /// Indica si la consulta ya tiene un cobro registrado vigente (no anulado), opcionalmente excluyendo un pago.
-    /// </summary>
+    // Indica si la consulta ya tiene un cobro registrado vigente (no anulado), opcionalmente excluyendo un pago.
     public async Task<bool> ConsultaYaCobradaAsync(long idConsulta, long? idPagoExcluido = null) =>
         await context.Pagos
             .IgnoreQueryFilters()

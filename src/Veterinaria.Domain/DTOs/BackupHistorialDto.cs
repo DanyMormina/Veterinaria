@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Dtos;
-
-/// <summary>
-/// DTO de lectura para la consulta histórica de copias de seguridad en la grilla administrativa.
-/// </summary>
+﻿namespace Veterinaria.Domain.Dtos;
+// DTO de lectura para la consulta histórica de copias de seguridad en la grilla administrativa.
 public class BackupHistorialDto
 {
     public int IdBackup { get; set; }

@@ -1,21 +1,14 @@
-using Veterinaria.Controllers.Sistema;
+﻿using Veterinaria.Controllers.Sistema;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Administrador;
-
-/// <summary>
-/// Vista administrativa para la configuración, generación y consulta histórica de copias de seguridad (Backups).
-/// Diseñada bajo el estándar visual "Ejecutivo Romántico Pastel".
-/// </summary>
+// Vista administrativa para la configuración, generación y consulta histórica de copias de seguridad (Backups).
+// Diseñada bajo el estándar visual "Ejecutivo Romántico Pastel".
 public partial class FormBackup : Form
 {
     private readonly BackupController _backupController;
-
-    /// <summary>
-    /// Constructor principal que recibe el controlador mediante inyección de dependencias.
-    /// </summary>
-    /// <param name="backupController">Controlador del módulo de copias de seguridad.</param>
+    // Constructor principal que recibe el controlador mediante inyección de dependencias.
     public FormBackup(BackupController backupController)
     {
         _backupController = backupController;
@@ -28,11 +21,7 @@ public partial class FormBackup : Form
         btnExaminarRestaurar.Click += btnExaminarRestaurar_Click;
         btnVolver.Click += (s, e) => Close();
     }
-
-
-    /// <summary>
-    /// Inicializa la sesión, la ruta configurada, la sugerencia del nombre de archivo y la grilla de historial.
-    /// </summary>
+    // Inicializa la sesión, la ruta configurada, la sugerencia del nombre de archivo y la grilla de historial.
     private async void FormBackup_Load(object? sender, EventArgs e)
     {
         // 1. Cabecera institucional con usuario en sesión
@@ -53,18 +42,12 @@ public partial class FormBackup : Form
         // 5. Cargar historial de copias de seguridad asíncronamente
         await CargarHistorialAsync();
     }
-
-    /// <summary>
-    /// Genera y asigna un nombre sugerido automático con marca de tiempo precisa.
-    /// </summary>
+    // Genera y asigna un nombre sugerido automático con marca de tiempo precisa.
     private void SugerirNuevoNombreArchivo()
     {
         txtNombreArchivo.Text = $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}";
     }
-
-    /// <summary>
-    /// Configura la apariencia de DataGridView según las reglas de GEMINI.md.
-    /// </summary>
+    // Configura la apariencia de DataGridView según las reglas de GEMINI.md.
     private void ConfigurarEstiloGrilla()
     {
         dgvBackups.AutoGenerateColumns = false;
@@ -83,10 +66,7 @@ public partial class FormBackup : Form
         dgvBackups.RowHeadersVisible = false;
         dgvBackups.RowTemplate.Height = 30;
     }
-
-    /// <summary>
-    /// Consulta y puebla la grilla central con el historial registrado.
-    /// </summary>
+    // Consulta y puebla la grilla central con el historial registrado.
     private async Task CargarHistorialAsync()
     {
         try
@@ -112,10 +92,7 @@ public partial class FormBackup : Form
             dgvBackups.Cursor = Cursors.Default;
         }
     }
-
-    /// <summary>
-    /// Dispara el proceso de respaldo validando la sesión y gestionando el feedback visual.
-    /// </summary>
+    // Dispara el proceso de respaldo validando la sesión y gestionando el feedback visual.
     private async void btnGenerarBackup_Click(object? sender, EventArgs e)
     {
         // 1. Bloqueo temporal y cursor de espera
@@ -178,11 +155,8 @@ public partial class FormBackup : Form
             dgvBackups.Cursor = Cursors.Default;
         }
     }
-
-    /// <summary>
-    /// Inicia el flujo de restauración tomando el archivo seleccionado en la grilla histórica.
-    /// Si no hay fila seleccionada, ofrece examinar el directorio de respaldos.
-    /// </summary>
+    // Inicia el flujo de restauración tomando el archivo seleccionado en la grilla histórica.
+    // Si no hay fila seleccionada, ofrece examinar el directorio de respaldos.
     private async void btnRestaurarCopia_Click(object? sender, EventArgs e)
     {
         string archivoSeleccionado = string.Empty;
@@ -209,10 +183,7 @@ public partial class FormBackup : Form
 
         await EjecutarFlujoRestauracionAsync(archivoSeleccionado);
     }
-
-    /// <summary>
-    /// Permite al usuario buscar y seleccionar manualmente un archivo .bak en el sistema de archivos.
-    /// </summary>
+    // Permite al usuario buscar y seleccionar manualmente un archivo .bak en el sistema de archivos.
     private async void btnExaminarRestaurar_Click(object? sender, EventArgs e)
     {
         using var ofd = new OpenFileDialog
@@ -228,11 +199,8 @@ public partial class FormBackup : Form
             await EjecutarFlujoRestauracionAsync(nombreArchivo);
         }
     }
-
-    /// <summary>
-    /// Orquesta el flujo completo de restauración: solicitud de doble factor mediante modal,
-    /// ejecución del restore y cierre forzado de sesión en caso de éxito.
-    /// </summary>
+    // Orquesta el flujo completo de restauración: solicitud de doble factor mediante modal,
+    // ejecución del restore y cierre forzado de sesión en caso de éxito.
     private async Task EjecutarFlujoRestauracionAsync(string nombreArchivo)
     {
         // 1. Mostrar diálogo modal de confirmación y solicitud de contraseña administrativa

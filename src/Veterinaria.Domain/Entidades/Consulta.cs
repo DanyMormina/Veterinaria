@@ -1,4 +1,4 @@
-using Veterinaria.Domain.Comunes;
+﻿using Veterinaria.Domain.Comunes;
 
 namespace Veterinaria.Domain.Entidades;
 
@@ -12,9 +12,9 @@ public class Consulta : EntidadAuditable
     public decimal? Temperatura { get; set; }
     public string Diagnostico { get; set; } = string.Empty;
     public string? Observaciones { get; set; }
-    /// <summary>Fecha sugerida del próximo control clínico.</summary>
+    // <summary>Fecha sugerida del próximo control clínico.</summary>
     public DateTime? ProximoControl { get; set; }
-    /// <summary>Importe base de la consulta clínica (sin tratamientos ni vacunas).</summary>
+    // <summary>Importe base de la consulta clínica (sin tratamientos ni vacunas).</summary>
     public decimal Importe { get; set; }
 
     public Usuario Usuario { get; set; } = null!;

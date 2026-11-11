@@ -1,13 +1,10 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Administrador;
-
-/// <summary>
-/// Formulario de Administración de Usuarios: Alta, Baja Lógica, Modificación y Consulta con estilo Ejecutivo Romántico Pastel.
-/// </summary>
+// Formulario de Administración de Usuarios: Alta, Baja Lógica, Modificación y Consulta con estilo Ejecutivo Romántico Pastel.
 public partial class FormUsuarios : Form
 {
     private static readonly Regex RegexNombreApellido = new(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]{2,100}$", RegexOptions.Compiled);
@@ -461,11 +458,8 @@ public partial class FormUsuarios : Form
             cboFiltroEstado.SelectedIndex = 0;
         AplicarFiltros();
     }
-
-    /// <summary>
-    /// Aplica los filtros combinados de Rol, Estado y búsqueda multi-campo de texto
-    /// sobre la nómina de usuarios en memoria, actualizando la grilla al instante.
-    /// </summary>
+    // Aplica los filtros combinados de Rol, Estado y búsqueda multi-campo de texto
+    // sobre la nómina de usuarios en memoria, actualizando la grilla al instante.
     private void AplicarFiltros()
     {
         // 1. Obtener el texto de búsqueda (sin espacios sobrantes)
@@ -518,9 +512,8 @@ public partial class FormUsuarios : Form
         MostrarUsuariosEnGrilla(consulta.ToList());
     }
 
-
-
-    private void dgvUsuarios_CellClick(object? sender, DataGridViewCellEventArgs e)
+    // Evento de clic en la grilla de usuarios: selecciona un usuario y activa el modo de edición.
+    private void dgvUsuarios_CellClick(object? sender, DataGridViewCellEventArgs e) 
     {
         if (e.RowIndex < 0)
             return;

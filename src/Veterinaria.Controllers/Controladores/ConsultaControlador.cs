@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Domain.Entidades;
@@ -20,19 +20,13 @@ public class ConsultaControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<ConsultaRespuestaDto>>.Falla($"Error interno al obtener consultas: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Obtiene las consultas activas asociadas a una mascota, ordenadas cronológicamente de la más reciente a la más antigua.
-    /// </summary>
+    // Obtiene las consultas activas asociadas a una mascota, ordenadas cronológicamente de la más reciente a la más antigua.
     public async Task<Resultado<IEnumerable<ConsultaRespuestaDto>>> ObtenerPorMascotaAsync(long idMascota)
     {
         return await ObtenerHistorialPorMascotaIdAsync(idMascota);
     }
-
-    /// <summary>
-    /// Obtiene el historial clínico completo de una mascota incluyendo tratamientos aplicados,
-    /// ordenado cronológicamente de la consulta más reciente a la más antigua.
-    /// </summary>
+    // Obtiene el historial clínico completo de una mascota incluyendo tratamientos aplicados,
+    // ordenado cronológicamente de la consulta más reciente a la más antigua.
     public async Task<Resultado<IEnumerable<ConsultaRespuestaDto>>> ObtenerHistorialPorMascotaIdAsync(long idMascota)
     {
         try
@@ -299,10 +293,7 @@ public class ConsultaControlador(ContextoVeterinaria context)
 
         return null;
     }
-
-    /// <summary>
-    /// Devuelve el precio fijo de la consulta según la especie de la mascota.
-    /// </summary>
+    // Devuelve el precio fijo de la consulta según la especie de la mascota.
     public async Task<Resultado<decimal>> ObtenerPrecioConsultaAsync(long idMascota)
     {
         try
@@ -334,9 +325,6 @@ public class ConsultaControlador(ContextoVeterinaria context)
             .FirstOrDefaultAsync();
     }
 }
-
-/// <summary>
-/// Alias de compatibilidad para ConsultaControlador.
-/// </summary>
+// Alias de compatibilidad para ConsultaControlador.
 public class ConsultaController(ContextoVeterinaria context) : ConsultaControlador(context);
 

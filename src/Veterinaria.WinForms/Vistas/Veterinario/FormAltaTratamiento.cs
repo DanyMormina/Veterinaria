@@ -1,11 +1,8 @@
-using Veterinaria.Controllers.Controladores;
+﻿using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Diálogo modal auxiliar para dar de alta un nuevo tratamiento en el catálogo médico.
-/// </summary>
+// Diálogo modal auxiliar para dar de alta un nuevo tratamiento en el catálogo médico.
 public partial class FormAltaTratamiento : Form
 {
     private readonly TratamientoControlador? _tratamientoControlador;

@@ -1,14 +1,11 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Administrador;
-
-/// <summary>
-/// Formulario de consulta y gestión de propietarios y sus mascotas asociadas para el rol Administrador.
-/// </summary>
+// Formulario de consulta y gestión de propietarios y sus mascotas asociadas para el rol Administrador.
 public partial class FormPropietarios : Form
 {
     private static readonly Regex RegexNombreApellido = new(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]{2,100}$", RegexOptions.Compiled);
@@ -114,11 +111,7 @@ public partial class FormPropietarios : Form
             }
         }
     }
-
-    /// <summary>
-    /// Valida los campos del formulario conforme a las reglas de negocio y restricciones de formato.
-    /// Retorna un Resultado indicando el éxito o el mensaje de falla junto con el control a enfocar.
-    /// </summary>
+    // Valida los campos del formulario conforme a las reglas de negocio y restricciones de formato.
     public Resultado ValidarCampos(out Control? controlConFoco)
     {
         LimpiarErroresValidacion();
@@ -199,10 +192,7 @@ public partial class FormPropietarios : Form
         controlConFoco = null;
         return Resultado.Exito();
     }
-
-    /// <summary>
-    /// Sobrecarga booleana de ValidarCampos para compatibilidad.
-    /// </summary>
+    // Sobrecarga booleana de ValidarCampos para compatibilidad.
     public bool ValidarCampos(out string mensajeError, out Control? controlConFoco)
     {
         var resultado = ValidarCampos(out controlConFoco);
@@ -378,11 +368,8 @@ public partial class FormPropietarios : Form
                 p.Activo ? "Activo" : "Inactivo");
         }
     }
-
-    /// <summary>
-    /// Aplica los filtros combinados de búsqueda por texto y estado sobre la nómina de propietarios en memoria,
-    /// actualizando la grilla sin precargar el formulario (el usuario debe elegir una fila).
-    /// </summary>
+    // Aplica los filtros combinados de búsqueda por texto y estado sobre la nómina de propietarios en memoria,
+    // actualizando la grilla sin precargar el formulario (el usuario debe elegir una fila).
     private void AplicarFiltros()
     {
         // 1. Obtener el texto ingresado (sin espacios en los extremos) y el índice del filtro por estado
@@ -421,11 +408,8 @@ public partial class FormPropietarios : Form
         dgvPropietarios.CurrentCell = null;
         LimpiarDetalles();
     }
-
-    /// <summary>
-    /// Manejador del evento de clic en la grilla de propietarios:
-    /// Identifica al propietario seleccionado y carga sus datos junto a sus mascotas asociadas.
-    /// </summary>
+    // Manejador del evento de clic en la grilla de propietarios:
+    // Identifica al propietario seleccionado y carga sus datos junto a sus mascotas asociadas.
     private async void dgvPropietarios_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
         // 1. Evitar procesar clics sobre los encabezados de las columnas (RowIndex < 0)
@@ -448,11 +432,8 @@ public partial class FormPropietarios : Form
         // 5. Poblar los campos de la izquierda y consultar asíncronamente las mascotas de ese propietario
         await SeleccionarPropietarioAsync(propietario);
     }
-
-    /// <summary>
-    /// Pobla automáticamente los controles del formulario izquierdo con los datos del propietario seleccionado
-    /// y desencadena la carga asíncrona de sus mascotas asociadas.
-    /// </summary>
+    // Pobla automáticamente los controles del formulario izquierdo con los datos del propietario seleccionado
+    // y desencadena la carga asíncrona de sus mascotas asociadas.
     private async Task SeleccionarPropietarioAsync(PropietarioRespuestaDto propietario)
     {
         // 1. Limpiar cualquier resaltado de error previo en las cajas de texto
@@ -474,11 +455,8 @@ public partial class FormPropietarios : Form
         // 5. Cargar en cascada la grilla inferior con las mascotas registradas a cargo de este propietario
         await CargarMascotasDelPropietarioAsync(propietario.Id);
     }
-
-    /// <summary>
-    /// Consulta de manera asíncrona a la base de datos las mascotas que pertenecen al propietario
-    /// y las dibuja en la grilla secundaria de pacientes asociados.
-    /// </summary>
+    // Consulta de manera asíncrona a la base de datos las mascotas que pertenecen al propietario
+    // y las dibuja en la grilla secundaria de pacientes asociados.
     private async Task CargarMascotasDelPropietarioAsync(long idPropietario)
     {
         // 1. Vaciar la grilla de mascotas para evitar duplicar filas previas

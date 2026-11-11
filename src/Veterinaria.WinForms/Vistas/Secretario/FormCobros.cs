@@ -1,15 +1,12 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
-
-/// <summary>
-/// Gestión de cobros en Secretaría vinculada a consultas clínicas.
-/// Cobro en pago único con importe no modificable y calculadora de vuelto en efectivo.
-/// </summary>
+// Gestión de cobros en Secretaría vinculada a consultas clínicas.
+// Cobro en pago único con importe no modificable y calculadora de vuelto en efectivo.
 public partial class FormCobros : Form
 {
     private static readonly Color ColorFondoError = ColorTranslator.FromHtml("#FDECEF");
@@ -74,19 +71,22 @@ public partial class FormCobros : Form
         ConfigurarEventos();
     }
 
+    // Configura las restricciones de controles y vincula los eventos de la pantalla
     private void ConfigurarEventos()
     {
-        // El importe a cobrar es de solo lectura y calculado por el sistema
+        // El importe a cobrar es de solo lectura y calculado por el sistema (el usuario no lo puede alterar a mano)
         txtImporte.ReadOnly = true;
         txtImporte.TabStop = false;
         pnlImporte.BackColor = ColorFondoBloqueado;
         txtImporte.BackColor = ColorFondoBloqueado;
         lblSimboloPeso.BackColor = ColorFondoBloqueado;
 
+        // Eventos para validar que en efectivo solo se escriban números y coma decimal
         txtAbonaCon.KeyPress += TxtAbonaCon_KeyPress;
         txtAbonaCon.TextChanged += TxtAbonaCon_TextChanged;
         txtAbonaCon.Leave += TxtAbonaCon_Leave;
 
+        // Enlace de clics de botones principales
         btnCobrar.Click += async (_, _) => await CobrarAsync();
         btnLimpiar.Click += (_, _) => LimpiarFormulario();
         txtBuscarCobro.TextChanged += (_, _) => MostrarCobros();
@@ -96,43 +96,52 @@ public partial class FormCobros : Form
         dgvCobros.CellClick += (_, _) => CargarPagoSeleccionado();
         dgvCobros.SelectionChanged += (_, _) => CargarPagoSeleccionado();
 
+        // Opciones de cuotas disponibles para tarjetas
         cboCuotas.Items.Clear();
         cboCuotas.Items.AddRange(["1 pago", "3 cuotas", "6 cuotas", "9 cuotas", "12 cuotas"]);
         cboCuotas.SelectedIndex = 0;
         ActualizarVisibilidadMetodoPago();
     }
 
+    // Evento que se dispara al abrir la pantalla de Cobros
     private async void FormCobros_Load(object? sender, EventArgs e)
     {
+        // Muestra en la cabecera el usuario autenticado en la recepción
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
             ? $"Recepción: {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Recepción: Secretario";
 
+        // Carga los métodos de pago y las consultas pendientes de cobro
         await CargarCatalogosAsync();
+        // Carga el historial de cobros realizados en la grilla inferior
         await CargarCobrosAsync();
+        // Deja el formulario en blanco listo para cobrar
         LimpiarFormulario();
         lblInfoEstado.Text = "Módulo de cobros --- recepción";
     }
 
+    // Ejecuta consultas a la base de datos protegiéndolas con SemaphoreSlim
+    // Evita errores de concurrencia ya que el DbContext de EF Core no admite dos consultas simultáneas
     private async Task<T> ConsultarAsync<T>(Func<Task<T>> consulta)
     {
-        await _accesoDatos.WaitAsync();
+        await _accesoDatos.WaitAsync(); // Espera su turno si hay otra consulta en curso
         try
         {
-            return await consulta();
+            return await consulta();    // Ejecuta la consulta a la base de datos
         }
         finally
         {
-            _accesoDatos.Release();
+            _accesoDatos.Release();      // Libera el semáforo para la siguiente consulta
         }
     }
 
+    // Carga los desplegables de Métodos de Pago y de Consultas Clínicas que aún no fueron cobradas
     private async Task CargarCatalogosAsync()
     {
         _cargando = true;
         try
         {
-            // Métodos de pago
+            // 1. Llena el combo de Métodos de Pago (Efectivo, Tarjeta, Mercado Pago, etc.)
             cboMetodoPago.Items.Clear();
             cboMetodoPago.Items.Add(new ItemCombo(null, "Seleccione un método de pago"));
             if (_metodoPagoControlador is not null)
@@ -149,7 +158,7 @@ public partial class FormCobros : Form
 
             cboMetodoPago.SelectedIndex = 0;
 
-            // Consultas ya cobradas (pago único registrado y vigente)
+            // 2. Obtiene las consultas que ya tienen un pago registrado para no duplicar cobros
             var idsYaCobradas = new HashSet<long>();
             if (_pagoControlador is not null)
             {
@@ -165,6 +174,7 @@ public partial class FormCobros : Form
                 }
             }
 
+            // 3. Llena el combo únicamente con las consultas pendientes de pago
             cboConsultaClinica.Items.Clear();
             cboConsultaClinica.Items.Add(new ItemCombo(null, "Seleccione una consulta clínica pendiente"));
 
@@ -197,6 +207,7 @@ public partial class FormCobros : Form
         }
     }
 
+    // Consulta en la base de datos todos los cobros históricos realizados
     private async Task CargarCobrosAsync()
     {
         _cobros = [];
@@ -208,12 +219,10 @@ public partial class FormCobros : Form
         }
 
         if (!IsDisposed)
-            MostrarCobros();
+            MostrarCobros(); // Dibuja la lista en la grilla visual
     }
 
-    /// <summary>
-    /// Lista todos los cobros que coinciden con el texto del buscador (en cualquier columna).
-    /// </summary>
+    // Filtra y dibuja los cobros en la grilla según lo que el usuario escribe en la barra de búsqueda
     private void MostrarCobros()
     {
         var termino = txtBuscarCobro.Text.Trim();
@@ -231,6 +240,7 @@ public partial class FormCobros : Form
                 var fecha = p.Fecha.ToString("dd/MM/yyyy");
                 var importe = $"$ {p.Importe:N2}";
 
+                // Si hay texto de búsqueda, compara contra ID, consulta, método, fecha e importe
                 if (termino.Length > 0 &&
                     !new[] { p.Id.ToString(), p.DescripcionConsulta, metodo, fecha, importe, p.Importe.ToString("0.00", CultureInfo.InvariantCulture) }
                         .Any(valor => valor.Contains(termino, StringComparison.OrdinalIgnoreCase)))
@@ -252,12 +262,14 @@ public partial class FormCobros : Form
             lblInfoEstado.Text = $"{dgvCobros.Rows.Count} de {_cobros.Count} cobro(s) coinciden con \"{termino}\".";
     }
 
+    // Se dispara cuando el secretario elige una consulta del desplegable
+    // Calcula automáticamente el importe sumando prácticas y vacunas
     private async Task OnConsultaSeleccionadaAsync()
     {
         if (_cargando)
             return;
 
-        // Solo vale la respuesta de la última selección; las anteriores se descartan
+        // Si el usuario cambia rápido de opción, descarta las respuestas viejas y solo atiende la última
         var version = ++_versionConsultaSeleccionada;
         bool EsVigente() => !IsDisposed && version == _versionConsultaSeleccionada;
 
@@ -271,6 +283,7 @@ public partial class FormCobros : Form
             return;
         }
 
+        // Calcula el desglose y el importe total a cobrar para esta consulta
         var (detalle, total) = await CalcularDetalleImporteAsync(item.Id.Value);
         if (!EsVigente())
             return;
@@ -279,11 +292,13 @@ public partial class FormCobros : Form
 
         if (!_idPagoSeleccionado.HasValue)
         {
+            // Asigna el importe calculado a la caja de texto (no editable por el usuario)
             txtImporte.Text = total > 0 ? total.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty;
             if (string.IsNullOrWhiteSpace(txtAbonaCon.Text) || txtAbonaCon.Text == "0.00")
                 txtAbonaCon.Text = txtImporte.Text;
             CalcularVuelto();
 
+            // Verifica defensivamente en la base de datos que la consulta no haya sido cobrada previamente
             if (_pagoControlador is not null)
             {
                 var yaCobrada = await ConsultarAsync(() => _pagoControlador.ConsultaYaCobradaAsync(item.Id.Value));
@@ -305,11 +320,17 @@ public partial class FormCobros : Form
         }
     }
 
+    // Algoritmo de cálculo de importe:
+    // 1. Obtiene el importe base de la consulta médica
+    // 2. Suma los tratamientos/servicios realizados (cantidad x subtotal)
+    // 3. Suma las vacunas aplicadas en la atención
+    // 4. Retorna el texto del desglose y el total monetario
     private async Task<(string Detalle, decimal Total)> CalcularDetalleImporteAsync(long idConsulta)
     {
         var lineas = new List<(string Concepto, decimal Monto)>();
         var total = 0m;
 
+        // 1. Importe base de la consulta
         if (_consultaControlador is not null)
         {
             var resConsulta = await ConsultarAsync(() => _consultaControlador.ObtenerPorIdAsync(idConsulta));
@@ -324,6 +345,7 @@ public partial class FormCobros : Form
             }
         }
 
+        // 2. Tratamientos y servicios aplicados por el veterinario
         if (_detalleConsultaControlador is not null)
         {
             var resDet = await ConsultarAsync(() => _detalleConsultaControlador.ObtenerPorConsultaAsync(idConsulta));
@@ -340,6 +362,7 @@ public partial class FormCobros : Form
             }
         }
 
+        // 3. Vacunas aplicadas durante la atención
         if (_aplicacionVacunaControlador is not null)
         {
             var resVac = await ConsultarAsync(() => _aplicacionVacunaControlador.ObtenerPorConsultaAsync(idConsulta));
@@ -354,6 +377,7 @@ public partial class FormCobros : Form
             }
         }
 
+        // 4. Formatea el texto con el desglose y el renglón de TOTAL alineado a la derecha
         var sb = new StringBuilder();
         const int ancho = 52;
         if (lineas.Count == 0)
@@ -382,14 +406,17 @@ public partial class FormCobros : Form
         return texto.PadRight(maxConcepto) + " " + montoTexto;
     }
 
+    // Ejecuta el cobro de la consulta clínica seleccionada
     private async Task CobrarAsync()
     {
+        // 1. Valida los datos requeridos (consulta elegida, método de pago, monto válido y efectivo suficiente)
         if (!ValidarFormulario(out var dto, out var mensaje))
         {
             MessageBox.Show(mensaje, "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
+        // 2. Comprobación defensiva del controlador
         if (_pagoControlador is null)
         {
             MessageBox.Show("El servicio de cobros no está disponible.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -398,10 +425,15 @@ public partial class FormCobros : Form
 
         try
         {
+            // 3. Deshabilita el botón Cobrar para evitar doble clic o cobros duplicados accidentales
             btnCobrar.Enabled = false;
+
+            // 4. Envía el registro de pago a la base de datos de manera asíncrona y segura
             var resultado = await ConsultarAsync(() => _pagoControlador.RegistrarPagoAsync(dto));
             if (IsDisposed)
                 return;
+
+            // 5. Si la base de datos confirmó el cobro con éxito
             if (resultado.EsExitoso)
             {
                 lblInfoEstado.ForeColor = ColorExito;
@@ -409,6 +441,7 @@ public partial class FormCobros : Form
 
                 var metodoTexto = (cboMetodoPago.SelectedItem as ItemCombo)?.Texto ?? string.Empty;
 
+                // Si pagó en efectivo, toma el valor con el que abonó para plasmarlo en el ticket
                 decimal? abonaCon = null;
                 if (EsEfectivo(metodoTexto))
                 {
@@ -417,20 +450,25 @@ public partial class FormCobros : Form
                         abonaCon = vAbona;
                 }
 
+                // 6. Genera el texto del ticket con datos fiscales, desglose de servicios y vuelto
                 var ticket = await ArmarTicketAsync(resultado.Valor, dto, metodoTexto, abonaCon: abonaCon);
 
+                // 7. Limpia el formulario y refresca las consultas y cobros
                 LimpiarFormulario();
                 await CargarCatalogosAsync();
                 await CargarCobrosAsync();
 
+                // 8. Muestra la ventana modal del ticket de pago para previsualizar o imprimir
                 using var vistaTicket = new FormTicket(ticket);
                 vistaTicket.ShowDialog(this);
             }
+            // Si la base de datos o validación rechazó la operación
             else
             {
                 MessageBox.Show(resultado.Mensaje, "Error al cobrar", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
+        // El bloque finally se ejecuta SIEMPRE: rehabilita el botón si la pantalla sigue abierta
         finally
         {
             if (!IsDisposed)
@@ -438,8 +476,10 @@ public partial class FormCobros : Form
         }
     }
 
+    // Permite reimprimir el ticket fiscal de un cobro histórico seleccionado de la grilla
     private async Task ImprimirTicketSeleccionadoAsync()
     {
+        // Verifica que haya una fila seleccionada en la tabla
         if (dgvCobros.CurrentRow?.Tag is not PagoRespuestaDto pago)
         {
             MessageBox.Show("Seleccione un cobro de la lista para imprimir su ticket.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -456,11 +496,13 @@ public partial class FormCobros : Form
             Cuotas = pago.Cuotas
         };
 
+        // Genera el ticket con la marca de [REIMPRESIÓN]
         var ticket = await ArmarTicketAsync(pago.Id, dto, pago.NombreMetodoPago, reimpresion: true);
         using var vistaTicket = new FormTicket(ticket);
         vistaTicket.ShowDialog(this);
     }
 
+    // Construye el texto completo del ticket fiscal térmico para imprimir o visualizar en pantalla
     private async Task<string> ArmarTicketAsync(long idPago, PagoSolicitudDto pago, string metodoPago, decimal? abonaCon = null, bool reimpresion = false)
     {
         const int ancho = 52;
@@ -468,6 +510,7 @@ public partial class FormCobros : Form
         var linea = new string('-', ancho);
         var sb = new StringBuilder();
 
+        // 1. Encabezado institucional con datos fiscales del comercio
         sb.AppendLine(Centrar(EmpresaNombreFantasia, ancho));
         sb.AppendLine(Centrar($"Razón social: {EmpresaRazonSocial}", ancho));
         sb.AppendLine(Centrar($"CUIT: {EmpresaCuit}", ancho));
@@ -483,6 +526,8 @@ public partial class FormCobros : Form
         if (reimpresion)
             sb.AppendLine(Centrar("*** REIMPRESIÓN ***", ancho));
         sb.AppendLine(separador);
+
+        // 2. Datos de emisión, punto de venta y usuario que cobró
         sb.AppendLine($"P.V.: {EmpresaPuntoVenta}   Ticket N°: {EmpresaPuntoVenta}-{idPago:D8}");
         sb.AppendLine($"Fecha de pago: {pago.Fecha:dd/MM/yyyy}");
         sb.AppendLine($"Emitido: {DateTime.Now:dd/MM/yyyy HH:mm}");
@@ -490,6 +535,7 @@ public partial class FormCobros : Form
             sb.AppendLine($"Atendió: {SesionActual.NombreCompleto}");
         sb.AppendLine(linea);
 
+        // 3. Datos de la consulta clínica (mascota, dueño, veterinario)
         if (_consultaControlador is not null)
         {
             var resConsulta = await ConsultarAsync(() => _consultaControlador.ObtenerPorIdAsync(pago.IdConsulta));
@@ -507,11 +553,13 @@ public partial class FormCobros : Form
             }
         }
 
+        // 4. Desglose detallado de tratamientos y vacunas aplicadas
         sb.AppendLine("DETALLE");
         var (detalle, _) = await CalcularDetalleImporteAsync(pago.IdConsulta);
         sb.AppendLine(detalle);
         sb.AppendLine(separador);
 
+        // 5. Total abonado, método de pago, desglose de cuotas y vuelto si fue en efectivo
         sb.AppendLine(FormatearLineaTicket("TOTAL ABONADO", pago.Importe, ancho));
         sb.AppendLine($"Método de pago: {metodoPago}");
         if (pago.Cuotas is > 1)
@@ -533,11 +581,13 @@ public partial class FormCobros : Form
     private static string Centrar(string texto, int ancho) =>
         texto.Length >= ancho ? texto : texto.PadLeft((ancho + texto.Length) / 2).PadRight(ancho);
 
+    // Valida las reglas de negocio del cobro antes de enviarlo a la base de datos
     private bool ValidarFormulario(out PagoSolicitudDto dto, out string mensaje)
     {
         dto = new PagoSolicitudDto();
         mensaje = string.Empty;
 
+        // 1. Debe haber seleccionado una consulta clínica
         var consulta = cboConsultaClinica.SelectedItem as ItemCombo;
         if (consulta?.Id is null || consulta.Id <= 0)
         {
@@ -546,6 +596,7 @@ public partial class FormCobros : Form
             return false;
         }
 
+        // 2. Debe haber seleccionado un método de pago
         var metodo = cboMetodoPago.SelectedItem as ItemCombo;
         if (metodo?.Id is null || metodo.Id <= 0)
         {
@@ -554,6 +605,7 @@ public partial class FormCobros : Form
             return false;
         }
 
+        // 3. El importe calculado debe ser mayor a cero
         if (!ValidarImporte(out var importe))
         {
             mensaje = "El importe debe ser un número decimal mayor a 0.";
@@ -561,6 +613,7 @@ public partial class FormCobros : Form
         }
 
         int? cuotas = null;
+        // 4. Si paga con tarjeta de crédito, exige seleccionar la cantidad de cuotas
         if (EsTarjetaCredito(metodo.Texto))
         {
             cuotas = ObtenerCuotasSeleccionadas();
@@ -571,6 +624,7 @@ public partial class FormCobros : Form
                 return false;
             }
         }
+        // 5. Si paga con efectivo, valida que haya ingresado con cuánto abona y que cubra el total
         else if (EsEfectivo(metodo.Texto))
         {
             var textoAbona = txtAbonaCon.Text.Trim().Replace(',', '.');
@@ -596,6 +650,7 @@ public partial class FormCobros : Form
             }
         }
 
+        // Construye el DTO con los datos listos para persistir
         dto = new PagoSolicitudDto
         {
             IdConsulta = consulta.Id.Value,
@@ -608,17 +663,20 @@ public partial class FormCobros : Form
         return true;
     }
 
+    // Muestra u oculta controles según el método de pago elegido (efectivo vs tarjeta)
     private void ActualizarVisibilidadMetodoPago()
     {
         var metodo = cboMetodoPago.SelectedItem as ItemCombo;
         var esCredito = metodo is not null && EsTarjetaCredito(metodo.Texto);
         var esEfectivo = metodo is not null && EsEfectivo(metodo.Texto);
 
+        // Si es crédito muestra el combo de cuotas
         lblCuotas.Visible = esCredito;
         cboCuotas.Visible = esCredito;
         if (esCredito && cboCuotas.SelectedIndex < 0 && cboCuotas.Items.Count > 0)
             cboCuotas.SelectedIndex = 0;
 
+        // Si es efectivo muestra la calculadora de vuelto y cuánto abona
         lblAbonaCon.Visible = esEfectivo;
         pnlAbonaCon.Visible = esEfectivo;
         lblVueltoEtiqueta.Visible = esEfectivo;
@@ -678,6 +736,7 @@ public partial class FormCobros : Form
             cboCuotas.SelectedIndex = idx;
     }
 
+    // Al hacer clic en un cobro de la grilla, carga sus datos en modo consulta
     private void CargarPagoSeleccionado()
     {
         // CellClick y SelectionChanged llegan juntos al hacer clic: el mismo cobro se carga una sola vez
@@ -699,6 +758,7 @@ public partial class FormCobros : Form
             CalcularVuelto();
             _estadoPagoSeleccionado = pago.Estado;
 
+            // En un cobro histórico, se desactiva Cobrar y solo se permite reimprimir el ticket
             btnCobrar.Enabled = false;
             btnImprimirTicket.Enabled = true;
             EstablecerSoloLectura(true);
@@ -712,9 +772,7 @@ public partial class FormCobros : Form
         _ = OnConsultaSeleccionadaAsync();
     }
 
-    /// <summary>
-    /// Configura los campos del formulario cuando se visualiza un pago ya registrado o uno nuevo.
-    /// </summary>
+    // Configura los campos del formulario en modo solo lectura o edición
     private void EstablecerSoloLectura(bool soloLectura)
     {
         cboConsultaClinica.Enabled = !soloLectura;
@@ -725,6 +783,7 @@ public partial class FormCobros : Form
         txtAbonaCon.ReadOnly = soloLectura;
     }
 
+    // Restablece todos los campos a su estado inicial para cobrar una nueva consulta
     private void LimpiarFormulario()
     {
         _idPagoSeleccionado = null;
@@ -751,20 +810,29 @@ public partial class FormCobros : Form
         cboConsultaClinica.Focus();
     }
 
+    // Asegura que una consulta histórica figure en el desplegable (ComboBox)
+    // Como el desplegable solo tiene consultas sin pagar, si el usuario toca un cobro viejo en la grilla,
+    // esta función la agrega temporalmente para poder mostrar sus datos sin que el sistema dé error.
     private void AsegurarConsultaEnCombo(long idConsulta, string descripcion)
     {
+        // 1. Recorre los ítems actuales del desplegable
         foreach (var obj in cboConsultaClinica.Items)
         {
+            // Si ya existe en la lista, no hace nada y sale
             if (obj is ItemCombo item && item.Id == idConsulta)
                 return;
         }
 
+        // 2. Si no estaba, arma el texto descriptivo
         var texto = string.IsNullOrWhiteSpace(descripcion)
             ? $"Consulta #{idConsulta}"
             : descripcion;
+
+        // 3. La inserta en el desplegable para que pueda ser seleccionada
         cboConsultaClinica.Items.Add(new ItemCombo(idConsulta, texto));
     }
 
+    // Busca un ítem dentro de un ComboBox por su ID numérico y lo deja seleccionado
     private static void SeleccionarComboPorId(ComboBox cbo, long id)
     {
         for (var i = 0; i < cbo.Items.Count; i++)
@@ -777,11 +845,14 @@ public partial class FormCobros : Form
         }
     }
 
+    // Filtra el teclado en tiempo real: solo permite ingresar dígitos numéricos y una única coma o punto decimal
     private void TxtAbonaCon_KeyPress(object? sender, KeyPressEventArgs e)
     {
+        // Permite teclas de control (BackSpace, Delete) y dígitos
         if (char.IsControl(e.KeyChar) || char.IsDigit(e.KeyChar))
             return;
 
+        // Permite un solo punto o coma como separador decimal
         if (e.KeyChar is '.' or ',')
         {
             if (sender is TextBox tb)
@@ -795,9 +866,11 @@ public partial class FormCobros : Form
             }
         }
 
+        // Bloquea cualquier otro carácter (letras, símbolos)
         e.Handled = true;
     }
 
+    // Se dispara mientras el usuario tipea para sanitizar pegados y recalcular el vuelto en vivo
     private void TxtAbonaCon_TextChanged(object? sender, EventArgs e)
     {
         if (string.IsNullOrEmpty(txtAbonaCon.Text))
@@ -821,6 +894,7 @@ public partial class FormCobros : Form
             }
         }
 
+        // Si se pegaron caracteres prohibidos, los limpia conservando la posición del cursor
         if (textoLimpio.ToString() != texto)
         {
             var cursor = txtAbonaCon.SelectionStart;
@@ -828,9 +902,11 @@ public partial class FormCobros : Form
             txtAbonaCon.SelectionStart = Math.Min(cursor, txtAbonaCon.Text.Length);
         }
 
+        // Actualiza el cálculo del vuelto en la pantalla
         CalcularVuelto();
     }
 
+    // Al salir del campo (Leave), formatea el número a dos decimales estándar (ej: "1500.00")
     private void TxtAbonaCon_Leave(object? sender, EventArgs e)
     {
         var texto = txtAbonaCon.Text.Trim().Replace(',', '.');
@@ -841,6 +917,9 @@ public partial class FormCobros : Form
         }
     }
 
+    // Calcula el vuelto en tiempo real cuando se cobra en efectivo
+    // Si el cliente entrega más dinero, muestra el vuelto en color verde
+    // Si entrega menos de lo debido, muestra en rojo cuánto dinero falta
     private void CalcularVuelto()
     {
         var metodo = cboMetodoPago.SelectedItem as ItemCombo;
@@ -860,20 +939,23 @@ public partial class FormCobros : Form
             return;
         }
 
+        // Si el dinero entregado alcanza para cubrir el total
         if (abona >= importe)
         {
             var vuelto = abona - importe;
-            lblVuelto.ForeColor = ColorExito;
+            lblVuelto.ForeColor = ColorExito; // Verde
             lblVuelto.Text = $"$ {vuelto:N2}";
         }
+        // Si el dinero entregado no es suficiente
         else
         {
             var falta = importe - abona;
-            lblVuelto.ForeColor = ColorEtiquetaError;
+            lblVuelto.ForeColor = ColorEtiquetaError; // Rojo
             lblVuelto.Text = $"Faltan $ {falta:N2}";
         }
     }
 
+    // Valida que el importe calculado sea un decimal positivo válido
     private bool ValidarImporte(out decimal importe)
     {
         importe = 0m;

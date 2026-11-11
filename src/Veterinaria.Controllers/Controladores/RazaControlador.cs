@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
@@ -75,6 +76,9 @@ public class RazaControlador(ContextoVeterinaria context)
                 return Resultado<long>.Falla($"No existe una especie registrada con ID {solicitud.IdEspecie}.");
 
             var nombreNormalizado = solicitud.Nombre.Trim();
+            if (!Regex.IsMatch(nombreNormalizado, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$"))
+                return Resultado<long>.Falla("El nombre de la raza solo puede contener letras y espacios.");
+
             var existeDuplicado = await context.Razas
                 .AnyAsync(r => r.IdEspecie == solicitud.IdEspecie && r.Nombre.ToLower() == nombreNormalizado.ToLower());
 
@@ -120,6 +124,9 @@ public class RazaControlador(ContextoVeterinaria context)
                 return Resultado.Falla($"No existe una especie registrada con ID {solicitud.IdEspecie}.");
 
             var nombreNormalizado = solicitud.Nombre.Trim();
+            if (!Regex.IsMatch(nombreNormalizado, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$"))
+                return Resultado.Falla("El nombre de la raza solo puede contener letras y espacios.");
+
             var existeDuplicado = await context.Razas
                 .AnyAsync(r => r.Id != id && r.IdEspecie == solicitud.IdEspecie && r.Nombre.ToLower() == nombreNormalizado.ToLower());
 

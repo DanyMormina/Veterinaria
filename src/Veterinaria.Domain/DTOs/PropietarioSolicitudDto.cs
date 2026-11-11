@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Dtos;
-
-/// <summary>
-/// DTO para la creación y actualización de un Propietario.
-/// </summary>
+﻿namespace Veterinaria.Domain.Dtos;
+// DTO para la creación y actualización de un Propietario.
 public class PropietarioSolicitudDto
 {
     public string DNI { get; set; } = string.Empty;

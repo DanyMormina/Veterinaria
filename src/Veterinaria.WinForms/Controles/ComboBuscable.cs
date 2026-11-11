@@ -1,19 +1,16 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 
 namespace Veterinaria.WinForms.Controles;
-
-/// <summary>
-/// Permite escribir en un ComboBox para buscar dentro de su lista: mientras se escribe se muestra
-/// debajo una lista con las opciones que contienen el texto (sin distinguir mayúsculas ni acentos).
-/// No usa el autocompletado nativo de WinForms, que se superpone con el desplegable y puede dejar
-/// el texto en blanco al elegir con el mouse.
-/// </summary>
+// Permite escribir en un ComboBox para buscar dentro de su lista: mientras se escribe se muestra
+// debajo una lista con las opciones que contienen el texto (sin distinguir mayúsculas ni acentos).
+// No usa el autocompletado nativo de WinForms, que se superpone con el desplegable y puede dejar
+// el texto en blanco al elegir con el mouse.
 public static class ComboBuscable
 {
-    /// <param name="permitirVacio">
-    /// Si es false, al dejar el texto vacío se vuelve a la última opción elegida (útil en filtros con "(Todos)").
-    /// </param>
+    // <param name="permitirVacio">
+    // Si es false, al dejar el texto vacío se vuelve a la última opción elegida (útil en filtros con "(Todos)").
+    // </param>
     public static void Habilitar(bool permitirVacio, params ComboBox[] combos)
     {
         foreach (var combo in combos)
@@ -21,10 +18,7 @@ public static class ComboBuscable
     }
 
     public static void Habilitar(params ComboBox[] combos) => Habilitar(true, combos);
-
-    /// <summary>
-    /// Solo agrega la lista de sugerencias; para combos cuyo formulario ya resuelve qué hacer al salir.
-    /// </summary>
+    // Solo agrega la lista de sugerencias; para combos cuyo formulario ya resuelve qué hacer al salir.
     public static void HabilitarSoloSugerencias(params ComboBox[] combos)
     {
         foreach (var combo in combos)

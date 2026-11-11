@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Dtos;
-
-/// <summary>
-/// DTO de respuesta para la entidad Método de Pago.
-/// </summary>
+﻿namespace Veterinaria.Domain.Dtos;
+// DTO de respuesta para la entidad Método de Pago.
 public class MetodoPagoRespuestaDto
 {
     public long Id { get; set; }

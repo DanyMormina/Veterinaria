@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Domain.Entidades;
@@ -71,10 +71,7 @@ public class TratamientoControlador(ContextoVeterinaria context)
             return Resultado<long>.Falla($"Error interno al registrar el tratamiento: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Registra la aplicación de un tratamiento a una consulta médica veterinaria (DetalleConsulta).
-    /// </summary>
+    // Registra la aplicación de un tratamiento a una consulta médica veterinaria (DetalleConsulta).
     public async Task<Resultado<long>> CrearAsync(DetalleConsultaSolicitudDto solicitud)
     {
         try
@@ -130,10 +127,7 @@ public class TratamientoControlador(ContextoVeterinaria context)
             return Resultado<long>.Falla($"Error interno al aplicar el tratamiento: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Obtiene todos los tratamientos aplicados a una consulta médica específica.
-    /// </summary>
+    // Obtiene todos los tratamientos aplicados a una consulta médica específica.
     public async Task<Resultado<IEnumerable<DetalleConsultaRespuestaDto>>> ObtenerTratamientosAplicadosPorConsultaAsync(long idConsulta)
     {
         try
@@ -166,10 +160,7 @@ public class TratamientoControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<DetalleConsultaRespuestaDto>>.Falla($"Error al obtener tratamientos aplicados: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Obtiene todos los tratamientos aplicados activos (listado general del módulo).
-    /// </summary>
+    // Obtiene todos los tratamientos aplicados activos (listado general del módulo).
     public async Task<Resultado<IEnumerable<DetalleConsultaRespuestaDto>>> ObtenerTodosAplicadosAsync()
     {
         try
@@ -267,10 +258,7 @@ public class TratamientoControlador(ContextoVeterinaria context)
             return Resultado.Falla($"Error interno al eliminar el tratamiento: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Elimina (baja lógica) un tratamiento aplicado a una consulta clínica.
-    /// </summary>
+    // Elimina (baja lógica) un tratamiento aplicado a una consulta clínica.
     public async Task<Resultado> EliminarDetalleAplicadoAsync(long idDetalle)
     {
         try

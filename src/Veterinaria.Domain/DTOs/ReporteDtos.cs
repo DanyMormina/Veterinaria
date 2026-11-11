@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Dtos;
-
-/// <summary>
-/// Parámetros y filtros para la generación de reportes clínicos y demográficos.
-/// </summary>
+﻿namespace Veterinaria.Domain.Dtos;
+// Parámetros y filtros para la generación de reportes clínicos y demográficos.
 public record FiltroReporteDto
 {
     public string TipoReporte { get; init; } = string.Empty;
@@ -11,10 +8,7 @@ public record FiltroReporteDto
     public long? IdVeterinario { get; init; }
     public long? IdEspecie { get; init; }
 }
-
-/// <summary>
-/// Modelo de datos para el reporte de Consultas Clínicas.
-/// </summary>
+// Modelo de datos para el reporte de Consultas Clínicas.
 public record ReporteConsultaClinicaDto
 {
     public DateTime FechaHora { get; init; }
@@ -28,11 +22,8 @@ public record ReporteConsultaClinicaDto
     public string Motivo { get; init; } = string.Empty;
     public string Diagnostico { get; init; } = string.Empty;
 }
-
-/// <summary>
-/// Modelo del reporte cruzado de consultas con sus tratamientos y vacunas aplicados
-/// (Consulta × Mascota × Propietario × Usuario × DetalleConsulta × AplicacionVacuna).
-/// </summary>
+// Modelo del reporte cruzado de consultas con sus tratamientos y vacunas aplicados
+// (Consulta × Mascota × Propietario × Usuario × DetalleConsulta × AplicacionVacuna).
 public record ReporteConsultaDetalladaDto
 {
     public long IdConsulta { get; init; }
@@ -50,10 +41,7 @@ public record ReporteConsultaDetalladaDto
     public decimal ImporteVacunas { get; init; }
     public decimal ImporteTotal => ImporteConsulta + ImporteTratamientos + ImporteVacunas;
 }
-
-/// <summary>
-/// Filtro para el reporte de cobros de recepción.
-/// </summary>
+// Filtro para el reporte de cobros de recepción.
 public record FiltroReporteCobroDto
 {
     public DateTime FechaDesde { get; init; }
@@ -62,10 +50,7 @@ public record FiltroReporteCobroDto
     public long? IdVeterinario { get; init; }
     public long? IdEspecie { get; init; }
 }
-
-/// <summary>
-/// Modelo de datos para el reporte de cobros.
-/// </summary>
+// Modelo de datos para el reporte de cobros.
 public record ReporteCobroDto
 {
     public DateTime Fecha { get; init; }
@@ -78,10 +63,7 @@ public record ReporteCobroDto
     public decimal Importe { get; init; }
     public string Estado { get; init; } = string.Empty;
 }
-
-/// <summary>
-/// Modelo de datos para el reporte de Vacunas y Tratamientos aplicados.
-/// </summary>
+// Modelo de datos para el reporte de Vacunas y Tratamientos aplicados.
 public record ReporteVacunaTratamientoDto
 {
     public DateTime Fecha { get; init; }
@@ -93,10 +75,7 @@ public record ReporteVacunaTratamientoDto
     public string Dosis { get; init; } = string.Empty;
     public string Veterinario { get; init; } = string.Empty;
 }
-
-/// <summary>
-/// Modelo de datos para el reporte preventivo de Próximos Controles Sanitarios.
-/// </summary>
+// Modelo de datos para el reporte preventivo de Próximos Controles Sanitarios.
 public record ReporteProximoControlDto
 {
     public DateTime FechaProximoControl { get; init; }
@@ -107,10 +86,7 @@ public record ReporteProximoControlDto
     public string Telefono { get; init; } = string.Empty;
     public string TratamientoAsociado { get; init; } = string.Empty;
 }
-
-/// <summary>
-/// Modelo de datos para el Censo Demográfico de Pacientes (Mascotas registradas).
-/// </summary>
+// Modelo de datos para el Censo Demográfico de Pacientes (Mascotas registradas).
 public record ReporteCensoMascotaDto
 {
     public long Id { get; init; }

@@ -1,13 +1,10 @@
-using Veterinaria.CrossCutting.Session;
+﻿using Veterinaria.CrossCutting.Session;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Interfaces.Services.Seguridad;
 
 namespace Veterinaria.Controllers.Seguridad;
-
-/// <summary>
-/// Controlador de la capa de aplicación/presentación para operaciones de usuario y autorización de restauración.
-/// </summary>
+// Controlador de la capa de aplicación/presentación para operaciones de usuario y autorización de restauración.
 public class UsuarioController
 {
     private readonly IUsuarioService _usuarioService;
@@ -16,11 +13,7 @@ public class UsuarioController
     {
         _usuarioService = usuarioService;
     }
-
-    /// <summary>
-    /// Valida que el usuario actualmente autenticado en sesión posea autorización para restaurar la base de datos.
-    /// </summary>
-    /// <returns>Resultado con true si está autorizado, o falla si no posee privilegios.</returns>
+    // Valida que el usuario actualmente autenticado en sesión posea autorización para restaurar la base de datos.
     public async Task<Result<bool>> ValidarAutorizacionRestoreAsync()
     {
         var idSesion = SesionActual.IdUsuario;
@@ -31,12 +24,7 @@ public class UsuarioController
 
         return await _usuarioService.ValidarAutorizacionRestoreAsync(idSesion.Value);
     }
-
-    /// <summary>
-    /// Valida los permisos de restauración para un identificador de usuario explícito.
-    /// </summary>
-    /// <param name="idUsuario">Identificador único del usuario.</param>
-    /// <returns>Resultado de autorización.</returns>
+    // Valida los permisos de restauración para un identificador de usuario explícito.
     public async Task<Result<bool>> ValidarAutorizacionRestoreAsync(long idUsuario)
     {
         return await _usuarioService.ValidarAutorizacionRestoreAsync(idUsuario);

@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
@@ -14,11 +14,8 @@ public class PropietarioControlador(ContextoVeterinaria context)
     private static readonly Regex RegexNombreApellido = new(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]{2,100}$", RegexOptions.Compiled);
     private static readonly Regex RegexDni = new(@"^\d{7,8}$", RegexOptions.Compiled);
     private static readonly Regex RegexTelefono = new(@"^\d{6,13}$", RegexOptions.Compiled);
-
-    /// <summary>
-    /// Obtiene todos los propietarios con estado activo en el sistema.
-    /// Utiliza AsNoTracking para optimizar la lectura de solo datos.
-    /// </summary>
+    // Obtiene todos los propietarios con estado activo en el sistema.
+    // Utiliza AsNoTracking para optimizar la lectura de solo datos.
     public async Task<Resultado<IEnumerable<PropietarioRespuestaDto>>> ObtenerActivosAsync()
     {
         try
@@ -179,11 +176,8 @@ public class PropietarioControlador(ContextoVeterinaria context)
     {
         return await CambiarEstadoAsync(id, false);
     }
-
-    /// <summary>
-    /// Modifica el estado de activación (Activo = true/false) de un propietario.
-    /// Utiliza IgnoreQueryFilters para permitir encontrar propietarios desactivados y reactivarlos.
-    /// </summary>
+    // Modifica el estado de activación (Activo = true/false) de un propietario.
+    // Utiliza IgnoreQueryFilters para permitir encontrar propietarios desactivados y reactivarlos.
     public async Task<Resultado> CambiarEstadoAsync(long id, bool activo)
     {
         try
@@ -207,11 +201,7 @@ public class PropietarioControlador(ContextoVeterinaria context)
             return Resultado.Falla($"Error interno al cambiar el estado del propietario: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Valida la consistencia, obligatoriedad y restricciones de formato de la solicitud de propietario.
-    /// Retorna un mensaje descriptivo de error en caso de fallo, o null si los datos son válidos.
-    /// </summary>
+    // Valida la consistencia, obligatoriedad y restricciones de formato de la solicitud de propietario.
     private static string? ValidarDatosSolicitud(PropietarioSolicitudDto solicitud)
     {
         // 1. Nombre: obligatorio, 2 a 100 caracteres, solo letras, tildes y espacios
@@ -252,10 +242,7 @@ public class PropietarioControlador(ContextoVeterinaria context)
 
         return null;
     }
-
-    /// <summary>
-    /// Comprueba la unicidad de DNI, teléfono y correo electrónico en la base de datos ignorando filtros de borrado lógico (soft-deleted).
-    /// </summary>
+    // Comprueba la unicidad de DNI, teléfono y correo electrónico en la base de datos ignorando filtros de borrado lógico (soft-deleted).
     protected async Task<string?> ValidarUnicidadContactoAsync(
         long? idExcluir,
         string dni,

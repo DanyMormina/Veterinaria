@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
@@ -8,11 +8,8 @@ using Veterinaria.Infrastructure;
 using Veterinaria.Interfaces.Services.Sistema;
 
 namespace Veterinaria.Services.Sistema;
-
-/// <summary>
-/// Servicio de negocio para la gestión, ejecución y auditoría de copias de seguridad.
-/// Compatible tanto con SQL Server local en Windows como en entornos contenerizados Docker / Linux.
-/// </summary>
+// Servicio de negocio para la gestión, ejecución y auditoría de copias de seguridad.
+// Compatible tanto con SQL Server local en Windows como en entornos contenerizados Docker / Linux.
 public class BackupService : IBackupService
 {
     private readonly ContextoVeterinaria _contexto;
@@ -22,20 +19,13 @@ public class BackupService : IBackupService
     {
         _contexto = contexto;
     }
-
-    /// <summary>
-    /// Retorna la ruta física por defecto configurada para el almacenamiento de respaldos.
-    /// </summary>
     public string ObtenerRutaDestinoPorDefecto()
     {
         return RutaPorDefecto;
     }
-
-    /// <summary>
-    /// Genera la copia de seguridad física de la base de datos y asienta el registro en dbo.Backup.
-    /// Si el motor de base de datos corre en Linux/Docker, genera el respaldo dentro del contenedor
-    /// y transmite el archivo .bak automáticamente a la máquina anfitriona Windows.
-    /// </summary>
+    // Genera la copia de seguridad física de la base de datos y asienta el registro en dbo.Backup.
+    // Si el motor de base de datos corre en Linux/Docker, genera el respaldo dentro del contenedor
+    // y transmite el archivo .bak automáticamente a la máquina anfitriona Windows.
     public async Task<Result> GenerarBackupAsync(string nombreSugerido, int idUsuario)
     {
         try
@@ -181,11 +171,8 @@ public class BackupService : IBackupService
             return Result.Falla($"Error al generar el backup: {mensaje}");
         }
     }
-
-    /// <summary>
-    /// Restaura una copia de seguridad física (.bak) sobre la base de datos SQL Server.
-    /// Establece la base de datos en modo SINGLE_USER, ejecuta el restore con REPLACE y la restablece en MULTI_USER.
-    /// </summary>
+    // Restaura una copia de seguridad física (.bak) sobre la base de datos SQL Server.
+    // Establece la base de datos en modo SINGLE_USER, ejecuta el restore con REPLACE y la restablece en MULTI_USER.
     public async Task<Result> RestaurarBaseDatosAsync(string nombreArchivoBak, long idUsuarioResponsable)
     {
         try
@@ -294,10 +281,7 @@ public class BackupService : IBackupService
             return Result.Falla($"Error al restaurar la base de datos: {mensaje}");
         }
     }
-
-    /// <summary>
-    /// Consulta el historial cronológico descendente de copias de seguridad registradas.
-    /// </summary>
+    // Consulta el historial cronológico descendente de copias de seguridad registradas.
     public async Task<Result<IEnumerable<BackupHistorialDto>>> ObtenerHistorialAsync()
     {
         try
@@ -325,10 +309,7 @@ public class BackupService : IBackupService
             return Result<IEnumerable<BackupHistorialDto>>.Falla($"Error al consultar el historial de backups: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Determina si el motor SQL Server se está ejecutando sobre plataforma Linux (incluyendo Docker).
-    /// </summary>
+    // Determina si el motor SQL Server se está ejecutando sobre plataforma Linux (incluyendo Docker).
     private async Task<bool> EsMotorLinuxAsync()
     {
         try
@@ -349,11 +330,8 @@ public class BackupService : IBackupService
             return false;
         }
     }
-
-    /// <summary>
-    /// Extrae un archivo generado dentro del servidor SQL Server (ej. Linux/Docker)
-    /// y lo escribe en el sistema de archivos local de Windows mediante flujo binario OPENROWSET.
-    /// </summary>
+    // Extrae un archivo generado dentro del servidor SQL Server (ej. Linux/Docker)
+    // y lo escribe en el sistema de archivos local de Windows mediante flujo binario OPENROWSET.
     private async Task ExtraerArchivoBackupDesdeServidorAsync(string rutaRemota, string rutaDestinoLocal)
     {
         var conexion = _contexto.Database.GetDbConnection();
@@ -380,11 +358,8 @@ public class BackupService : IBackupService
             await streamRemoto.CopyToAsync(streamLocal);
         }
     }
-
-    /// <summary>
-    /// Concede permisos de control total al identificador universal *S-1-1-0 (Everyone/Todos)
-    /// sobre la carpeta para permitir al servicio de SQL Server escribir directamente si está en Windows.
-    /// </summary>
+    // Concede permisos de control total al identificador universal *S-1-1-0 (Everyone/Todos)
+    // sobre la carpeta para permitir al servicio de SQL Server escribir directamente si está en Windows.
     private static void AsegurarDirectorioConPermisos(string directorio)
     {
         try
@@ -409,10 +384,7 @@ public class BackupService : IBackupService
             // Continuar defensivamente
         }
     }
-
-    /// <summary>
-    /// Obtiene la ruta del directorio de backups predeterminado configurado en la instancia de SQL Server.
-    /// </summary>
+    // Obtiene la ruta del directorio de backups predeterminado configurado en la instancia de SQL Server.
     private async Task<string?> ObtenerRutaBackupPredeterminadaServidorAsync()
     {
         try

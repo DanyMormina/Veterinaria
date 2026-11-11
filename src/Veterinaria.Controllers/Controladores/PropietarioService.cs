@@ -1,25 +1,17 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Infrastructure;
 
 namespace Veterinaria.Controllers.Controladores;
-
-/// <summary>
-/// Servicio de dominio para la gestión, validación de unicidad y búsqueda dinámica multi-campo de propietarios.
-/// Reutiliza y expone las operaciones de negocio con validaciones estrictas y control de unicidad.
-/// </summary>
+// Servicio de dominio para la gestión, validación de unicidad y búsqueda dinámica multi-campo de propietarios.
+// Reutiliza y expone las operaciones de negocio con validaciones estrictas y control de unicidad.
 public class PropietarioService(ContextoVeterinaria context) : PropietarioControlador(context)
 {
-    /// <summary>
-    /// Realiza una búsqueda dinámica multi-campo asíncrona de propietarios utilizando AsNoTracking().
-    /// Si el término está vacío, recarga todos los propietarios activos.
-    /// Si se proporciona un término, filtra de forma insensible a mayúsculas/minúsculas en DNI, Nombre, Apellido,
-    /// Teléfono, Correo Electrónico o Dirección.
-    /// </summary>
-    /// <param name="termino">Término global de búsqueda.</param>
-    /// <param name="soloActivos">Indica si se deben limitar los resultados exclusivamente a propietarios activos.</param>
-    /// <returns>Resultado con la colección de propietarios coincidentes.</returns>
+    // Realiza una búsqueda dinámica multi-campo asíncrona de propietarios utilizando AsNoTracking().
+    // Si el término está vacío, recarga todos los propietarios activos.
+    // Si se proporciona un término, filtra de forma insensible a mayúsculas/minúsculas en DNI, Nombre, Apellido,
+    // Teléfono, Correo Electrónico o Dirección.
     public async Task<Resultado<IEnumerable<PropietarioRespuestaDto>>> BuscarPropietariosAsync(string? termino, bool soloActivos = true)
     {
         try
@@ -74,16 +66,8 @@ public class PropietarioService(ContextoVeterinaria context) : PropietarioContro
             return Resultado<IEnumerable<PropietarioRespuestaDto>>.Falla($"Error interno al realizar la búsqueda de propietarios: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Valida la unicidad en base de datos para DNI, Teléfono y Correo Electrónico frente a registros activos e inactivos.
-    /// Utiliza IgnoreQueryFilters para garantizar que no existan colisiones con registros soft-deleted.
-    /// </summary>
-    /// <param name="idExcluir">Identificador del propietario a excluir en caso de modificación.</param>
-    /// <param name="dni">DNI a verificar.</param>
-    /// <param name="telefono">Teléfono a verificar.</param>
-    /// <param name="correoElectronico">Correo electrónico a verificar.</param>
-    /// <returns>Resultado exitoso o con mensaje descriptivo de conflicto de unicidad.</returns>
+    // Valida la unicidad en base de datos para DNI, Teléfono y Correo Electrónico frente a registros activos e inactivos.
+    // Utiliza IgnoreQueryFilters para garantizar que no existan colisiones con registros soft-deleted.
     public async Task<Resultado> ValidarUnicidadAsync(
         long? idExcluir,
         string dni,

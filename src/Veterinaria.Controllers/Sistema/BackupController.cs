@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Controllers.Seguridad;
 using Veterinaria.CrossCutting.Session;
 using Veterinaria.Domain.Comunes;
@@ -8,10 +8,7 @@ using Veterinaria.Interfaces.Services.Seguridad;
 using Veterinaria.Interfaces.Services.Sistema;
 
 namespace Veterinaria.Controllers.Sistema;
-
-/// <summary>
-/// Controlador de la capa de presentación/aplicación para la gestión de copias de seguridad y restauración.
-/// </summary>
+// Controlador de la capa de presentación/aplicación para la gestión de copias de seguridad y restauración.
 public class BackupController
 {
     private readonly IBackupService _backupService;
@@ -27,14 +24,7 @@ public class BackupController
         _usuarioService = usuarioService;
         _contexto = contexto;
     }
-
-
-    /// <summary>
-    /// Extrae el identificador del usuario en sesión y ejecuta la generación de la copia de seguridad.
-    /// </summary>
-    /// <param name="nombreArchivo">Nombre del archivo de respaldo ingresado por el usuario.</param>
-    /// <param name="idUsuarioSesion">ID opcional del usuario en sesión para desacoplar de contexto estático.</param>
-    /// <returns>Resultado de la operación.</returns>
+    // Extrae el identificador del usuario en sesión y ejecuta la generación de la copia de seguridad.
     public async Task<Result> RealizarBackupAsync(string nombreArchivo, long? idUsuarioSesion = null)
     {
         // 1. Extraer ID del usuario desde parámetro o sesión
@@ -48,10 +38,7 @@ public class BackupController
         // 2. Invocar el servicio de negocio
         return await _backupService.GenerarBackupAsync(nombreArchivo, (int)idUsuarioActual.Value);
     }
-
-    /// <summary>
-    /// Verifica la contraseña contra los gerentes activos registrados en la base (segunda autorización del restore).
-    /// </summary>
+    // Verifica la contraseña contra los gerentes activos registrados en la base (segunda autorización del restore).
     private async Task<bool> VerificarPasswordGerenteAsync(string passwordGerente)
     {
         if (string.IsNullOrWhiteSpace(passwordGerente))
@@ -65,10 +52,7 @@ public class BackupController
 
         return hashesGerentes.Any(hash => PasswordHasher.Verificar(passwordGerente, hash));
     }
-
-    /// <summary>
-    /// Primer paso del restore: permiso PuedeRestaurarBD y contraseña del administrador en sesión.
-    /// </summary>
+    // Primer paso del restore: permiso PuedeRestaurarBD y contraseña del administrador en sesión.
     public async Task<Result> VerificarAdministradorParaRestoreAsync(string passwordConfirmacion, long? idUsuarioSesion = null)
     {
         long? idUsuarioActual = idUsuarioSesion ?? (SesionActual.EstaAutenticado ? SesionActual.IdUsuario : null);
@@ -109,25 +93,14 @@ public class BackupController
 
         return Result.Ok("Contraseña del administrador verificada.");
     }
-
-    /// <summary>
-    /// Envoltorio seguro para consultar el historial de copias registradas.
-    /// </summary>
+    // Envoltorio seguro para consultar el historial de copias registradas.
     public async Task<Result<IEnumerable<BackupHistorialDto>>> CargarHistorialAsync()
     {
         return await _backupService.ObtenerHistorialAsync();
     }
-
-    /// <summary>
-    /// Solicita y ejecuta la restauración de una copia de seguridad tras validar doble autorización:
-    /// 1. Permiso PuedeRestaurarBD y contraseña del administrador en sesión.
-    /// 2. Contraseña de un gerente activo registrado en la base de datos.
-    /// </summary>
-    /// <param name="nombreArchivoBak">Nombre del archivo .bak ubicado en el directorio de backups.</param>
-    /// <param name="passwordConfirmacion">Contraseña del administrador en sesión.</param>
-    /// <param name="passwordGerente">Contraseña del gerente que autoriza la operación.</param>
-    /// <param name="idUsuarioSesion">ID opcional del usuario en sesión para desacoplar de contexto estático.</param>
-    /// <returns>Resultado de la operación de restauración.</returns>
+    // Solicita y ejecuta la restauración de una copia de seguridad tras validar doble autorización:
+    // 1. Permiso PuedeRestaurarBD y contraseña del administrador en sesión.
+    // 2. Contraseña de un gerente activo registrado en la base de datos.
     public async Task<Result> SolicitarRestauracionAsync(
         string nombreArchivoBak,
         string passwordConfirmacion,
@@ -157,10 +130,6 @@ public class BackupController
         // Paso C: Ejecutar la restauración de la base de datos
         return await _backupService.RestaurarBaseDatosAsync(nombreArchivoBak, idUsuarioActual.Value);
     }
-
-    /// <summary>
-    /// Retorna el directorio destino configurado para mostrar en la interfaz de usuario.
-    /// </summary>
     public string ObtenerDirectorioDestino()
     {
         return _backupService.ObtenerRutaDestinoPorDefecto();

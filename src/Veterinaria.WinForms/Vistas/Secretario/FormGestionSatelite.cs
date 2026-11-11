@@ -1,11 +1,9 @@
+﻿using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
-
-/// <summary>
-/// Modos de operación para el formulario modal de gestión satélite.
-/// </summary>
+// Modos de operación para el formulario modal de gestión satélite.
 public enum ModoGestion
 {
     AltaEspecie,
@@ -13,23 +11,18 @@ public enum ModoGestion
     AltaRaza,
     ModificarRaza
 }
-
-/// <summary>
-/// Formulario modal polimórfico para la gestión auxiliar de Especies y Razas (Alta, Modificación y Baja lógica).
-/// </summary>
+// Formulario modal polimórfico para la gestión auxiliar de Especies y Razas (Alta, Modificación y Baja lógica).
 public partial class FormGestionSatelite : Form
 {
     private static readonly Color ColorFondoError = ColorTranslator.FromHtml("#FDECEF");
+    private static readonly Regex RegexSoloTexto = new(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$", RegexOptions.Compiled);
 
     private readonly ModoGestion _modo;
     private readonly EspecieControlador? _especieControlador;
     private readonly RazaControlador? _razaControlador;
     private readonly long? _idEspeciePreseleccionada;
     private bool _cargandoDatos = false;
-
-    /// <summary>
-    /// Constructor principal configurable con controladores inyectados o provistos.
-    /// </summary>
+    // Constructor principal configurable con controladores inyectados o provistos.
     public FormGestionSatelite(
         ModoGestion modo,
         EspecieControlador? especieControlador = null,
@@ -47,10 +40,7 @@ public partial class FormGestionSatelite : Form
         ConfigurarRestriccionesTeclado();
         ConfigurarEventosLimpiezaError();
     }
-
-    /// <summary>
-    /// Configura la visibilidad y disposición de los controles según el modo activo.
-    /// </summary>
+    // Configura la visibilidad y disposición de los controles según el modo activo.
     private void ConfigurarEstiloSegunModo()
     {
         bool esModoEdicion = _modo is ModoGestion.ModificarEspecie or ModoGestion.ModificarRaza;
@@ -127,13 +117,10 @@ public partial class FormGestionSatelite : Form
             txtNombre.Location = new Point(24, 146);
         }
     }
-
-    /// <summary>
-    /// Restringe el tipeo en txtNombre admitiendo únicamente letras, tildes y espacios simples.
-    /// </summary>
+    // Restringe el tipeo en txtNombre y desplegables admitiendo únicamente letras, tildes y espacios simples.
     private void ConfigurarRestriccionesTeclado()
     {
-        txtNombre.KeyPress += (sender, e) =>
+        var validarSoloTexto = new KeyPressEventHandler((sender, e) =>
         {
             if (char.IsControl(e.KeyChar))
                 return;
@@ -141,11 +128,51 @@ public partial class FormGestionSatelite : Form
             if (char.IsLetter(e.KeyChar))
                 return;
 
-            if (e.KeyChar == ' ' && sender is TextBox txt && !txt.Text.EndsWith(' '))
+            var textoActual = sender switch
+            {
+                TextBox txt => txt.Text,
+                ComboBox cbo => cbo.Text,
+                _ => string.Empty
+            };
+
+            if (e.KeyChar == ' ' && !string.IsNullOrEmpty(textoActual) && !textoActual.EndsWith(' '))
                 return;
 
             e.Handled = true;
-        };
+        });
+
+        txtNombre.KeyPress += validarSoloTexto;
+        cboSeleccion.KeyPress += validarSoloTexto;
+        cboParentEspecie.KeyPress += validarSoloTexto;
+
+        // Sanitización defensiva ante pegado para no admitir números ni caracteres especiales
+        void SanitizarTexto(object? sender, EventArgs _)
+        {
+            if (sender is TextBox txt && !string.IsNullOrEmpty(txt.Text))
+            {
+                var textoLimpio = Regex.Replace(txt.Text, @"[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]", "");
+                if (textoLimpio != txt.Text)
+                {
+                    var pos = txt.SelectionStart;
+                    txt.Text = textoLimpio;
+                    txt.SelectionStart = Math.Min(pos, txt.Text.Length);
+                }
+            }
+            else if (sender is ComboBox cbo && !string.IsNullOrEmpty(cbo.Text))
+            {
+                var textoLimpio = Regex.Replace(cbo.Text, @"[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]", "");
+                if (textoLimpio != cbo.Text)
+                {
+                    var pos = cbo.SelectionStart;
+                    cbo.Text = textoLimpio;
+                    cbo.SelectionStart = Math.Min(pos, cbo.Text.Length);
+                }
+            }
+        }
+
+        txtNombre.TextChanged += SanitizarTexto;
+        cboSeleccion.TextChanged += SanitizarTexto;
+        cboParentEspecie.TextChanged += SanitizarTexto;
     }
 
     private void ConfigurarEventosLimpiezaError()
@@ -297,6 +324,14 @@ public partial class FormGestionSatelite : Form
             return;
         }
 
+        if (!RegexSoloTexto.IsMatch(nombre))
+        {
+            txtNombre.BackColor = ColorFondoError;
+            MessageBox.Show("El nombre debe contener únicamente letras y espacios (sin números ni caracteres especiales).", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            txtNombre.Focus();
+            return;
+        }
+
         if (_modo == ModoGestion.AltaEspecie)
         {
             if (_especieControlador is null) return;
@@ -356,6 +391,14 @@ public partial class FormGestionSatelite : Form
         {
             txtNombre.BackColor = ColorFondoError;
             MessageBox.Show("El nombre debe tener al menos 2 caracteres.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            txtNombre.Focus();
+            return;
+        }
+
+        if (!RegexSoloTexto.IsMatch(nombre))
+        {
+            txtNombre.BackColor = ColorFondoError;
+            MessageBox.Show("El nombre debe contener únicamente letras y espacios (sin números ni caracteres especiales).", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             txtNombre.Focus();
             return;
         }
@@ -467,10 +510,7 @@ public partial class FormGestionSatelite : Form
             }
         }
     }
-
-    /// <summary>
-    /// Elemento auxiliar para vincular identificador y texto en los desplegables.
-    /// </summary>
+    // Elemento auxiliar para vincular identificador y texto en los desplegables.
     public sealed record ItemCombo(long? Id, string Texto)
     {
         public override string ToString() => Texto;

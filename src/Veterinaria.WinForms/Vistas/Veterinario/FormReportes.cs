@@ -1,4 +1,4 @@
-using System.Drawing.Printing;
+﻿using System.Drawing.Printing;
 using System.Text;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
@@ -6,10 +6,7 @@ using Veterinaria.WinForms.Controles;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Reportes del periodo para el rol Veterinario: mis consultas, o vacunas y tratamientos aplicados juntos.
-/// </summary>
+// Reportes del periodo para el rol Veterinario: mis consultas, o vacunas y tratamientos aplicados juntos.
 public partial class FormReportes : Form
 {
     private const string TipoConsultas = "Mis consultas";
@@ -28,16 +25,19 @@ public partial class FormReportes : Form
         InitializeComponent();
     }
 
+    // Inicializa la sesión clínica del veterinario, el selector de vista y las columnas según el tipo de reporte
     private void FormReportes_Load(object? sender, EventArgs e)
     {
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
             ? $"Dr./Dra. {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Médico: Veterinario";
 
+        // Establece por defecto el mes en curso
         var hoy = DateTime.Today;
         dtpFechaDesde.Value = new DateTime(hoy.Year, hoy.Month, 1);
         dtpFechaHasta.Value = hoy;
 
+        // Configura el selector polimórfico de vista (Grilla tabular o Gráficos estadísticos con GDI+)
         _vista = SelectorVistaReporte.Configurar(dgvReporte);
         _vista.AgrupacionCambiada += async (_, _) =>
         {
@@ -45,11 +45,14 @@ public partial class FormReportes : Form
             if (btnImprimir.Enabled)
                 await GenerarAsync();
         };
+
+        // Carga los dos tipos de reportes clínicos habilitados para el rol Veterinario
         cboTipoReporte.Items.AddRange([TipoConsultas, TipoVacunasTratamientos]);
         cboTipoReporte.SelectedIndex = 0;
         cboTipoReporte.SelectedIndexChanged += (_, _) => PrepararGrilla();
         PrepararGrilla();
 
+        // Enlace de eventos de generación, exportación y cierre
         btnGenerar.Click += async (_, _) => await GenerarAsync();
         btnImprimir.Click += (_, _) => ImprimirReporte();
         btnExportarPdf.Click += (_, _) => ExportarPdf();
@@ -59,14 +62,17 @@ public partial class FormReportes : Form
         btnExportarPdf.Enabled = false;
     }
 
+    // Consulta en base de datos las consultas o vacunas/tratamientos del veterinario autenticado en el rango de fechas
     private async Task GenerarAsync()
     {
+        // Valida que exista un profesional autenticado en la sesión
         if (!SesionActual.IdUsuario.HasValue || SesionActual.IdUsuario.Value <= 0)
         {
             MessageBox.Show("No hay un veterinario autenticado en sesión.", "Sesión", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
+        // Validación temporal defensiva
         if (dtpFechaDesde.Value.Date > dtpFechaHasta.Value.Date)
         {
             MessageBox.Show("La fecha desde no puede ser mayor que la fecha hasta.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -84,15 +90,16 @@ public partial class FormReportes : Form
                 TipoReporte = esVacunasTratamientos ? "Vacunas y Tratamientos" : "Consultas Clínicas",
                 FechaDesde = dtpFechaDesde.Value.Date,
                 FechaHasta = dtpFechaHasta.Value.Date,
-                IdVeterinario = SesionActual.IdUsuario.Value
+                IdVeterinario = SesionActual.IdUsuario.Value // Filtra exclusivamente las atenciones del profesional actual
             };
 
-            PrepararGrilla();
+            PrepararGrilla(); // Reconfigura las cabeceras según el reporte elegido
 
             bool exito;
             string mensaje;
             if (esVacunasTratamientos)
             {
+                // Consulta médica de vacunas y tratamientos aplicados
                 var resultado = await _reporteControlador.ObtenerReporteVacunasTratamientosAsync(filtro);
                 exito = resultado.EsExitoso && resultado.Valor is not null;
                 mensaje = resultado.Mensaje;
@@ -105,6 +112,7 @@ public partial class FormReportes : Form
                     var vacunas = filas.Count(r => r.Tipo == "Vacunación");
                     lblTotal.Text = $"Total de registros: {filas.Count} ({vacunas} vacuna(s), {filas.Count - vacunas} tratamiento(s))";
 
+                    // Gráfico 1: Dona GDI+ agrupada por tipo de aplicación (Vacunación vs Tratamiento)
                     var porTipo = filas
                         .GroupBy(r => r.Tipo)
                         .OrderByDescending(gr => gr.Count())
@@ -114,7 +122,7 @@ public partial class FormReportes : Form
                         porTipo.Select(gr => gr.Key).ToList(),
                         porTipo.Select(gr => (decimal)gr.Count()).ToList());
 
-                    // Resumen: evolución en el tiempo según la agrupación elegida
+                    // Gráfico 2: Evolución cronológica de aplicaciones según período (días, semanas, meses)
                     var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista?.Agrupacion ?? AgrupacionPeriodo.Automatico);
                     _vista?.UsarGraficoSecundario(true);
                     _vista?.GraficoSecundario.MostrarEvolucion(
@@ -128,6 +136,7 @@ public partial class FormReportes : Form
             }
             else
             {
+                // Consulta de atenciones clínicas individuales del profesional
                 var resultado = await _reporteControlador.ObtenerReporteConsultasClinicasAsync(filtro);
                 exito = resultado.EsExitoso && resultado.Valor is not null;
                 mensaje = resultado.Mensaje;
@@ -139,13 +148,14 @@ public partial class FormReportes : Form
 
                     lblTotal.Text = $"Total de consultas: {dgvReporte.Rows.Count}";
 
+                    // Gráfico 1: Evolución cronológica de consultas atendidas
                     var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista?.Agrupacion ?? AgrupacionPeriodo.Automatico);
                     _vista?.Grafico.MostrarEvolucion(
                         $"Mis consultas por {periodos.Unidad}",
                         periodos.Etiquetas,
                         [new SerieGrafico("Consultas", GraficoReporte.Paleta[0], periodos.Acumular(consultas, c => c.FechaHora, _ => 1))]);
 
-                    // Resumen: pacientes atendidos según especie
+                    // Gráfico 2: Dona GDI+ con la distribución de pacientes atendidos según su especie
                     var porEspecie = consultas
                         .GroupBy(c => c.Especie)
                         .OrderByDescending(gr => gr.Count())
@@ -179,10 +189,7 @@ public partial class FormReportes : Form
 
     private bool EsVacunasTratamientos() =>
         Equals(cboTipoReporte.SelectedItem, TipoVacunasTratamientos);
-
-    /// <summary>
-    /// Vacía la grilla y ajusta los encabezados de columna según el tipo de reporte elegido.
-    /// </summary>
+    // Vacía la grilla y ajusta los encabezados de columna según el tipo de reporte elegido.
     private void PrepararGrilla()
     {
         dgvReporte.Rows.Clear();

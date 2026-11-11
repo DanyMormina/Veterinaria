@@ -1,16 +1,13 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Formulario para la gestión y registro de consultas clínicas veterinarias.
-/// Incorpora restricciones en tiempo real, validaciones con feedback visual
-/// y sincronización inteligente entre tutores y pacientes.
-/// </summary>
+// Formulario para la gestión y registro de consultas clínicas veterinarias.
+// Incorpora restricciones en tiempo real, validaciones con feedback visual
+// y sincronización inteligente entre tutores y pacientes.
 public partial class FormConsultas : Form
 {
     private readonly ConsultaControlador _consultaControlador;
@@ -42,10 +39,7 @@ public partial class FormConsultas : Form
         _propietarioControlador = propietarioControlador;
         _serviceProvider = serviceProvider;
     }
-
-    /// <summary>
-    /// Inicializa la sesión del profesional, enlaza eventos de validación y carga catálogos clínicos.
-    /// </summary>
+    // Inicializa la sesión del profesional, enlaza eventos de validación y carga catálogos clínicos.
     private async void FormConsultas_Load(object? sender, EventArgs e)
     {
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
@@ -81,10 +75,7 @@ public partial class FormConsultas : Form
         cboPropietario.SelectedIndexChanged += cboPropietario_SelectedIndexChanged;
         cboMascota.SelectedIndexChanged += cboMascota_SelectedIndexChanged;
     }
-
-    /// <summary>
-    /// Aplica filtros de teclado estrictos para campos numéricos, de texto clínico y selectores de búsqueda.
-    /// </summary>
+    // Aplica filtros de teclado estrictos para campos numéricos, de texto clínico y selectores de búsqueda.
     private void ConfigurarRestriccionesTeclado()
     {
         // Peso: 0,10–100,00 kg. Temperatura: 36,0–41,0 °C. No se permite tipear fuera de rango.
@@ -294,10 +285,7 @@ public partial class FormConsultas : Form
                && temperatura >= TemperaturaMinimaC
                && temperatura <= TemperaturaMaximaC;
     }
-
-    /// <summary>
-    /// Restablece el color de las cajas de texto y etiquetas al interactuar con ellas.
-    /// </summary>
+    // Restablece el color de las cajas de texto y etiquetas al interactuar con ellas.
     private void ConfigurarLimpiezaErroresEnInteraccion()
     {
         foreach (var (control, _) in _mapaEtiquetas)
@@ -315,10 +303,7 @@ public partial class FormConsultas : Form
             }
         }
     }
-
-    /// <summary>
-    /// Restringe el ingreso en cajas de texto decimal a dígitos y un único separador.
-    /// </summary>
+    // Restringe el ingreso en cajas de texto decimal a dígitos y un único separador.
     private void ValidarDecimal_KeyPress(object? sender, KeyPressEventArgs e)
     {
         if (char.IsControl(e.KeyChar))
@@ -336,10 +321,7 @@ public partial class FormConsultas : Form
 
         e.Handled = true;
     }
-
-    /// <summary>
-    /// Igual que <see cref="ValidarDecimal_KeyPress"/>, pero limita la cantidad de dígitos enteros y decimales.
-    /// </summary>
+    // Igual que <see cref="ValidarDecimal_KeyPress"/>, pero limita la cantidad de dígitos enteros y decimales.
     private void ValidarDecimalLimitado_KeyPress(object? sender, KeyPressEventArgs e, int maxEnteros, int maxDecimales)
     {
         ValidarDecimal_KeyPress(sender, e);
@@ -352,10 +334,7 @@ public partial class FormConsultas : Form
         if (partes[0].Length > maxEnteros || (partes.Length > 1 && partes[1].Length > maxDecimales))
             e.Handled = true;
     }
-
-    /// <summary>
-    /// Permite caracteres alfabéticos, numéricos, signos de puntuación estándar y previene espacios dobles.
-    /// </summary>
+    // Permite caracteres alfabéticos, numéricos, signos de puntuación estándar y previene espacios dobles.
     private void ValidarTextoGeneral_KeyPress(object? sender, KeyPressEventArgs e)
     {
         if (char.IsControl(e.KeyChar))
@@ -374,10 +353,7 @@ public partial class FormConsultas : Form
 
         e.Handled = true;
     }
-
-    /// <summary>
-    /// Restringe la búsqueda en los desplegables de mascota y propietario exclusivamente a letras y espacios, bloqueando números y caracteres especiales.
-    /// </summary>
+    // Restringe la búsqueda en los desplegables de mascota y propietario exclusivamente a letras y espacios, bloqueando números y caracteres especiales.
     private void ValidarSoloLetras_KeyPress(object? sender, KeyPressEventArgs e)
     {
         // 1. Permitir teclas de control del sistema (retroceso, cortar/copiar, etc.)
@@ -398,28 +374,28 @@ public partial class FormConsultas : Form
         // 4. Bloquear cualquier número (0-9), símbolo o carácter especial no alfabético
         e.Handled = true;
     }
-
-    /// <summary>
-    /// Carga la lista completa de propietarios activos en el selector desplegable.
-    /// </summary>
+    // Carga la lista completa de propietarios activos en el selector desplegable (ComboBox)
     private async Task CargarPropietariosAsync()
     {
         try
         {
+            // 1. Consulta al controlador de propietarios de forma asíncrona en SQL Server
             var res = await _propietarioControlador.ObtenerTodosAsync();
             var lista = new List<PropietarioRespuestaDto>();
 
+            // 2. Filtra solo los propietarios activos
             if (res.EsExitoso && res.Valor != null)
             {
                 lista.AddRange(res.Valor.Where(p => p.Activo));
             }
 
+            // 3. Guarda la lista en memoria y la enlaza al ComboBox
             _propietarios = lista;
-            _sincronizandoCombos = true;
-            cboPropietario.DisplayMember = "NombreCompleto";
-            cboPropietario.ValueMember = "Id";
-            cboPropietario.DataSource = _propietarios;
-            cboPropietario.SelectedIndex = -1;
+            _sincronizandoCombos = true; // Evita disparar el evento SelectedIndexChanged durante la carga inicial
+            cboPropietario.DisplayMember = "NombreCompleto"; // Texto visible en la lista (ej: "Juan Pérez")
+            cboPropietario.ValueMember = "Id";               // Valor interno del ID
+            cboPropietario.DataSource = _propietarios;       // Asigna la fuente de datos
+            cboPropietario.SelectedIndex = -1;              // Deja el desplegable sin selección inicial
             cboPropietario.Text = string.Empty;
             _sincronizandoCombos = false;
         }
@@ -429,22 +405,24 @@ public partial class FormConsultas : Form
         }
     }
 
-    /// <summary>
-    /// Carga la lista completa de mascotas activas en el selector desplegable.
-    /// </summary>
+    // Carga la lista completa de mascotas activas desde la base de datos a memoria
     private async Task CargarMascotasAsync()
     {
         try
         {
+            // 1. Consulta al controlador de mascotas en SQL Server
             var res = await _mascotaControlador.ObtenerTodosAsync();
             var lista = new List<MascotaRespuestaDto>();
 
+            // 2. Filtra solo las mascotas activas
             if (res.EsExitoso && res.Valor != null)
             {
                 lista.AddRange(res.Valor.Where(m => m.Activo));
             }
 
+            // 3. Guarda las mascotas en memoria en la lista _mascotas
             _mascotas = lista;
+            // Si ya había un dueño seleccionado, filtra sus mascotas; si no, deja el combo deshabilitado
             CargarMascotasDePropietario(cboPropietario.SelectedValue is long idProp && idProp > 0 ? idProp : null);
         }
         catch (Exception ex)
@@ -453,19 +431,19 @@ public partial class FormConsultas : Form
         }
     }
 
-    /// <summary>
-    /// Puebla la grilla de historial con las consultas clínicas registradas.
-    /// </summary>
+    // Puebla la grilla inferior con el historial de consultas clínicas registradas
     private async Task CargarHistorialConsultasAsync()
     {
         try
         {
+            // 1. Consulta todas las atenciones médicas registradas
             var res = await _consultaControlador.ObtenerTodosAsync();
             dgvConsultas.Rows.Clear();
 
             if (!res.EsExitoso || res.Valor == null)
                 return;
 
+            // 2. Ordena de la más reciente a la más antigua
             _consultas = res.Valor.OrderByDescending(c => c.FechaHora).ToList();
             foreach (var c in _consultas)
             {
@@ -478,7 +456,7 @@ public partial class FormConsultas : Form
                     c.Diagnostico,
                     c.ProximoControl?.ToString("dd/MM/yyyy") ?? "-"
                 );
-                dgvConsultas.Rows[idx].Tag = c;
+                dgvConsultas.Rows[idx].Tag = c; // Guarda el DTO completo en el Tag para fácil acceso al hacer clic
             }
             dgvConsultas.ClearSelection();
             dgvConsultas.CurrentCell = null;
@@ -489,9 +467,8 @@ public partial class FormConsultas : Form
         }
     }
 
-    /// <summary>
-    /// Filtra las mascotas disponibles al seleccionar un tutor en el ComboBox de Propietario.
-    /// </summary>
+    // Se dispara cuando el veterinario elige un propietario en el ComboBox
+    // Filtra las mascotas para que solo aparezcan las de ese dueño
     private void cboPropietario_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_sincronizandoCombos)
@@ -500,21 +477,22 @@ public partial class FormConsultas : Form
         if (!_idConsultaSeleccionada.HasValue)
             txtImporte.Clear();
 
+        // Si se eligió un dueño válido, carga solo sus mascotas
         if (cboPropietario.SelectedValue is long idProp && idProp > 0)
             CargarMascotasDePropietario(idProp);
         else if (cboPropietario.SelectedIndex == -1)
             CargarMascotasDePropietario(null);
     }
 
-    /// <summary>
-    /// Primero se elige el propietario: el combo de mascotas solo muestra (y habilita) las de ese propietario.
-    /// </summary>
+    // Filtra las mascotas en memoria con LINQ según el IdPropietario
     private void CargarMascotasDePropietario(long? idPropietario, long? idMascotaSeleccionada = null)
     {
         _sincronizandoCombos = true;
         cboMascota.DataSource = null;
-        cboMascota.DisplayMember = "Nombre";
-        cboMascota.ValueMember = "Id";
+        cboMascota.DisplayMember = "Nombre"; // Muestra el nombre del animal (ej: "Uma")
+        cboMascota.ValueMember = "Id";       // Guarda el ID de la mascota
+
+        // Filtra en memoria: solo mascotas donde IdPropietario coincide con el dueño elegido
         cboMascota.DataSource = idPropietario.HasValue
             ? _mascotas.Where(m => m.IdPropietario == idPropietario.Value).ToList()
             : new List<MascotaRespuestaDto>();
@@ -529,13 +507,12 @@ public partial class FormConsultas : Form
             cboMascota.Text = string.Empty;
         }
 
+        // El combo de mascotas solo se habilita si hay un dueño seleccionado
         cboMascota.Enabled = idPropietario.HasValue;
         _sincronizandoCombos = false;
     }
 
-    /// <summary>
-    /// Sincroniza automáticamente el propietario correspondiente cuando se selecciona una mascota.
-    /// </summary>
+    // Sincronización inversa: si se elige una mascota, autoselecciona a su dueño en el combo de propietarios
     private async void cboMascota_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_sincronizandoCombos)
@@ -543,10 +520,12 @@ public partial class FormConsultas : Form
 
         if (cboMascota.SelectedValue is long idMascota && idMascota > 0)
         {
+            // Busca la mascota en la lista para saber quién es su tutor
             var mascota = _mascotas.FirstOrDefault(m => m.Id == idMascota);
             if (mascota != null && mascota.IdPropietario > 0)
             {
                 _sincronizandoCombos = true;
+                // Autoselecciona al dueño en cboPropietario
                 cboPropietario.SelectedValue = mascota.IdPropietario;
                 var mascotasFiltradas = _mascotas.Where(m => m.IdPropietario == mascota.IdPropietario).ToList();
                 cboMascota.DataSource = null;
@@ -557,7 +536,7 @@ public partial class FormConsultas : Form
                 _sincronizandoCombos = false;
             }
 
-            // En una consulta existente el importe queda el registrado, salvo que se cambie la mascota.
+            // Consulta y muestra el precio base de la consulta para esta mascota
             var consultaActual = _consultas.FirstOrDefault(c => c.Id == _idConsultaSeleccionada);
             if (consultaActual is null || consultaActual.IdMascota != idMascota)
                 await MostrarPrecioConsultaAsync(idMascota);
@@ -570,14 +549,13 @@ public partial class FormConsultas : Form
         }
     }
 
-    /// <summary>
-    /// Muestra el precio fijo de la consulta según la especie de la mascota (no editable).
-    /// </summary>
+    // Consulta el valor fijado para la consulta según la especie del animal y lo muestra en txtImporte
     private async Task MostrarPrecioConsultaAsync(long idMascota)
     {
         var res = await _consultaControlador.ObtenerPrecioConsultaAsync(idMascota);
         if (res.EsExitoso)
         {
+            // Muestra el importe formateado con dos decimales en modo de solo lectura
             txtImporte.Text = res.Valor.ToString("0.00", CultureInfo.InvariantCulture);
         }
         else
@@ -586,10 +564,7 @@ public partial class FormConsultas : Form
             lblInfoEstado.Text = res.Mensaje;
         }
     }
-
-    /// <summary>
-    /// Valida la integridad y consistencia de los datos ingresados en el formulario.
-    /// </summary>
+    // Valida la integridad y consistencia de los datos ingresados en el formulario.
     private bool ValidarCampos(out ConsultaSolicitudDto? solicitud)
     {
         solicitud = null;
@@ -679,10 +654,7 @@ public partial class FormConsultas : Form
 
         return true;
     }
-
-    /// <summary>
-    /// Resalta el control defectuoso con el color Borgoña suave del sistema de diseño.
-    /// </summary>
+    // Resalta el control defectuoso con el color Borgoña suave del sistema de diseño.
     private void MarcarControlConError(Control control, string mensaje)
     {
         control.BackColor = Color.FromArgb(253, 236, 239); // Fondo #FDECEF
@@ -693,10 +665,7 @@ public partial class FormConsultas : Form
         control.Focus();
         MessageBox.Show(mensaje, "Validación de Consulta", MessageBoxButtons.OK, MessageBoxIcon.Warning);
     }
-
-    /// <summary>
-    /// Limpia el estado de error visual del control que recibe interacción.
-    /// </summary>
+    // Limpia el estado de error visual del control que recibe interacción.
     private void Control_LimpiarError(object? sender, EventArgs e)
     {
         if (sender is Control c)
@@ -708,10 +677,7 @@ public partial class FormConsultas : Form
             }
         }
     }
-
-    /// <summary>
-    /// Restaura todos los controles del formulario a sus colores neutrales.
-    /// </summary>
+    // Restaura todos los controles del formulario a sus colores neutrales.
     private void LimpiarTodosLosErroresVisuales()
     {
         foreach (var (control, label) in _mapaEtiquetas)
@@ -720,20 +686,20 @@ public partial class FormConsultas : Form
             label.ForeColor = Color.FromArgb(58, 53, 59);
         }
     }
-
-    /// <summary>
-    /// Registra una nueva consulta clínica en la base de datos tras validar los campos.
-    /// </summary>
+    // Registra una nueva consulta clínica en la base de datos tras validar los campos
     private async void btnGuardar_Click(object? sender, EventArgs e)
     {
+        // 1. Valida campos obligatorios, signos vitales y vigencia de fechas
         if (!ValidarCampos(out var solicitud) || solicitud is null)
             return;
 
         try
         {
+            // 2. Bloquea el botón Guardar y activa el cursor de espera para prevenir doble clic
             btnGuardar.Enabled = false;
             Cursor = Cursors.WaitCursor;
 
+            // 3. Envía el DTO al controlador para insertarlo en SQL Server de forma asíncrona
             var resultado = await _consultaControlador.CrearAsync(solicitud);
             if (!resultado.EsExitoso)
             {
@@ -741,6 +707,7 @@ public partial class FormConsultas : Form
                 return;
             }
 
+            // 4. Si se guardó con éxito, notifica, limpia los campos y actualiza la grilla
             MessageBox.Show("La consulta clínica fue registrada exitosamente.", "Consulta Registrada", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LimpiarFormulario();
             await CargarHistorialConsultasAsync();
@@ -749,6 +716,7 @@ public partial class FormConsultas : Form
         {
             MessageBox.Show($"Ocurrió un error inesperado al guardar la consulta: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+        // El bloque finally se ejecuta SIEMPRE: vuelve a habilitar el botón y restablece el mouse
         finally
         {
             btnGuardar.Enabled = true;
@@ -756,20 +724,21 @@ public partial class FormConsultas : Form
         }
     }
 
-    /// <summary>
-    /// Actualiza la consulta clínica seleccionada en el historial.
-    /// </summary>
+    // Actualiza la consulta clínica seleccionada en el historial
     private async void btnModificar_Click(object? sender, EventArgs e)
     {
+        // 1. Verifica que haya una consulta seleccionada de la grilla
         if (!_idConsultaSeleccionada.HasValue)
         {
             MessageBox.Show("Debe seleccionar una consulta del historial para poder modificarla.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
+        // 2. Valida los nuevos datos ingresados
         if (!ValidarCampos(out var solicitud) || solicitud is null)
             return;
 
+        // 3. Snapshot: compara con la foto inicial; si el usuario no tocó nada, cancela para no molestar a la BD
         if (string.Equals(ObtenerSnapshotFormulario(), _snapshotEdicion, StringComparison.Ordinal))
         {
             MessageBox.Show("No se detectaron cambios para guardar.", "Sin cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -778,9 +747,11 @@ public partial class FormConsultas : Form
 
         try
         {
+            // 4. Bloquea el botón Modificar mientras procesa
             btnModificar.Enabled = false;
             Cursor = Cursors.WaitCursor;
 
+            // 5. Envía la actualización al controlador
             var resultado = await _consultaControlador.ActualizarAsync(_idConsultaSeleccionada.Value, solicitud);
             if (!resultado.EsExitoso)
             {
@@ -788,6 +759,7 @@ public partial class FormConsultas : Form
                 return;
             }
 
+            // 6. Notifica éxito, limpia y recarga la grilla
             MessageBox.Show("La consulta clínica fue modificada exitosamente.", "Consulta Actualizada", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LimpiarFormulario();
             await CargarHistorialConsultasAsync();
@@ -802,10 +774,7 @@ public partial class FormConsultas : Form
             Cursor = Cursors.Default;
         }
     }
-
-    /// <summary>
-    /// Carga los datos de la consulta seleccionada en la grilla para su revisión o modificación.
-    /// </summary>
+    // Carga los datos de la consulta seleccionada en la grilla para su revisión o modificación.
     private async void dgvConsultas_CellClick(object? sender, DataGridViewCellEventArgs e)
     {
         if (e.RowIndex < 0 || e.RowIndex >= dgvConsultas.Rows.Count)
@@ -904,18 +873,12 @@ public partial class FormConsultas : Form
 
         return $"{sb}Total: ${total:N2}";
     }
-
-    /// <summary>
-    /// Limpia todos los campos y restablece el formulario a su estado original para una nueva consulta.
-    /// </summary>
+    // Limpia todos los campos y restablece el formulario a su estado original para una nueva consulta.
     private void btnLimpiar_Click(object? sender, EventArgs e)
     {
         LimpiarFormulario();
     }
-
-    /// <summary>
-    /// Restablece todos los campos, combos y selectores del formulario.
-    /// </summary>
+    // Restablece todos los campos, combos y selectores del formulario.
     private void LimpiarFormulario()
     {
         _idConsultaSeleccionada = null;
@@ -952,11 +915,7 @@ public partial class FormConsultas : Form
         lblInfoEstado.Text = "Formulario listo para registrar una nueva consulta.";
         cboPropietario.Focus();
     }
-
-
-    /// <summary>
-    /// Cierra el formulario y regresa al panel principal.
-    /// </summary>
+    // Cierra el formulario y regresa al panel principal.
     private void btnVolver_Click(object? sender, EventArgs e)
     {
         Close();

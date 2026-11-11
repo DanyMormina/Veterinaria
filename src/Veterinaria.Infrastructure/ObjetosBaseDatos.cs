@@ -1,12 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Veterinaria.Infrastructure;
-
-/// <summary>
-/// Procedimientos almacenados de reportes e índices únicos.
-/// Se aplican en cada inicio de forma idempotente (CREATE OR ALTER / IF NOT EXISTS),
-/// porque EnsureCreated no los genera ni altera bases existentes.
-/// </summary>
+// Procedimientos almacenados de reportes e índices únicos.
+// Se aplican en cada inicio de forma idempotente (CREATE OR ALTER / IF NOT EXISTS),
+// porque EnsureCreated no los genera ni altera bases existentes.
 public static class ObjetosBaseDatos
 {
     public static async Task AsegurarProcedimientosReportesAsync(ContextoVeterinaria context)

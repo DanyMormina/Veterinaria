@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
@@ -6,17 +6,12 @@ using Veterinaria.Domain.Dtos;
 using Veterinaria.Infrastructure;
 
 namespace Veterinaria.Controllers.Controladores;
-
-/// <summary>
-/// Controlador de reporting clínico y demográfico para la gestión administrativa de la veterinaria.
-/// Los reportes principales se resuelven con procedimientos almacenados (dbo.sp_Reporte*)
-/// creados por <see cref="ObjetosBaseDatos"/> al iniciar la aplicación.
-/// </summary>
+// Controlador de reporting clínico y demográfico para la gestión administrativa de la veterinaria.
+// Los reportes principales se resuelven con procedimientos almacenados (dbo.sp_Reporte*)
+// creados por <see cref="ObjetosBaseDatos"/> al iniciar la aplicación.
 public class ReporteControlador(ContextoVeterinaria context)
 {
-    /// <summary>
-    /// Obtiene la lista de veterinarios activos para poblar el selector de profesionales.
-    /// </summary>
+    // Obtiene la lista de veterinarios activos para poblar el selector de profesionales.
     public async Task<Resultado<IEnumerable<UsuarioRespuestaDto>>> ObtenerVeterinariosActivosAsync()
     {
         try
@@ -48,11 +43,8 @@ public class ReporteControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<UsuarioRespuestaDto>>.Falla($"Error al obtener profesionales veterinarios: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Genera el reporte de Consultas Clínicas realizadas en el rango de fechas con filtros opcionales.
-    /// Procedimiento: dbo.sp_ReporteConsultasClinicas.
-    /// </summary>
+    // Genera el reporte de Consultas Clínicas realizadas en el rango de fechas con filtros opcionales.
+    // Procedimiento: dbo.sp_ReporteConsultasClinicas.
     public async Task<Resultado<IEnumerable<ReporteConsultaClinicaDto>>> ObtenerReporteConsultasClinicasAsync(FiltroReporteDto filtro)
     {
         try
@@ -70,11 +62,8 @@ public class ReporteControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<ReporteConsultaClinicaDto>>.Falla($"Error al generar reporte de consultas clínicas: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Reporte cruzado: cada consulta del período con la cantidad e importe de sus tratamientos y vacunas.
-    /// Procedimiento: dbo.sp_ReporteConsultasDetalladas.
-    /// </summary>
+    // Reporte cruzado: cada consulta del período con la cantidad e importe de sus tratamientos y vacunas.
+    // Procedimiento: dbo.sp_ReporteConsultasDetalladas.
     public async Task<Resultado<IEnumerable<ReporteConsultaDetalladaDto>>> ObtenerReporteConsultasDetalladasAsync(FiltroReporteDto filtro)
     {
         try
@@ -92,11 +81,8 @@ public class ReporteControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<ReporteConsultaDetalladaDto>>.Falla($"Error al generar reporte de consultas con tratamientos y vacunas: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Genera el reporte de cobros (pagos) en un rango de fechas, incluyendo anulados.
-    /// Procedimiento: dbo.sp_ReporteCobros.
-    /// </summary>
+    // Genera el reporte de cobros (pagos) en un rango de fechas, incluyendo anulados.
+    // Procedimiento: dbo.sp_ReporteCobros.
     public async Task<Resultado<IEnumerable<ReporteCobroDto>>> ObtenerReporteCobrosAsync(FiltroReporteCobroDto filtro)
     {
         try
@@ -127,11 +113,8 @@ public class ReporteControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<ReporteCobroDto>>.Falla($"Error al generar reporte de cobros: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Genera el reporte consolidado de Vacunas y Tratamientos clínicos aplicados en el período.
-    /// Procedimiento: dbo.sp_ReporteVacunasTratamientos.
-    /// </summary>
+    // Genera el reporte consolidado de Vacunas y Tratamientos clínicos aplicados en el período.
+    // Procedimiento: dbo.sp_ReporteVacunasTratamientos.
     public async Task<Resultado<IEnumerable<ReporteVacunaTratamientoDto>>> ObtenerReporteVacunasTratamientosAsync(FiltroReporteDto filtro)
     {
         try
@@ -149,10 +132,7 @@ public class ReporteControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<ReporteVacunaTratamientoDto>>.Falla($"Error al generar reporte de vacunas y tratamientos: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Genera el reporte preventivo de Próximos Controles Sanitarios a vencer en el rango indicado.
-    /// </summary>
+    // Genera el reporte preventivo de Próximos Controles Sanitarios a vencer en el rango indicado.
     public async Task<Resultado<IEnumerable<ReporteProximoControlDto>>> ObtenerReporteProximosControlesAsync(FiltroReporteDto filtro)
     {
         try
@@ -192,11 +172,8 @@ public class ReporteControlador(ContextoVeterinaria context)
             return Resultado<IEnumerable<ReporteProximoControlDto>>.Falla($"Error al generar reporte de próximos controles: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Censo de pacientes atendidos en el rango (opcional: veterinario y especie).
-    /// Procedimiento: dbo.sp_ReporteCensoMascotas.
-    /// </summary>
+    // Censo de pacientes atendidos en el rango (opcional: veterinario y especie).
+    // Procedimiento: dbo.sp_ReporteCensoMascotas.
     public async Task<Resultado<IEnumerable<ReporteCensoMascotaDto>>> ObtenerReporteCensoMascotasAsync(FiltroReporteDto filtro)
     {
         try

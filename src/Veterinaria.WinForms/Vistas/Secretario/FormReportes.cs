@@ -1,4 +1,4 @@
-using System.Drawing.Printing;
+﻿using System.Drawing.Printing;
 using System.Text;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
@@ -6,10 +6,7 @@ using Veterinaria.WinForms.Controles;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
-
-/// <summary>
-/// Reporte de cobros por periodo para el rol Secretario.
-/// </summary>
+// Reporte de cobros por periodo para el rol Secretario.
 public partial class FormReportes : Form
 {
     private readonly ReporteControlador _reporteControlador;
@@ -25,12 +22,15 @@ public partial class FormReportes : Form
         InitializeComponent();
     }
 
+    // Maneja la carga inicial del formulario de reportes de cobros
     private void FormReportes_Load(object? sender, EventArgs e)
     {
+        // Identifica al usuario en recepción en el encabezado
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
             ? $"Recepción: {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Recepción: Secretario";
 
+        // Vincula el selector de vista interactivo (Tablas o Gráficos con GDI+)
         _vista = SelectorVistaReporte.Configurar(dgvReporte);
         _vista.VistaCambiada += async (_, _) =>
         {
@@ -43,7 +43,11 @@ public partial class FormReportes : Form
             if (_reporteGenerado)
                 await GenerarAsync();
         };
+
+        // Aplica el rango del mes actual por defecto
         AplicarPeriodoMes();
+
+        // Enlace de botones de acceso rápido de períodos y acciones
         btnHoy.Click += (_, _) => AplicarPeriodoHoy();
         btnSemana.Click += (_, _) => AplicarPeriodoSemana();
         btnMes.Click += (_, _) => AplicarPeriodoMes();
@@ -52,16 +56,19 @@ public partial class FormReportes : Form
         btnExportarPdf.Click += (_, _) => ExportarPdf();
         btnVolver.Click += (_, _) => Close();
 
+        // Deshabilita imprimir y exportar hasta que se genere el primer reporte con datos
         btnImprimir.Enabled = false;
         btnExportarPdf.Enabled = false;
     }
 
+    // Configura el rango temporal para el día de hoy
     private void AplicarPeriodoHoy()
     {
         dtpFechaDesde.Value = DateTime.Today;
         dtpFechaHasta.Value = DateTime.Today;
     }
 
+    // Configura el rango temporal para la semana en curso (lunes a hoy)
     private void AplicarPeriodoSemana()
     {
         var hoy = DateTime.Today;
@@ -70,6 +77,7 @@ public partial class FormReportes : Form
         dtpFechaHasta.Value = hoy;
     }
 
+    // Configura el rango temporal para el mes completo en curso (primer día del mes a hoy)
     private void AplicarPeriodoMes()
     {
         var hoy = DateTime.Today;
@@ -77,8 +85,10 @@ public partial class FormReportes : Form
         dtpFechaHasta.Value = hoy;
     }
 
+    // Consulta los cobros en el rango de fechas y actualiza tanto la grilla como los gráficos interactivos
     private async Task GenerarAsync()
     {
+        // Validación temporal defensiva
         if (dtpFechaDesde.Value.Date > dtpFechaHasta.Value.Date)
         {
             MessageBox.Show("La fecha desde no puede ser mayor que la fecha hasta.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -90,7 +100,7 @@ public partial class FormReportes : Form
             btnGenerar.Enabled = false;
             Cursor = Cursors.WaitCursor;
 
-            // Solo cobros completados: en recepción ya no se elige estado al cobrar
+            // Filtro exclusivo para cobros completados en el rango indicado
             var filtro = new FiltroReporteCobroDto
             {
                 FechaDesde = dtpFechaDesde.Value.Date,
@@ -111,6 +121,7 @@ public partial class FormReportes : Form
                 return;
             }
 
+            // Puebla las filas de la tabla con los cobros recuperados
             foreach (var r in resultado.Valor)
             {
                 var metodo = r.MetodoPago;
@@ -129,6 +140,7 @@ public partial class FormReportes : Form
             var considerados = resultado.Valor.ToList();
             var suma = considerados.Sum(x => x.Importe);
 
+            // Gráfico 1 (Dona GDI+): Distribución de ingresos por método de pago (Efectivo, Tarjeta, etc.)
             var porMetodo = considerados
                 .GroupBy(x => string.IsNullOrWhiteSpace(x.MetodoPago) ? "Sin método" : x.MetodoPago)
                 .OrderByDescending(gr => gr.Sum(x => x.Importe))
@@ -139,6 +151,7 @@ public partial class FormReportes : Form
                 porMetodo.Select(gr => gr.Sum(x => x.Importe)).ToList(),
                 v => v.ToString("C0", new System.Globalization.CultureInfo("es-AR")));
 
+            // Gráfico 2 (Barras / Evolución GDI+): Recaudación acumulada por período temporal
             var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista?.Agrupacion ?? AgrupacionPeriodo.Automatico);
             _vista?.UsarGraficoSecundario(true);
             _vista?.GraficoSecundario.MostrarEvolucion(
@@ -160,8 +173,10 @@ public partial class FormReportes : Form
         }
     }
 
+    // Abre el diálogo de vista previa de impresión para visualizar el reporte antes de imprimirlo en papel
     private void ImprimirReporte()
     {
+        // Si no se generó ninguna fila, cancela la acción para no imprimir una hoja en blanco
         if (dgvReporte.Rows.Count == 0)
         {
             MessageBox.Show("No hay datos en la grilla para imprimir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -170,6 +185,7 @@ public partial class FormReportes : Form
 
         try
         {
+            // Instancia el documento de impresión configurado en apaisado (Landscape)
             using var pd = CrearPrintDocument();
             using var vista = new PrintPreviewDialog
             {
@@ -179,6 +195,7 @@ public partial class FormReportes : Form
                 StartPosition = FormStartPosition.CenterScreen,
                 Text = "Vista previa --- Reportes de cobros"
             };
+            // Muestra la ventana modal con la vista previa del reporte
             vista.ShowDialog(this);
         }
         catch (Exception ex)
@@ -187,14 +204,17 @@ public partial class FormReportes : Form
         }
     }
 
+    // Permite exportar el reporte generado a formato PDF o CSV según elija el usuario
     private void ExportarPdf()
     {
+        // Verifica que existan registros cargados en la tabla
         if (dgvReporte.Rows.Count == 0)
         {
             MessageBox.Show("No hay datos en la grilla para exportar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
+        // Abre el explorador de archivos para elegir dónde guardar y con qué nombre
         using var sfd = new SaveFileDialog
         {
             Filter = "Archivo PDF (*.pdf)|*.pdf|Archivo CSV (*.csv)|*.csv",
@@ -207,6 +227,7 @@ public partial class FormReportes : Form
 
         try
         {
+            // Si el usuario eligió extensión .csv, genera el archivo delimitado por punto y coma
             if (sfd.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
                 ExportarCsv(sfd.FileName);
@@ -214,10 +235,12 @@ public partial class FormReportes : Form
                 return;
             }
 
+            // Verifica si Windows cuenta con la impresora virtual 'Microsoft Print to PDF'
             var pdfOk = PrinterSettings.InstalledPrinters
                 .Cast<string>()
                 .Any(p => p.Equals("Microsoft Print to PDF", StringComparison.OrdinalIgnoreCase));
 
+            // Si la máquina no tiene la impresora virtual instalada, ofrece exportar como CSV alternativo
             if (!pdfOk)
             {
                 var r = MessageBox.Show(
@@ -234,6 +257,7 @@ public partial class FormReportes : Form
                 return;
             }
 
+            // Imprime directamente al archivo PDF utilizando el controlador de Windows
             using var pd = CrearPrintDocument();
             pd.PrinterSettings.PrinterName = "Microsoft Print to PDF";
             pd.PrinterSettings.PrintToFile = true;
@@ -247,37 +271,45 @@ public partial class FormReportes : Form
         }
     }
 
+    // Exporta los datos visibles de la grilla a un archivo de texto separado por punto y coma (CSV compatible con Excel)
     private void ExportarCsv(string ruta)
     {
         var sb = new StringBuilder();
+        // Toma únicamente las columnas visibles ordenadas por su índice de pantalla
         var cols = dgvReporte.Columns.Cast<DataGridViewColumn>().Where(c => c.Visible).OrderBy(c => c.DisplayIndex).ToList();
+        // Agrega la fila de encabezados
         sb.AppendLine(string.Join(";", cols.Select(c => c.HeaderText)));
+        // Recorre cada fila de datos de la grilla
         foreach (DataGridViewRow row in dgvReporte.Rows)
         {
             if (row.IsNewRow) continue;
             sb.AppendLine(string.Join(";", cols.Select(c =>
             {
                 var v = row.Cells[c.Index].FormattedValue?.ToString() ?? string.Empty;
-                return v.Contains(';') ? $"\"{v}\"" : v;
+                return v.Contains(';') ? $"\"{v}\"" : v; // Escapa punto y coma entre comillas
             })));
         }
+        // Guarda el archivo con codificación UTF-8
         File.WriteAllText(ruta, sb.ToString(), Encoding.UTF8);
     }
 
+    // Crea y configura el objeto PrintDocument para imprimir en orientación horizontal (apaisado)
     private PrintDocument CrearPrintDocument()
     {
         var pd = new PrintDocument();
-        pd.DefaultPageSettings.Landscape = true;
-        pd.DefaultPageSettings.Margins = new Margins(40, 40, 40, 40);
+        pd.DefaultPageSettings.Landscape = true; // Orientación horizontal para que entren todas las columnas
+        pd.DefaultPageSettings.Margins = new Margins(40, 40, 40, 40); // Márgenes de 40 píxeles
         pd.BeginPrint += (_, _) =>
         {
+            // Reinicia los contadores al iniciar la impresión
             _filaActualImpresion = 0;
             _paginaActualImpresion = 0;
         };
-        pd.PrintPage += ImprimirPagina;
+        pd.PrintPage += ImprimirPagina; // Asocia el método de dibujo por página
         return pd;
     }
 
+    // Dibuja el contenido de cada página a imprimir (encabezado institucional, tabla paginada o gráficos GDI+)
     private void ImprimirPagina(object sender, PrintPageEventArgs e)
     {
         _paginaActualImpresion++;
@@ -289,6 +321,7 @@ public partial class FormReportes : Form
         }
 
         var bounds = e.MarginBounds;
+        // Tipografías y pinceles que respetan la paleta "Ejecutivo Romántico Pastel"
         using var fontTitulo = new Font("Segoe UI", 12F, FontStyle.Bold);
         using var fontSub = new Font("Segoe UI", 9.5F, FontStyle.Bold);
         using var fontInfo = new Font("Segoe UI", 8F);
@@ -303,6 +336,7 @@ public partial class FormReportes : Form
         using var penLinea = new Pen(Color.FromArgb(226, 217, 220));
 
         float y = bounds.Top;
+        // Dibuja el encabezado completo en la página 1
         if (_paginaActualImpresion == 1)
         {
             g.DrawString("CLÍNICA VETERINARIA --- REPORTES DE COBROS", fontTitulo, brushRosa, bounds.Left, y);
@@ -314,6 +348,7 @@ public partial class FormReportes : Form
             g.DrawLine(pen, bounds.Left, y, bounds.Right, y);
             y += 8;
         }
+        // En páginas posteriores dibuja un encabezado reducido
         else
         {
             g.DrawString($"REPORTES DE COBROS (Pág. {_paginaActualImpresion})", fontSub, brushRosa, bounds.Left, y);
@@ -322,6 +357,7 @@ public partial class FormReportes : Form
             y += 8;
         }
 
+        // Si el usuario está viendo gráficos, imprime los gráficos interactivos dibujados con GDI+
         if (_vista is { MostrandoGrafico: true })
         {
             _vista.DibujarGraficos(g, Rectangle.FromLTRB(bounds.Left, (int)y, bounds.Right, bounds.Bottom - 28));
@@ -330,6 +366,7 @@ public partial class FormReportes : Form
             return;
         }
 
+        // Calcula anchos proporcionales de columnas para aprovechar el ancho disponible de la hoja
         var columnas = dgvReporte.Columns.Cast<DataGridViewColumn>().Where(c => c.Visible).OrderBy(c => c.DisplayIndex).ToList();
         float totalW = columnas.Sum(c => Math.Max(c.Width, 40));
         var anchos = columnas.Select(c => (Math.Max(c.Width, 40) / totalW) * bounds.Width).ToArray();
@@ -344,6 +381,7 @@ public partial class FormReportes : Form
             FormatFlags = StringFormatFlags.NoWrap
         };
 
+        // Dibuja el fondo y texto de la cabecera de la tabla
         g.FillRectangle(brushCab, bounds.Left, y, bounds.Width, altoCab);
         g.DrawRectangle(penLinea, bounds.Left, y, bounds.Width, altoCab);
         float x = bounds.Left;
@@ -354,8 +392,10 @@ public partial class FormReportes : Form
         }
         y += altoCab;
 
+        // Dibuja fila por fila verificando si entra en la hoja actual
         while (_filaActualImpresion < dgvReporte.Rows.Count)
         {
+            // Si la siguiente fila supera el margen inferior, salta a una nueva página
             if (y + altoFila > bounds.Bottom - 28)
             {
                 e.HasMorePages = true;
@@ -364,6 +404,7 @@ public partial class FormReportes : Form
             }
 
             var fila = dgvReporte.Rows[_filaActualImpresion];
+            // Alterna color de fondo para facilitar la lectura ejecutiva
             if (_filaActualImpresion % 2 == 1)
                 g.FillRectangle(brushAlt, bounds.Left, y, bounds.Width, altoFila);
             g.DrawRectangle(penLinea, bounds.Left, y, bounds.Width, altoFila);
@@ -378,6 +419,7 @@ public partial class FormReportes : Form
             _filaActualImpresion++;
         }
 
+        // Fin de la impresión: no quedan más páginas
         e.HasMorePages = false;
         g.DrawString($"Página {_paginaActualImpresion}", fontPie, brush, bounds.Left, bounds.Bottom - 18);
     }

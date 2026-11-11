@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Veterinaria.Infrastructure;
@@ -8,18 +8,12 @@ using Veterinaria.WinForms.Vistas.Secretario;
 using Veterinaria.WinForms.Vistas.Veterinario;
 
 namespace Veterinaria.WinForms;
-
-/// <summary>
-/// Punto de entrada principal de la aplicación WinForms (.NET 10).
-/// </summary>
+// Punto de entrada principal de la aplicación WinForms (.NET 10).
 internal static class Program
 {
     private const string CadenaConexionRespaldo =
         "Server=localhost,1433;Database=VeterinariaDb;User Id=sa;Password=Pass123456!;TrustServerCertificate=True;MultipleActiveResultSets=true;";
-
-    /// <summary>
-    /// Punto de inicio de la aplicación con validación de base de datos e inyección de dependencias.
-    /// </summary>
+    // Punto de inicio de la aplicación con validación de base de datos e inyección de dependencias.
     [STAThread]
     private static void Main()
     {
@@ -78,10 +72,7 @@ internal static class Program
         var formLogin = serviceProvider.GetRequiredService<FormInicioSesion>();
         Application.Run(formLogin);
     }
-
-    /// <summary>
-    /// Valida conectividad e inicializa el esquema y datos iniciales si no existen.
-    /// </summary>
+    // Valida conectividad e inicializa el esquema y datos iniciales si no existen.
     private static bool ValidarEInicializarBaseDeDatos(IServiceProvider serviceProvider, string cadenaConexion)
     {
         try

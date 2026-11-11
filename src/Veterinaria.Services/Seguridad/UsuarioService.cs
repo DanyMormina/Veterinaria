@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
@@ -7,10 +7,7 @@ using Veterinaria.Infrastructure;
 using Veterinaria.Interfaces.Services.Seguridad;
 
 namespace Veterinaria.Services.Seguridad;
-
-/// <summary>
-/// Implementación de la capa de servicios para la administración y validación de privilegios de usuarios.
-/// </summary>
+// Implementación de la capa de servicios para la administración y validación de privilegios de usuarios.
 public class UsuarioService : IUsuarioService
 {
     private readonly ContextoVeterinaria _contexto;
@@ -21,10 +18,7 @@ public class UsuarioService : IUsuarioService
         _contexto = contexto;
         _controlador = controlador;
     }
-
-    /// <summary>
-    /// Consulta un usuario por su nombre de usuario único con proyección no rastreada.
-    /// </summary>
+    // Consulta un usuario por su nombre de usuario único con proyección no rastreada.
     public async Task<Result<UsuarioRespuestaDto>> ObtenerPorUsernameAsync(string username)
     {
         var res = await _controlador.ObtenerPorNombreUsuarioAsync(username);
@@ -32,10 +26,7 @@ public class UsuarioService : IUsuarioService
             ? Result<UsuarioRespuestaDto>.Ok(res.Valor, res.Mensaje)
             : Result<UsuarioRespuestaDto>.Falla(res.Mensaje);
     }
-
-    /// <summary>
-    /// Consulta un usuario por su ID primario.
-    /// </summary>
+    // Consulta un usuario por su ID primario.
     public async Task<Result<UsuarioRespuestaDto>> ObtenerPorIdAsync(long idUsuario)
     {
         var res = await _controlador.ObtenerPorIdAsync(idUsuario);
@@ -43,11 +34,8 @@ public class UsuarioService : IUsuarioService
             ? Result<UsuarioRespuestaDto>.Ok(res.Valor, res.Mensaje)
             : Result<UsuarioRespuestaDto>.Falla(res.Mensaje);
     }
-
-    /// <summary>
-    /// Valida que el usuario exista, esté activo y posea privilegios exclusivos para restaurar la base de datos.
-    /// Realiza una consulta directa y en tiempo real a la base de datos proyectando únicamente las columnas requeridas.
-    /// </summary>
+    // Valida que el usuario exista, esté activo y posea privilegios exclusivos para restaurar la base de datos.
+    // Realiza una consulta directa y en tiempo real a la base de datos proyectando únicamente las columnas requeridas.
     public async Task<Result<bool>> ValidarAutorizacionRestoreAsync(long idUsuario)
     {
         if (idUsuario <= 0)
@@ -67,10 +55,7 @@ public class UsuarioService : IUsuarioService
 
         return Result<bool>.Ok(true);
     }
-
-    /// <summary>
-    /// Consulta el listado completo de usuarios en el sistema.
-    /// </summary>
+    // Consulta el listado completo de usuarios en el sistema.
     public async Task<Result<IEnumerable<UsuarioRespuestaDto>>> ObtenerTodosAsync()
     {
         var res = await _controlador.ObtenerTodosAsync();
@@ -78,10 +63,7 @@ public class UsuarioService : IUsuarioService
             ? Result<IEnumerable<UsuarioRespuestaDto>>.Ok(res.Valor, res.Mensaje)
             : Result<IEnumerable<UsuarioRespuestaDto>>.Falla(res.Mensaje);
     }
-
-    /// <summary>
-    /// Autentica las credenciales de acceso del usuario.
-    /// </summary>
+    // Autentica las credenciales de acceso del usuario.
     public async Task<Result<UsuarioRespuestaDto>> AutenticarAsync(string nombreUsuario, string contrasena)
     {
         var res = await _controlador.AutenticarAsync(nombreUsuario, contrasena);
@@ -89,10 +71,7 @@ public class UsuarioService : IUsuarioService
             ? Result<UsuarioRespuestaDto>.Ok(res.Valor, res.Mensaje)
             : Result<UsuarioRespuestaDto>.Falla(res.Mensaje);
     }
-
-    /// <summary>
-    /// Da de alta un nuevo usuario registrando su estado y permisos.
-    /// </summary>
+    // Da de alta un nuevo usuario registrando su estado y permisos.
     public async Task<Result<long>> CrearAsync(UsuarioSolicitudDto solicitud)
     {
         var res = await _controlador.CrearAsync(solicitud);
@@ -100,10 +79,7 @@ public class UsuarioService : IUsuarioService
             ? Result<long>.Ok(res.Valor, res.Mensaje)
             : Result<long>.Falla(res.Mensaje);
     }
-
-    /// <summary>
-    /// Actualiza los datos y privilegios del usuario especificado.
-    /// </summary>
+    // Actualiza los datos y privilegios del usuario especificado.
     public async Task<Result> ActualizarAsync(long id, UsuarioSolicitudDto solicitud)
     {
         var res = await _controlador.ActualizarAsync(id, solicitud);
@@ -111,10 +87,7 @@ public class UsuarioService : IUsuarioService
             ? Result.Ok(res.Mensaje)
             : Result.Falla(res.Mensaje);
     }
-
-    /// <summary>
-    /// Conmuta el estado de actividad lógica del usuario.
-    /// </summary>
+    // Conmuta el estado de actividad lógica del usuario.
     public async Task<Result> CambiarEstadoAsync(long id, bool activo, long? idUsuarioSesion = null)
     {
         var res = await _controlador.CambiarEstadoAsync(id, activo, idUsuarioSesion);

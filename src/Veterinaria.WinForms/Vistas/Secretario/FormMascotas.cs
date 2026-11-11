@@ -1,15 +1,12 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
-
-/// <summary>
-/// Formulario de gestión y consulta de mascotas para el rol Secretario / Recepción.
-/// Implementa operaciones de ABM completo, binding con la grilla, validaciones defensivas y cascada de catálogos.
-/// </summary>
+// Formulario de gestión y consulta de mascotas para el rol Secretario / Recepción.
+// Implementa operaciones de ABM completo, binding con la grilla, validaciones defensivas y cascada de catálogos.
 public partial class FormMascotas : Form
 {
     // =========================================================================
@@ -41,17 +38,11 @@ public partial class FormMascotas : Form
     private readonly System.Windows.Forms.Timer _timerBusqueda = new() { Interval = 300 };
     private long _idMascotaSeleccionada = 0;
     private string? _snapshotEdicion;
-
-    /// <summary>
-    /// Constructor por defecto para soporte del Diseñador de Windows Forms.
-    /// </summary>
+    // Constructor por defecto para soporte del Diseñador de Windows Forms.
     public FormMascotas() : this(null, null, null, null, null, null)
     {
     }
-
-    /// <summary>
-    /// Constructor con Inyección de Dependencias.
-    /// </summary>
+    // Constructor con Inyección de Dependencias.
     public FormMascotas(
         MascotaControlador? mascotaControlador,
         PropietarioControlador? propietarioControlador = null,
@@ -75,69 +66,70 @@ public partial class FormMascotas : Form
         ConfigurarValidacionVisual();
         ConfigurarEventosControles();
     }
-
-    /// <summary>
-    /// Asocia los manejadores de eventos para todos los botones, grilla y desplegables.
-    /// </summary>
+    // Asocia los manejadores de eventos para todos los botones, grilla y desplegables.
     private void ConfigurarEventosControles()
     {
-        // Botones de acción principales
-        btnGuardar.Click += async (_, _) => await GuardarMascotaAsync();
-        btnModificar.Click += async (_, _) => await ModificarMascotaAsync();
-        btnLimpiar.Click += (_, _) => LimpiarFormulario();
-        btnVolver.Click += (_, _) => Close();
-        btnActivar.Click += async (_, _) => await btnActivar_Click();
-        btnDesactivar.Click += async (_, _) => await btnDesactivar_Click();
+        // Botones de acción principales del formulario
+        btnGuardar.Click += async (_, _) => await GuardarMascotaAsync(); // Registra una nueva mascota en la base de datos
+        btnModificar.Click += async (_, _) => await ModificarMascotaAsync(); // Actualiza los datos de la mascota seleccionada
+        btnLimpiar.Click += (_, _) => LimpiarFormulario(); // Limpia los campos y vuelve al modo de creación
+        btnVolver.Click += (_, _) => Close(); // Cierra la ventana y regresa al panel principal
+        btnActivar.Click += async (_, _) => await btnActivar_Click(); // Reactiva una mascota inactiva (Soft Delete)
+        btnDesactivar.Click += async (_, _) => await btnDesactivar_Click(); // Desactiva lógicamente una mascota activa
 
-        // Botón auxiliar para redirección a gestión de propietarios
+        // Botón auxiliar para dar de alta un propietario rápido sin perder los datos de la mascota
         btnNuevoPropietario.Click += btnNuevoPropietario_Click;
 
-        // Botones de gestión satélite (Especies y Razas)
+        // Botones satélites para abrir modales de creación y modificación de especies y razas
         btnAltaEspecie.Click += async (_, _) => await AbrirGestionSateliteAsync(ModoGestion.AltaEspecie);
         btnModEspecie.Click += async (_, _) => await AbrirGestionSateliteAsync(ModoGestion.ModificarEspecie);
         btnAltaRaza.Click += async (_, _) => await AbrirGestionSateliteAsync(ModoGestion.AltaRaza);
         btnModRaza.Click += async (_, _) => await AbrirGestionSateliteAsync(ModoGestion.ModificarRaza);
 
-        // Cascada entre especie y razas
+        // Dispara la carga en cascada de razas cuando el usuario cambia la especie
         cboEspecie.SelectedIndexChanged += async (_, _) => await cboEspecie_SelectedIndexChangedAsync();
 
         // Búsqueda y filtros sobre la grilla
-        btnBuscar.Click += async (_, _) => await CargarMascotasGrillaAsync();
-        cboFiltroEspecie.SelectedIndexChanged += async (_, _) =>
+        btnBuscar.Click += async (_, _) => await CargarMascotasGrillaAsync(); // Búsqueda manual al presionar el botón
+        cboFiltroEspecie.SelectedIndexChanged += async (_, _) => // Filtrado inmediato al cambiar el desplegable de especies
         {
             if (!_cargandoDatos)
                 await CargarMascotasGrillaAsync();
         };
 
+        // Permite disparar la búsqueda presionando la tecla Enter en la caja de texto
         txtBuscar.KeyDown += async (_, e) =>
         {
             if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = true;
+                e.SuppressKeyPress = true; // Evita el sonido de alerta del sistema operativo
                 await CargarMascotasGrillaAsync();
             }
         };
 
-        // La grilla se filtra mientras se escribe, sin tener que presionar Buscar
+        // Búsqueda reactiva con debounce: reinicia el timer cada vez que el usuario teclea
         txtBuscar.TextChanged += (_, _) =>
         {
             _timerBusqueda.Stop();
             _timerBusqueda.Start();
         };
+        // Al transcurrir los 300 ms sin escribir, el timer se detiene y ejecuta la consulta SQL
         _timerBusqueda.Tick += async (_, _) =>
         {
             _timerBusqueda.Stop();
             await CargarMascotasGrillaAsync();
         };
+        // Libera los recursos del timer cuando se cierra el formulario
         FormClosed += (_, _) => _timerBusqueda.Dispose();
 
-        // Binding de selección en la grilla
+        // Selección de filas en la grilla para cargar los datos en el formulario superior
         dgvMascotas.CellClick += async (_, e) =>
         {
             if (e.RowIndex >= 0)
                 await SeleccionarMascotaDeGrillaAsync(e.RowIndex);
         };
 
+        // Sincroniza la selección también al navegar con las flechas del teclado
         dgvMascotas.SelectionChanged += async (_, _) =>
         {
             if (!_cargandoDatos && dgvMascotas.CurrentRow != null && dgvMascotas.CurrentRow.Index >= 0)
@@ -146,33 +138,48 @@ public partial class FormMascotas : Form
             }
         };
     }
-
-    /// <summary>
-    /// Aplica restricciones de tipeo en tiempo real (KeyPress) bloqueando caracteres no permitidos.
-    /// </summary>
+    // Aplica restricciones de tipeo en tiempo real (KeyPress) bloqueando caracteres no permitidos.
     private void ConfigurarRestriccionesTeclado()
     {
-        // txtNombre, txtColor y txtBuscar: solo letras, acentos y espacios simples (sin números ni caracteres especiales)
+        // txtNombre, txtColor, txtBuscar y desplegables de búsqueda (Especie y Raza): solo letras, acentos y espacios simples
         var validarSoloTexto = new KeyPressEventHandler((sender, e) =>
         {
+            // Permite teclas de control del sistema (BackSpace, Delete, Enter, Flechas)
             if (char.IsControl(e.KeyChar))
                 return;
 
+            // Permite caracteres alfabéticos (incluye letras mayúsculas, minúsculas y tildes)
             if (char.IsLetter(e.KeyChar))
                 return;
 
-            if (e.KeyChar == ' ' && sender is TextBox txt && !string.IsNullOrEmpty(txt.Text) && !txt.Text.EndsWith(' '))
+            // Obtiene el texto actual según el tipo de control (TextBox o ComboBox)
+            var textoActual = sender switch
+            {
+                TextBox txt => txt.Text,
+                ComboBox cbo => cbo.Text,
+                _ => string.Empty
+            };
+
+            // Permite un espacio solo si ya hay texto previo y no termina con espacio (evita espacios dobles o iniciales)
+            if (e.KeyChar == ' ' && !string.IsNullOrEmpty(textoActual) && !textoActual.EndsWith(' '))
                 return;
 
+            // Si es un número o carácter especial, cancela la pulsación impidiendo que se escriba en el campo
             e.Handled = true;
         });
 
+        // Vincula el validador a los campos de texto
         txtNombre.KeyPress += validarSoloTexto;
         txtColor.KeyPress += validarSoloTexto;
         txtBuscar.KeyPress += validarSoloTexto;
 
-        // Sanitización defensiva ante pegado en el buscador para no admitir números ni caracteres especiales
-        txtBuscar.TextChanged += (sender, _) =>
+        // Vincula el validador a los desplegables de búsqueda (evita ingresar números al tipear especies o razas)
+        cboEspecie.KeyPress += validarSoloTexto;
+        cboRaza.KeyPress += validarSoloTexto;
+        cboFiltroEspecie.KeyPress += validarSoloTexto;
+
+        // Sanitización defensiva ante pegado (Ctrl+V) para limpiar números o símbolos automáticamente
+        void SanitizarTexto(object? sender, EventArgs _)
         {
             if (sender is TextBox txt && !string.IsNullOrEmpty(txt.Text))
             {
@@ -181,17 +188,31 @@ public partial class FormMascotas : Form
                 {
                     var pos = txt.SelectionStart;
                     txt.Text = textoLimpio;
-                    txt.SelectionStart = Math.Min(pos, txt.Text.Length);
+                    txt.SelectionStart = Math.Min(pos, txt.Text.Length); // Conserva la posición del cursor
                 }
             }
-        };
-    }
+            else if (sender is ComboBox cbo && !string.IsNullOrEmpty(cbo.Text))
+            {
+                var textoLimpio = Regex.Replace(cbo.Text, @"[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]", "");
+                if (textoLimpio != cbo.Text)
+                {
+                    var pos = cbo.SelectionStart;
+                    cbo.Text = textoLimpio;
+                    cbo.SelectionStart = Math.Min(pos, cbo.Text.Length); // Conserva la posición del cursor
+                }
+            }
+        }
 
-    /// <summary>
-    /// Vincula los eventos para limpiar las marcas de error visual cuando el usuario interactúa.
-    /// </summary>
+        // Asocia la sanitización al evento TextChanged de cada control
+        txtBuscar.TextChanged += SanitizarTexto;
+        cboEspecie.TextChanged += SanitizarTexto;
+        cboRaza.TextChanged += SanitizarTexto;
+        cboFiltroEspecie.TextChanged += SanitizarTexto;
+    }
+    // Vincula los eventos para limpiar las marcas de error visual cuando el usuario interactúa.
     private void ConfigurarValidacionVisual()
     {
+        // Al entrar o modificar el campo, se remueve el fondo de error y la etiqueta vuelve a su color normal
         txtNombre.Enter += (_, _) => LimpiarErrorControl(txtNombre, lblNombre);
         txtNombre.TextChanged += (_, _) => LimpiarErrorControl(txtNombre, lblNombre);
 
@@ -205,6 +226,7 @@ public partial class FormMascotas : Form
         cboRaza.Enter += (_, _) => LimpiarErrorControl(cboRaza, lblRaza);
         cboRaza.SelectedIndexChanged += (_, _) => LimpiarErrorControl(cboRaza, lblRaza);
 
+        // Limpia el color de advertencia de la etiqueta de sexo al seleccionar una opción
         rbMacho.CheckedChanged += (_, _) => LimpiarErrorSexo();
         rbHembra.CheckedChanged += (_, _) => LimpiarErrorSexo();
 
@@ -214,33 +236,33 @@ public partial class FormMascotas : Form
         txtColor.TextChanged += (_, _) => LimpiarErrorControl(txtColor, lblColor);
     }
 
+    // Maneja el evento de carga inicial del formulario
     private async void FormMascotas_Load(object? sender, EventArgs e)
     {
+        // Muestra en el encabezado el nombre completo y rol del usuario autenticado en la sesión actual
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
             ? $"Recepción: {SesionActual.NombreCompleto} | {SesionActual.Rol}"
             : "Recepción: Secretario";
 
-        // Estado inicial de botones CRUD
+        // Establece el estado inicial: modo creación (Guardar habilitado, Modificar deshabilitado)
         btnGuardar.Enabled = true;
         btnModificar.Enabled = false;
 
+        // Deshabilita los botones de Activar y Desactivar hasta que el usuario elija un registro de la grilla
         ActualizarEstadoBotonesAccion(null);
 
-        // Carga inicial de catálogos y grilla (sin precargar el formulario)
+        // Inicializa los catálogos en los ComboBox y consulta las mascotas en la grilla
         await InicializarCatalogosAsync();
         await CargarMascotasGrillaAsync();
-        LimpiarFormulario();
+        LimpiarFormulario(); // Deja el formulario listo para un nuevo registro
     }
-
-    /// <summary>
-    /// Carga asíncronamente los propietarios, especies y resetea las razas.
-    /// </summary>
+    // Carga asíncronamente los propietarios, especies y resetea las razas.
     private async Task InicializarCatalogosAsync()
     {
-        _cargandoDatos = true;
+        _cargandoDatos = true; // Bandera para evitar disparar eventos indeseados durante la carga
         try
         {
-            // 1. Propietarios activos en cboPropietario
+            // 1. Carga los propietarios activos ordenados alfabéticamente en cboPropietario
             cboPropietario.Items.Clear();
             if (_propietarioControlador is not null)
             {
@@ -249,15 +271,16 @@ public partial class FormMascotas : Form
                 {
                     foreach (var p in resProp.Valor.Where(x => x.Activo).OrderBy(x => x.Nombre))
                     {
+                        // Guarda el ID y muestra el Nombre, Apellido y DNI en el desplegable
                         cboPropietario.Items.Add(new ItemCombo(p.Id, $"{p.Nombre} {p.Apellido} - DNI: {p.DNI}"));
                     }
                 }
             }
 
-            // 2. Especies activas en cboEspecie y cboFiltroEspecie
+            // 2. Carga las especies activas en el combo del formulario y en el filtro inferior
             cboEspecie.Items.Clear();
             cboFiltroEspecie.Items.Clear();
-            cboFiltroEspecie.Items.Add(new ItemCombo(null, "(Todas las especies)"));
+            cboFiltroEspecie.Items.Add(new ItemCombo(null, "(Todas las especies)")); // Opción neutral de filtro
 
             if (_especieControlador is not null)
             {
@@ -273,13 +296,13 @@ public partial class FormMascotas : Form
                 }
             }
 
-            cboFiltroEspecie.SelectedIndex = 0;
+            cboFiltroEspecie.SelectedIndex = 0; // Selecciona por defecto "(Todas las especies)"
 
-            // 3. Razas: Spec 5: cboRaza must NOT be preloaded on form startup (Enabled = false or empty)
+            // 3. Regla de negocio: cboRaza inicia vacío y deshabilitado hasta que se elija una especie
             cboRaza.Items.Clear();
             cboRaza.Enabled = false;
 
-            // Ningún valor de alta precargado en los combos del formulario
+            // Limpia cualquier selección residual en los combos superiores
             cboPropietario.SelectedIndex = -1;
             cboPropietario.Text = string.Empty;
             cboEspecie.SelectedIndex = -1;
@@ -287,29 +310,27 @@ public partial class FormMascotas : Form
         }
         finally
         {
-            _cargandoDatos = false;
+            _cargandoDatos = false; // Restablece la bandera de carga
         }
     }
-
-    /// <summary>
-    /// Implementa el comportamiento en cascada de especies hacia razas (Spec 5).
-    /// </summary>
+    // Implementa el comportamiento en cascada de especies hacia razas.
     private async Task cboEspecie_SelectedIndexChangedAsync()
     {
-        if (_cargandoDatos) return;
+        if (_cargandoDatos) return; // Evita ejecuciones si se están reseteando datos
 
         var especieSeleccionada = cboEspecie.SelectedItem as ItemCombo;
         var idEspecie = especieSeleccionada?.Id;
 
-        cboRaza.Items.Clear();
+        cboRaza.Items.Clear(); // Limpia el combo de razas antes de recargar
 
-        // Si se seleccionó una especie válida: habilitar y cargar razas activas asociadas
+        // Si se seleccionó una especie válida, consulta asíncronamente sus razas asociadas
         if (idEspecie.HasValue && idEspecie.Value > 0)
         {
-            cboRaza.Enabled = true;
+            cboRaza.Enabled = true; // Habilita el control de razas
 
             if (_razaControlador is not null)
             {
+                // Trae exclusivamente las razas activas que pertenezcan a la especie elegida
                 var resRazas = await _razaControlador.ObtenerPorEspecieAsync(idEspecie.Value);
                 if (resRazas.EsExitoso && resRazas.Valor is not null)
                 {
@@ -322,29 +343,26 @@ public partial class FormMascotas : Form
         }
         else
         {
-            // Si no hay especie válida seleccionada: vaciar y deshabilitar cboRaza
+            // Si el usuario deseleccionó la especie, deshabilita y vacía el combo de razas
             cboRaza.Enabled = false;
             cboRaza.SelectedIndex = -1;
             cboRaza.Text = string.Empty;
         }
     }
-
-    /// <summary>
-    /// Valida integralmente los campos de entrada según las especificaciones defensivas (Spec 7).
-    /// Algoritmo paso a paso:
-    /// 1. Valida nombre de mascota (obligatorio, entre 2 y 80 caracteres alfabéticos).
-    /// 2. Valida selección obligatoria de propietario (ID válido > 0).
-    /// 3. Valida selección obligatoria de especie (ID válido > 0).
-    /// 4. Valida selección obligatoria de raza (ID válido > 0).
-    /// 5. Valida sexo biológico (exactamente uno de rbMacho o rbHembra seleccionado).
-    /// 6. Valida fecha de nacimiento (no puede ser en el futuro).
-    /// 7. Valida color (opcional, pero si tiene texto debe tener al menos 3 caracteres alfabéticos).
-    /// </summary>
+    // Valida integralmente los campos de entrada según las reglas de negocio del formulario.
+    // Algoritmo de validación defensiva paso a paso:
+    // 1. Valida nombre de mascota (obligatorio, entre 2 y 80 caracteres alfabéticos).
+    // 2. Valida selección obligatoria de propietario (ID válido > 0).
+    // 3. Valida selección obligatoria de especie (ID válido > 0).
+    // 4. Valida selección obligatoria de raza (ID válido > 0).
+    // 5. Valida sexo biológico (exactamente uno de rbMacho o rbHembra seleccionado).
+    // 6. Valida fecha de nacimiento (no puede ser una fecha futura).
+    // 7. Valida color (obligatorio, entre 3 y 50 caracteres alfabéticos).
     private bool ValidarCampos(out string mensajeError)
     {
-        RestablecerBordes();
+        RestablecerBordes(); // Restablece colores normales de fondo y etiquetas
 
-        // Paso 1: Nombre de la mascota
+        // Paso 1: Validación del nombre de la mascota
         var nombre = txtNombre.Text.Trim();
         if (string.IsNullOrWhiteSpace(nombre) || nombre.Length < 2 || nombre.Length > 80 || !RegexSoloTexto.IsMatch(nombre))
         {
@@ -353,7 +371,7 @@ public partial class FormMascotas : Form
             return false;
         }
 
-        // Paso 2: Propietario seleccionado
+        // Paso 2: Validación del propietario seleccionado
         var propItem = cboPropietario.SelectedItem as ItemCombo;
         if (propItem?.Id is null || propItem.Id <= 0)
         {
@@ -362,7 +380,7 @@ public partial class FormMascotas : Form
             return false;
         }
 
-        // Paso 3: Especie seleccionada
+        // Paso 3: Validación de la especie seleccionada
         var espItem = cboEspecie.SelectedItem as ItemCombo;
         if (espItem?.Id is null || espItem.Id <= 0)
         {
@@ -371,7 +389,7 @@ public partial class FormMascotas : Form
             return false;
         }
 
-        // Paso 4: Raza seleccionada
+        // Paso 4: Validación de la raza seleccionada
         var razaItem = cboRaza.SelectedItem as ItemCombo;
         if (razaItem?.Id is null || razaItem.Id <= 0)
         {
@@ -380,7 +398,7 @@ public partial class FormMascotas : Form
             return false;
         }
 
-        // Paso 5: Sexo (RadioButtons)
+        // Paso 5: Validación del sexo biológico mediante RadioButtons
         if (!rbMacho.Checked && !rbHembra.Checked)
         {
             lblSexo.ForeColor = ColorEtiquetaError;
@@ -389,7 +407,7 @@ public partial class FormMascotas : Form
             return false;
         }
 
-        // Paso 6: Fecha de nacimiento
+        // Paso 6: Validación de fecha de nacimiento (regla temporal)
         if (dtpFechaNacimiento.Value.Date > DateTime.Today)
         {
             MarcarError(dtpFechaNacimiento, lblFechaNacimiento, "La fecha de nacimiento no puede ser una fecha futura.");
@@ -397,7 +415,7 @@ public partial class FormMascotas : Form
             return false;
         }
 
-        // Paso 7: Color (obligatorio; solo letras, entre 3 y 50 caracteres)
+        // Paso 7: Validación del color del pelaje
         var color = txtColor.Text.Trim();
         if (string.IsNullOrWhiteSpace(color) || color.Length < 3 || color.Length > 50 || !RegexSoloTexto.IsMatch(color))
         {
@@ -407,23 +425,23 @@ public partial class FormMascotas : Form
         }
 
         mensajeError = string.Empty;
-        return true;
+        return true; // Todos los campos son válidos
     }
-
-    /// <summary>
-    /// Guarda una nueva mascota en la base de datos previa validación defensiva.
-    /// </summary>
+    // Guarda una nueva mascota en la base de datos previa validación defensiva.
     private async Task GuardarMascotaAsync()
     {
+        // 1. Ejecuta la validación de todos los campos del formulario
         if (!ValidarCampos(out var mensajeError))
         {
             MessageBox.Show(mensajeError, "Validación de Datos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
+        // 2. Extrae los identificadores foráneos de los combos seleccionados
         var propItem = (ItemCombo)cboPropietario.SelectedItem!;
         var razaItem = (ItemCombo)cboRaza.SelectedItem!;
 
+        // 3. Mapea los controles de la interfaz al Data Transfer Object (DTO)
         var dto = new MascotaSolicitudDto
         {
             Nombre = txtNombre.Text.Trim(),
@@ -442,15 +460,18 @@ public partial class FormMascotas : Form
 
         try
         {
+            // Bloquea el botón para prevenir el "doble clic involuntario" y que no se dupliquen registros en la base de datos
             btnGuardar.Enabled = false;
+            // Cambia el cursor al puntero de espera (WaitCursor) para dar feedback visual de que el sistema está trabajando
             Cursor = Cursors.WaitCursor;
 
+            // 4. Invoca al controlador de negocio para persistir la entidad en SQL Server
             var resultado = await _mascotaControlador.CrearAsync(dto);
             if (resultado.EsExitoso)
             {
                 MessageBox.Show(resultado.Mensaje ?? "Mascota registrada exitosamente.", "Registro Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LimpiarFormulario();
-                await CargarMascotasGrillaAsync();
+                LimpiarFormulario(); // Restablece los campos al modo creación
+                await CargarMascotasGrillaAsync(); // Refresca la grilla para mostrar la nueva mascota
             }
             else
             {
@@ -459,34 +480,36 @@ public partial class FormMascotas : Form
         }
         finally
         {
+            // El bloque finally garantiza que el botón se reactive y el cursor vuelva a Default, incluso si ocurrió un error
             btnGuardar.Enabled = true;
-            Cursor = Cursors.Default;
+            Cursor = Cursors.Default; // Restaura el mouse a su estado normal para no dejar bloqueada la interfaz
         }
     }
-
-    /// <summary>
-    /// Modifica la mascota seleccionada en la base de datos.
-    /// </summary>
+    // Modifica los datos de la mascota actualmente seleccionada.
     private async Task ModificarMascotaAsync()
     {
+        // Verifica que se haya seleccionado previamente una mascota válida de la grilla
         if (_idMascotaSeleccionada <= 0)
         {
             MessageBox.Show("Debe seleccionar una mascota de la grilla para poder modificarla.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
+        // Valida que los nuevos datos ingresados cumplan con las reglas de negocio
         if (!ValidarCampos(out var mensajeError))
         {
             MessageBox.Show(mensajeError, "Validación de Datos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
+        // Optimización por Snapshot: compara los valores actuales con la copia tomada al seleccionar
         if (string.Equals(ObtenerSnapshotFormulario(), _snapshotEdicion, StringComparison.Ordinal))
         {
             MessageBox.Show("No se detectaron cambios para guardar.", "Sin cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            return;
+            return; // Cancela la operación sin enviar peticiones innecesarias a la base de datos
         }
 
+        // Extrae los ítems y construye el DTO con los datos actualizados
         var propItem = (ItemCombo)cboPropietario.SelectedItem!;
         var razaItem = (ItemCombo)cboRaza.SelectedItem!;
 
@@ -504,15 +527,17 @@ public partial class FormMascotas : Form
 
         try
         {
+            // Deshabilita el botón temporalmente y activa el cursor de espera para evitar envíos duplicados concurrentes
             btnModificar.Enabled = false;
-            Cursor = Cursors.WaitCursor;
+            Cursor = Cursors.WaitCursor; // Informa visualmente al usuario que la actualización está en progreso
 
+            // Invoca al controlador para actualizar la mascota en la base de datos
             var resultado = await _mascotaControlador.ActualizarAsync(_idMascotaSeleccionada, dto);
             if (resultado.EsExitoso)
             {
                 MessageBox.Show(resultado.Mensaje ?? "Mascota actualizada exitosamente.", "Modificación Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LimpiarFormulario();
-                await CargarMascotasGrillaAsync();
+                LimpiarFormulario(); // Regresa al modo creación
+                await CargarMascotasGrillaAsync(); // Refresca la grilla con los cambios
             }
             else
             {
@@ -521,19 +546,18 @@ public partial class FormMascotas : Form
         }
         finally
         {
+            // Bloque finally para asegurar que el mouse y los botones se restablezcan ante cualquier resultado o excepción
             btnModificar.Enabled = true;
-            Cursor = Cursors.Default;
+            Cursor = Cursors.Default; // Vuelve el cursor al estado predeterminado
         }
     }
-
-    /// <summary>
-    /// Restablece todos los campos del formulario al modo de Creación inicial (Spec 6).
-    /// </summary>
+    // Restablece todos los campos del formulario al modo de Creación inicial.
     private void LimpiarFormulario()
     {
-        _cargandoDatos = true;
+        _cargandoDatos = true; // Evita disparar eventos de selección durante el reseteo
         try
         {
+            // Limpia los datos de texto y selecciones
             txtNombre.Clear();
             cboPropietario.SelectedIndex = -1;
             cboPropietario.Text = string.Empty;
@@ -541,26 +565,32 @@ public partial class FormMascotas : Form
             cboEspecie.SelectedIndex = -1;
             cboEspecie.Text = string.Empty;
 
+            // Restablece el combo de razas a su estado inicial (vacío y deshabilitado)
             cboRaza.Items.Clear();
             cboRaza.SelectedIndex = -1;
             cboRaza.Text = string.Empty;
             cboRaza.Enabled = false;
 
+            // Desmarca las opciones de sexo
             rbMacho.Checked = false;
             rbHembra.Checked = false;
 
+            // Restablece la fecha a hoy y limpia el color
             dtpFechaNacimiento.Value = DateTime.Today;
             txtColor.Clear();
 
+            // Resetea el identificador de edición y la instantánea en memoria
             _idMascotaSeleccionada = 0;
             _snapshotEdicion = null;
 
-            // Transición a Modo Creación
+            // Transición de botones: pasa a Modo Creación (Guardar activo, Modificar inactivo)
             btnGuardar.Enabled = true;
             btnModificar.Enabled = false;
 
+            // Deshabilita los botones de estado porque no hay ningún registro seleccionado
             ActualizarEstadoBotonesAccion(null);
 
+            // Quita cualquier color de error y deselecciona filas en la grilla
             RestablecerBordes();
             dgvMascotas.ClearSelection();
         }
@@ -569,17 +599,17 @@ public partial class FormMascotas : Form
             _cargandoDatos = false;
         }
 
+        // Coloca el foco en el primer campo para facilitar la carga al usuario
         txtNombre.Focus();
     }
-
-    /// <summary>
-    /// Carga y enlaza en los controles superiores los datos de la mascota seleccionada en la grilla (Spec 9).
-    /// </summary>
+    // Carga y enlaza en los controles superiores los datos de la mascota seleccionada en la grilla.
     private async Task SeleccionarMascotaDeGrillaAsync(int rowIndex)
     {
+        // Valida que el índice de fila se encuentre dentro del rango válido
         if (rowIndex < 0 || rowIndex >= dgvMascotas.Rows.Count)
             return;
 
+        // Extrae el ID de la mascota desde la columna oculta de la fila seleccionada
         var fila = dgvMascotas.Rows[rowIndex];
         var valorId = fila.Cells["colId"].Value?.ToString();
         if (string.IsNullOrEmpty(valorId) || !long.TryParse(valorId, out var idMascota) || idMascota <= 0)
@@ -587,6 +617,7 @@ public partial class FormMascotas : Form
 
         if (_mascotaControlador is null) return;
 
+        // Consulta asíncronamente a la base de datos el detalle completo de la mascota
         var resultado = await _mascotaControlador.ObtenerPorIdAsync(idMascota);
         if (!resultado.EsExitoso || resultado.Valor is null)
             return;
@@ -595,16 +626,16 @@ public partial class FormMascotas : Form
         _cargandoDatos = true;
         try
         {
-            _idMascotaSeleccionada = mascota.Id;
+            _idMascotaSeleccionada = mascota.Id; // Guarda el ID de la mascota en edición
             txtNombre.Text = mascota.Nombre;
 
-            // Seleccionar Propietario
+            // Preselecciona el propietario asociado en el combo
             SeleccionarEnComboPorId(cboPropietario, mascota.IdPropietario);
 
-            // Seleccionar Especie y poblar Razas
+            // Preselecciona la especie
             SeleccionarEnComboPorId(cboEspecie, mascota.IdEspecie);
 
-            // Carga asíncrona de razas correspondientes a la especie de la mascota
+            // Carga asíncrona de razas correspondientes a la especie de la mascota seleccionada
             cboRaza.Items.Clear();
             if (_razaControlador is not null)
             {
@@ -618,9 +649,10 @@ public partial class FormMascotas : Form
                 }
             }
             cboRaza.Enabled = true;
+            // Preselecciona la raza de la mascota una vez poblado el combo
             SeleccionarEnComboPorId(cboRaza, mascota.IdRaza);
 
-            // Seleccionar Sexo vía RadioButtons
+            // Vincula el sexo biológico con el RadioButton correspondiente
             if (string.Equals(mascota.Sexo, "Macho", StringComparison.OrdinalIgnoreCase))
             {
                 rbMacho.Checked = true;
@@ -637,17 +669,21 @@ public partial class FormMascotas : Form
                 rbHembra.Checked = false;
             }
 
-            // Fecha y Color
+            // Asigna la fecha de nacimiento y color
             dtpFechaNacimiento.Value = mascota.FechaNacimiento ?? DateTime.Today;
             txtColor.Text = mascota.Color ?? string.Empty;
 
-            // Modo Edición: Guardar desactivado, Modificar activado
+            // Transición a Modo Edición: deshabilita Guardar y habilita Modificar
             btnGuardar.Enabled = false;
             btnModificar.Enabled = true;
+
+            // Genera una instantánea (snapshot) de los datos recién cargados para detectar cambios futuros
             _snapshotEdicion = ObtenerSnapshotFormulario();
 
+            // Configura de forma reactiva los botones de Activar/Desactivar según el estado activo de la mascota
             ActualizarEstadoBotonesAccion(mascota.Activo);
 
+            // Limpia marcas previas de error visual
             RestablecerBordes();
         }
         finally
@@ -656,6 +692,7 @@ public partial class FormMascotas : Form
         }
     }
 
+    // Serializa en una cadena delimitada por tuberías (|) el estado actual de los controles para auditoría de cambios en memoria
     private string ObtenerSnapshotFormulario()
     {
         var propId = (cboPropietario.SelectedItem as ItemCombo)?.Id ?? 0;
@@ -669,27 +706,27 @@ public partial class FormMascotas : Form
             dtpFechaNacimiento.Value.Date.ToString("yyyy-MM-dd"),
             txtColor.Text.Trim());
     }
-
-    /// <summary>
-    /// Consulta y puebla la grilla de mascotas aplicando los filtros de búsqueda exclusiva por nombre de mascota y de especie.
-    /// </summary>
+    // Consulta y puebla la grilla de mascotas aplicando los filtros de búsqueda exclusiva por nombre de mascota y de especie.
     private async Task CargarMascotasGrillaAsync()
     {
+        // Obtiene el texto del filtro de nombre y el ID de la especie seleccionada
         var textoFiltro = txtBuscar.Text.Trim();
         var especieItem = cboFiltroEspecie.SelectedItem as ItemCombo;
         var idEspecie = especieItem?.Id;
 
         try
         {
+            // Bloquea el botón de búsqueda y activa el cursor de espera para feedback de carga
             _cargandoDatos = true;
             btnBuscar.Enabled = false;
             Cursor = Cursors.WaitCursor;
 
             IEnumerable<MascotaRespuestaDto> listado;
 
+            // Si está inyectado el servicio especializado de búsqueda, lo prioriza
             if (_mascotaService is not null)
             {
-                // Búsqueda exclusivamente por nombre de la mascota
+                // Realiza la búsqueda en base de datos filtrando exclusivamente por nombre de la mascota y especie
                 var resultado = await _mascotaService.BuscarMascotasAsync(
                     nombre: string.IsNullOrWhiteSpace(textoFiltro) ? null : textoFiltro,
                     nombrePropietario: null,
@@ -703,6 +740,7 @@ public partial class FormMascotas : Form
             }
             else if (_mascotaControlador is not null)
             {
+                // Consulta todas las mascotas y aplica el filtrado en memoria como alternativa
                 var resultado = await _mascotaControlador.ObtenerTodosAsync();
                 listado = resultado.EsExitoso && resultado.Valor is not null ? resultado.Valor : [];
 
@@ -713,7 +751,6 @@ public partial class FormMascotas : Form
 
                 if (!string.IsNullOrWhiteSpace(textoFiltro))
                 {
-                    // Filtrar exclusivamente por nombre de la mascota
                     listado = listado.Where(m =>
                         m.Nombre.Contains(textoFiltro, StringComparison.OrdinalIgnoreCase));
                 }
@@ -723,6 +760,7 @@ public partial class FormMascotas : Form
                 listado = [];
             }
 
+            // Vuelca los resultados en las filas del DataGridView
             dgvMascotas.Rows.Clear();
             foreach (var m in listado)
             {
@@ -735,12 +773,13 @@ public partial class FormMascotas : Form
                     m.Sexo,
                     m.FechaNacimiento.HasValue ? m.FechaNacimiento.Value.ToString("dd/MM/yyyy") : "-",
                     m.Color ?? string.Empty,
-                    m.Activo ? "Activo" : "Inactivo");
+                    m.Activo ? "Activo" : "Inactivo"); // Indica visualmente el estado del borrado lógico
             }
 
+            // Deselecciona celdas iniciales para mantener el formulario en modo creación
             dgvMascotas.ClearSelection();
             dgvMascotas.CurrentCell = null;
-            ActualizarTotalRegistros();
+            ActualizarTotalRegistros(); // Actualiza la etiqueta con la cantidad de filas visibles
         }
         finally
         {
@@ -749,52 +788,50 @@ public partial class FormMascotas : Form
             _cargandoDatos = false;
         }
     }
-
-    /// <summary>
-    /// Abre el formulario modal satélite polimórfico en el modo especificado y actualiza los desplegables (Spec 4).
-    /// </summary>
+    // Abre el formulario modal satélite polimórfico en el modo especificado y actualiza los desplegables.
     private async Task AbrirGestionSateliteAsync(ModoGestion modo)
     {
+        // Conserva la especie que esté actualmente seleccionada en el combo
         var especieItem = cboEspecie.SelectedItem as ItemCombo;
         var idEspeciePreseleccionada = especieItem?.Id;
 
+        // Instancia el formulario modal pasándole el modo (Alta o Modificación) y los controladores correspondientes
         using var modal = new FormGestionSatelite(
             modo,
             _especieControlador,
             _razaControlador,
             idEspeciePreseleccionada);
 
+        // Si el usuario confirmó la operación (DialogResult.OK), refresca los datos dependientes
         if (modal.ShowDialog(this) == DialogResult.OK)
         {
-            // Refrescar desplegables de especies
+            // Refresca desplegables de especies
             await InicializarCatalogosAsync();
 
-            // Restaurar selección previa de especie si sigue existiendo y actualizar razas
+            // Si había una especie seleccionada previamente, la restablece y recarga sus razas
             if (idEspeciePreseleccionada.HasValue && idEspeciePreseleccionada.Value > 0)
             {
                 SeleccionarEnComboPorId(cboEspecie, idEspeciePreseleccionada.Value);
                 await cboEspecie_SelectedIndexChangedAsync();
             }
 
-            // Refrescar grilla para reflejar cambios en nombres de especies o razas
+            // Refresca la grilla para reflejar cualquier cambio en nombres de especies o razas
             await CargarMascotasGrillaAsync();
         }
     }
-
-    /// <summary>
-    /// Abre la vista de propietarios para alta rápida y vuelve a mascotas sin perder los datos en carga.
-    /// </summary>
+    // Abre la vista de propietarios para alta rápida y vuelve a mascotas sin perder los datos en carga.
     private async void btnNuevoPropietario_Click(object? sender, EventArgs e)
     {
         long? idPropietarioCreado = null;
 
+        // Resuelve la vista de propietarios a través del contenedor de inyección de dependencias
         if (_serviceProvider is not null)
         {
             using var alcance = _serviceProvider.CreateScope();
             using var vistaPropietarios = alcance.ServiceProvider.GetService<FormPropietarios>() ?? new FormPropietarios();
-            vistaPropietarios.RetornarAMascotas = true;
+            vistaPropietarios.RetornarAMascotas = true; // Configura el formulario para retorno modal
             vistaPropietarios.ShowDialog(this);
-            idPropietarioCreado = vistaPropietarios.UltimoIdCreado;
+            idPropietarioCreado = vistaPropietarios.UltimoIdCreado; // Recupera el ID del propietario recién creado
         }
         else
         {
@@ -804,12 +841,10 @@ public partial class FormMascotas : Form
             idPropietarioCreado = vistaPropietarios.UltimoIdCreado;
         }
 
+        // Recarga el desplegable de propietarios y preselecciona automáticamente el que se acaba de registrar
         await RecargarPropietariosAsync(idPropietarioCreado);
     }
-
-    /// <summary>
-    /// Recarga el combo de propietarios sin tocar el resto del formulario en edición/alta.
-    /// </summary>
+    // Recarga el combo de propietarios sin tocar el resto del formulario en edición/alta.
     private async Task RecargarPropietariosAsync(long? seleccionarId = null)
     {
         var idPrevio = (cboPropietario.SelectedItem as ItemCombo)?.Id;
@@ -836,28 +871,23 @@ public partial class FormMascotas : Form
             _cargandoDatos = false;
         }
 
+        // Si se indicó un ID a seleccionar, lo busca en los ítems y lo marca como seleccionado
         if (idASeleccionar.HasValue && idASeleccionar.Value > 0)
             SeleccionarEnComboPorId(cboPropietario, idASeleccionar.Value);
     }
-
-    /// <summary>
-    /// Resalta con color de fondo suave o etiqueta el control que falló la validación.
-    /// </summary>
+    // Resalta con color de fondo suave y etiqueta en borgoña el control que falló la validación.
     private static void MarcarError(Control control, Label? etiqueta, string mensaje)
     {
-        control.BackColor = ColorFondoError;
+        control.BackColor = ColorFondoError; // Fondo en tono rosa pastel suave
 
         if (etiqueta is not null)
         {
-            etiqueta.ForeColor = ColorEtiquetaError;
+            etiqueta.ForeColor = ColorEtiquetaError; // Etiqueta en color borgoña
         }
 
-        control.Focus();
+        control.Focus(); // Pone el foco directamente en el campo que causó el error
     }
-
-    /// <summary>
-    /// Restablece un control específico a su color de fondo y etiqueta neutral.
-    /// </summary>
+    // Restablece un control específico a su color de fondo blanco y etiqueta neutral.
     private static void LimpiarErrorControl(Control control, Label? etiqueta)
     {
         control.BackColor = ColorFondoNormal;
@@ -868,14 +898,12 @@ public partial class FormMascotas : Form
         }
     }
 
+    // Restablece el color de la etiqueta de sexo al color neutral
     private void LimpiarErrorSexo()
     {
         lblSexo.ForeColor = ColorEtiquetaNormal;
     }
-
-    /// <summary>
-    /// Restablece todos los campos a su color de fondo y etiqueta neutral.
-    /// </summary>
+    // Restablece todos los campos del formulario a su color de fondo y etiquetas normales.
     private void RestablecerBordes()
     {
         txtNombre.BackColor = ColorFondoNormal;
@@ -898,10 +926,7 @@ public partial class FormMascotas : Form
         txtColor.BackColor = ColorFondoNormal;
         lblColor.ForeColor = ColorEtiquetaNormal;
     }
-
-    /// <summary>
-    /// Selecciona un elemento dentro de un ComboBox a partir de su ID encapsulado en un ItemCombo.
-    /// </summary>
+    // Selecciona un elemento dentro de un ComboBox a partir de su ID encapsulado en un ItemCombo.
     private static void SeleccionarEnComboPorId(ComboBox cbo, long id)
     {
         for (int i = 0; i < cbo.Items.Count; i++)
@@ -913,25 +938,21 @@ public partial class FormMascotas : Form
             }
         }
     }
-
-    /// <summary>
-    /// Actualiza la etiqueta con el total de registros presentes en la grilla de mascotas.
-    /// </summary>
+    // Actualiza la etiqueta con el total de registros presentes en la grilla de mascotas.
     public void ActualizarTotalRegistros()
     {
         var total = dgvMascotas.Rows.Count;
         lblTotalRegistros.Text = $"Total de registros: {total}";
     }
 
+    // Manejador del botón volver para cerrar el formulario
     private void btnVolver_Click(object? sender, EventArgs e) => Close();
 
+    // Eventos del DataGridView para mantener sincronizado el contador de filas
     private void dgvMascotas_RowsAdded(object? sender, DataGridViewRowsAddedEventArgs e) => ActualizarTotalRegistros();
-
     private void dgvMascotas_RowsRemoved(object? sender, DataGridViewRowsRemovedEventArgs e) => ActualizarTotalRegistros();
 
-    /// <summary>
-    /// Elemento auxiliar para vincular identificadores con leyendas en desplegables.
-    /// </summary>
+    // Elemento auxiliar inmutable (record) para vincular identificadores con leyendas en desplegables.
     private sealed record ItemCombo(long? Id, string Texto)
     {
         public override string ToString() => Texto;
@@ -946,17 +967,15 @@ public partial class FormMascotas : Form
     {
 
     }
-
-    /// <summary>
-    /// Actualiza de forma reactiva el estado y colores de los botones de estado (Activar / Desactivar).
-    /// null = sin selección (ambos deshabilitados).
-    /// true = registro activo (Desactivar habilitado).
-    /// false = registro inactivo (Activar habilitado).
-    /// </summary>
+    // Actualiza de forma reactiva el estado y colores de los botones de estado (Activar / Desactivar).
+    // null = sin selección (ambos deshabilitados en gris).
+    // true = registro activo (Desactivar habilitado en borgoña; Activar deshabilitado).
+    // false = registro inactivo (Activar habilitado en verde salvia; Desactivar deshabilitado).
     private void ActualizarEstadoBotonesAccion(bool? activo)
     {
         if (!activo.HasValue)
         {
+            // Sin selección: ambos botones apagados en gris
             btnActivar.Enabled = false;
             btnActivar.BackColor = ColorBotonDeshabilitado;
             btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
@@ -967,7 +986,7 @@ public partial class FormMascotas : Form
         }
         else if (activo.Value)
         {
-            // Registro Activo: Desactivar habilitado, Activar deshabilitado
+            // Mascota activa: solo se puede Desactivar
             btnActivar.Enabled = false;
             btnActivar.BackColor = ColorBotonDeshabilitado;
             btnActivar.ForeColor = ColorTextoBotonDeshabilitado;
@@ -978,7 +997,7 @@ public partial class FormMascotas : Form
         }
         else
         {
-            // Registro Inactivo: Activar habilitado, Desactivar deshabilitado
+            // Mascota inactiva: solo se puede Activar (reactivar)
             btnActivar.Enabled = true;
             btnActivar.BackColor = ColorBotonActivarHabilitado;
             btnActivar.ForeColor = Color.White;
@@ -989,6 +1008,7 @@ public partial class FormMascotas : Form
         }
     }
 
+    // Reactiva una mascota dada de baja lógica previa confirmación del usuario
     private async Task btnActivar_Click()
     {
         if (_idMascotaSeleccionada <= 0)
@@ -997,6 +1017,7 @@ public partial class FormMascotas : Form
             return;
         }
 
+        // Cuadro de diálogo de confirmación para evitar reactivaciones accidentales
         var confirmacion = MessageBox.Show(
             "¿Desea reactivar este registro?",
             "Confirmar Activación",
@@ -1009,12 +1030,13 @@ public partial class FormMascotas : Form
         if (_mascotaControlador is null)
             return;
 
+        // Invoca al controlador con activo = true (soft delete invertido)
         var resultado = await _mascotaControlador.CambiarEstadoAsync(_idMascotaSeleccionada, true);
         if (resultado.EsExitoso)
         {
             MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            LimpiarFormulario();
-            await CargarMascotasGrillaAsync();
+            LimpiarFormulario(); // Vuelve al modo creación
+            await CargarMascotasGrillaAsync(); // Refresca la grilla con el nuevo estado
         }
         else
         {
@@ -1022,6 +1044,7 @@ public partial class FormMascotas : Form
         }
     }
 
+    // Realiza la baja lógica (Soft Delete) de la mascota sin eliminar físicamente sus datos
     private async Task btnDesactivar_Click()
     {
         if (_idMascotaSeleccionada <= 0)
@@ -1030,6 +1053,7 @@ public partial class FormMascotas : Form
             return;
         }
 
+        // Cuadro de diálogo de confirmación para prevenir desactivaciones accidentales
         var confirmacion = MessageBox.Show(
             "¿Está seguro de que desea desactivar este registro?",
             "Confirmar Desactivación",
@@ -1042,12 +1066,13 @@ public partial class FormMascotas : Form
         if (_mascotaControlador is null)
             return;
 
+        // Invoca al controlador con activo = false para preservar historial clínico y facturación
         var resultado = await _mascotaControlador.CambiarEstadoAsync(_idMascotaSeleccionada, false);
         if (resultado.EsExitoso)
         {
             MessageBox.Show(resultado.Mensaje, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            LimpiarFormulario();
-            await CargarMascotasGrillaAsync();
+            LimpiarFormulario(); // Regresa al modo creación
+            await CargarMascotasGrillaAsync(); // Refresca la grilla reflejando el estado inactivo
         }
         else
         {

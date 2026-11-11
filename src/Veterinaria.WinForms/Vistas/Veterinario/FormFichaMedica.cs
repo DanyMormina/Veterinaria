@@ -1,15 +1,12 @@
-using System.Drawing.Printing;
+﻿using System.Drawing.Printing;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Formulario de Ficha Médica e Historial Clínico de Pacientes.
-/// Incorpora búsqueda predictiva sin caracteres numéricos, visualización en solo lectura estricta,
-/// carga cronológica de consultas y feedback visual con el estándar "Ejecutivo Romántico Pastel".
-/// </summary>
+// Formulario de Ficha Médica e Historial Clínico de Pacientes.
+// Incorpora búsqueda predictiva sin caracteres numéricos, visualización en solo lectura estricta,
+// carga cronológica de consultas y feedback visual con el estándar "Ejecutivo Romántico Pastel".
 public partial class FormFichaMedica : Form
 {
     private static readonly Color ColorError = ColorTranslator.FromHtml("#B85D69");
@@ -23,22 +20,13 @@ public partial class FormFichaMedica : Form
     private bool _cargandoMascotas = false;
     private int _filaActualImpresion;
     private int _paginaActualImpresion;
-
-    /// <summary>
-    /// Compatibilidad hacia atrás para referencias a la grilla con el nombre dgvHistorial.
-    /// </summary>
+    // Compatibilidad hacia atrás para referencias a la grilla con el nombre dgvHistorial.
     public DataGridView dgvHistorial => dgvHistorialClinico;
-
-    /// <summary>
-    /// Constructor por defecto para compatibilidad con el diseñador de Windows Forms.
-    /// </summary>
+    // Constructor por defecto para compatibilidad con el diseñador de Windows Forms.
     public FormFichaMedica() : this(null, null)
     {
     }
-
-    /// <summary>
-    /// Constructor principal con inyección de controladores de Mascota y Consulta.
-    /// </summary>
+    // Constructor principal con inyección de controladores de Mascota y Consulta.
     public FormFichaMedica(
         MascotaControlador? mascotaControlador,
         ConsultaControlador? consultaControlador)
@@ -51,10 +39,7 @@ public partial class FormFichaMedica : Form
         ConfigurarPoliticaSoloLectura();
         ConfigurarEventosBusqueda();
     }
-
-    /// <summary>
-    /// Aplica estrictamente la política de campos no editables para el perfil del paciente.
-    /// </summary>
+    // Aplica estrictamente la política de campos no editables para el perfil del paciente.
     private void ConfigurarPoliticaSoloLectura()
     {
         txtNombre.ReadOnly = true;
@@ -77,10 +62,7 @@ public partial class FormFichaMedica : Form
         txtColor.ReadOnly = true;
         txtColor.BackColor = Color.White;
     }
-
-    /// <summary>
-    /// Enlaza los manejadores de eventos para el control de teclado y retroalimentación visual en búsqueda.
-    /// </summary>
+    // Enlaza los manejadores de eventos para el control de teclado y retroalimentación visual en búsqueda.
     private void ConfigurarEventosBusqueda()
     {
         cboBuscarMascota.KeyPress += cboBuscarMascota_KeyPress;
@@ -89,20 +71,14 @@ public partial class FormFichaMedica : Form
         cboBuscarMascota.SelectedIndexChanged += cboBuscarMascota_SelectedIndexChanged;
         cboBuscarMascota.Leave += cboBuscarMascota_Leave;
     }
-
-    /// <summary>
-    /// Obtiene el sexo seleccionado ("Macho", "Hembra" o vacío).
-    /// </summary>
+    // Obtiene el sexo seleccionado ("Macho", "Hembra" o vacío).
     public string ObtenerSexo()
     {
         if (rbMacho.Checked) return "Macho";
         if (rbHembra.Checked) return "Hembra";
         return string.Empty;
     }
-
-    /// <summary>
-    /// Establece la selección de sexo de la mascota ("Macho" o "Hembra").
-    /// </summary>
+    // Establece la selección de sexo de la mascota ("Macho" o "Hembra").
     public void EstablecerSexo(string? sexo)
     {
         if (string.Equals(sexo, "Macho", StringComparison.OrdinalIgnoreCase))
@@ -121,10 +97,7 @@ public partial class FormFichaMedica : Form
             rbHembra.Checked = false;
         }
     }
-
-    /// <summary>
-    /// Inicializa la sesión del profesional y precarga el catálogo de mascotas activas.
-    /// </summary>
+    // Inicializa la sesión del profesional y precarga el catálogo de mascotas activas.
     private async void FormFichaMedica_Load(object? sender, EventArgs e)
     {
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
@@ -137,10 +110,7 @@ public partial class FormFichaMedica : Form
 
         await CargarMascotasAsync();
     }
-
-    /// <summary>
-    /// Restringe la entrada de teclado en el buscador: bloquea números y caracteres no alfabéticos.
-    /// </summary>
+    // Restringe la entrada de teclado en el buscador: bloquea números y caracteres no alfabéticos.
     private void cboBuscarMascota_KeyPress(object? sender, KeyPressEventArgs e)
     {
         // 1. Restaurar borde a color neutral ante cualquier pulsación
@@ -171,18 +141,12 @@ public partial class FormFichaMedica : Form
         // 6. Bloquear cualquier otro carácter especial o símbolo no alfabético
         e.Handled = true;
     }
-
-    /// <summary>
-    /// Restaura el contenedor de búsqueda al color neutral pastel (#E2D9DC) al interactuar.
-    /// </summary>
+    // Restaura el contenedor de búsqueda al color neutral pastel (#E2D9DC) al interactuar.
     private void cboBuscarMascota_InputInteract(object? sender, EventArgs e)
     {
         pnlContenedorBusqueda.BackColor = ColorNeutro;
     }
-
-    /// <summary>
-    /// Valida si el texto ingresado coincide con un paciente al salir del control.
-    /// </summary>
+    // Valida si el texto ingresado coincide con un paciente al salir del control.
     private void cboBuscarMascota_Leave(object? sender, EventArgs e)
     {
         var texto = cboBuscarMascota.Text.Trim();
@@ -217,10 +181,7 @@ public partial class FormFichaMedica : Form
             lblInfoEstado.Text = $"No se encontró ninguna mascota que coincida con \"{texto}\".";
         }
     }
-
-    /// <summary>
-    /// Carga el catálogo de mascotas activas en el ComboBox de búsqueda con formato predictivo.
-    /// </summary>
+    // Carga el catálogo de mascotas activas en el ComboBox de búsqueda con formato predictivo.
     private async Task CargarMascotasAsync()
     {
         if (_mascotaControlador == null) return;
@@ -264,10 +225,7 @@ public partial class FormFichaMedica : Form
             _cargandoMascotas = false;
         }
     }
-
-    /// <summary>
-    /// Carga los datos del perfil y el historial clínico al seleccionar un paciente en el desplegable.
-    /// </summary>
+    // Carga los datos del perfil y el historial clínico al seleccionar un paciente en el desplegable.
     private async void cboBuscarMascota_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoMascotas) return;
@@ -298,10 +256,7 @@ public partial class FormFichaMedica : Form
             pnlContenedorBusqueda.BackColor = ColorNeutro;
         }
     }
-
-    /// <summary>
-    /// Consulta el historial clínico mediante ConsultaController y puebla la grilla ordenado de más reciente a más antiguo.
-    /// </summary>
+    // Consulta el historial clínico mediante ConsultaController y puebla la grilla ordenado de más reciente a más antiguo.
     private async Task CargarHistorialClinicoAsync(long idMascota)
     {
         dgvHistorialClinico.Rows.Clear();
@@ -355,10 +310,7 @@ public partial class FormFichaMedica : Form
             Cursor = Cursors.Default;
         }
     }
-
-    /// <summary>
-    /// Restablece completamente el formulario a su estado inicial.
-    /// </summary>
+    // Restablece completamente el formulario a su estado inicial.
     private void btnLimpiar_Click(object? sender, EventArgs e)
     {
         // 1. Restablecer selector de búsqueda de mascotas
@@ -383,10 +335,7 @@ public partial class FormFichaMedica : Form
         cboBuscarMascota.Focus();
         lblInfoEstado.Text = "Formulario restablecido. Seleccione o busque una mascota.";
     }
-
-    /// <summary>
-    /// Limpia los campos de texto del paciente y la mascota activa en memoria.
-    /// </summary>
+    // Limpia los campos de texto del paciente y la mascota activa en memoria.
     private void LimpiarCamposPaciente()
     {
         _mascotaSeleccionada = null;
@@ -396,10 +345,7 @@ public partial class FormFichaMedica : Form
         txtRaza.Clear();
         txtColor.Clear();
     }
-
-    /// <summary>
-    /// Abre la vista previa de impresión de la ficha médica con datos del paciente e historial clínico.
-    /// </summary>
+    // Abre la vista previa de impresión de la ficha médica con datos del paciente e historial clínico.
     private void btnImprimirFicha_Click(object? sender, EventArgs e)
     {
         if (_mascotaSeleccionada is null)
@@ -622,10 +568,7 @@ public partial class FormFichaMedica : Form
     {
         Close();
     }
-
-    /// <summary>
-    /// Estructura interna para los elementos del selector de mascotas con formato personalizado.
-    /// </summary>
+    // Estructura interna para los elementos del selector de mascotas con formato personalizado.
     private sealed class MascotaComboItem
     {
         public required MascotaRespuestaDto Mascota { get; init; }
@@ -634,10 +577,7 @@ public partial class FormFichaMedica : Form
         public override string ToString() => Texto;
     }
 }
-
-/// <summary>
-/// Subclase de compatibilidad que expone FormHistorialClinico como alias de FormFichaMedica.
-/// </summary>
+// Subclase de compatibilidad que expone FormHistorialClinico como alias de FormFichaMedica.
 public class FormHistorialClinico : FormFichaMedica
 {
     public FormHistorialClinico() : base()

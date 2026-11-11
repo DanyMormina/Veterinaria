@@ -1,15 +1,12 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Formulario de aplicación y gestión de tratamientos veterinarios en consultas clínicas.
-/// Adhiere al sistema de diseño "Ejecutivo Romántico Pastel", validaciones preventivas,
-/// filtros predictivos en tiempo real y el Result Pattern (.NET 10 / C#).
-/// </summary>
+// Formulario de aplicación y gestión de tratamientos veterinarios en consultas clínicas.
+// Adhiere al sistema de diseño "Ejecutivo Romántico Pastel", validaciones preventivas,
+// filtros predictivos en tiempo real y el Result Pattern (.NET 10 / C#).
 public partial class FormTratamientos : Form
 {
     private readonly TratamientoControlador? _tratamientoControlador;
@@ -28,17 +25,11 @@ public partial class FormTratamientos : Form
 
     private decimal _importeConsulta;
     private decimal _totalAplicados;
-
-    /// <summary>
-    /// Constructor por defecto para compatibilidad con el diseñador de Windows Forms.
-    /// </summary>
+    // Constructor por defecto para compatibilidad con el diseñador de Windows Forms.
     public FormTratamientos() : this(null, null, null)
     {
     }
-
-    /// <summary>
-    /// Constructor principal con inyección de dependencias de controladores clínicos.
-    /// </summary>
+    // Constructor principal con inyección de dependencias de controladores clínicos.
     public FormTratamientos(
         TratamientoControlador? tratamientoControlador,
         ConsultaControlador? consultaControlador,
@@ -52,10 +43,7 @@ public partial class FormTratamientos : Form
 
         ConfigurarRestriccionesTeclado();
     }
-
-    /// <summary>
-    /// Inicializa la sesión, limpia la grilla y precarga los catálogos clínicos.
-    /// </summary>
+    // Inicializa la sesión, limpia la grilla y precarga los catálogos clínicos.
     private async void FormTratamientos_Load(object? sender, EventArgs e)
     {
         // 1. Configuración de sesión y estado
@@ -78,11 +66,8 @@ public partial class FormTratamientos : Form
     }
 
     #region Carga de Datos y Catálogos
-
-    /// <summary>
-    /// Carga el padrón de pacientes activos en el desplegable con autocompletado y búsqueda en tiempo real.
-    /// Formato: "{NombreMascota} - {NombrePropietario}".
-    /// </summary>
+    // Carga el padrón de pacientes activos en el desplegable con autocompletado y búsqueda en tiempo real.
+    // Formato: "{NombreMascota} - {NombrePropietario}".
     private async Task CargarCatalogoMascotasAsync()
     {
         if (_mascotaControlador is null) return;
@@ -121,11 +106,8 @@ public partial class FormTratamientos : Form
             _cargandoMascotas = false;
         }
     }
-
-    /// <summary>
-    /// Carga el catálogo de tratamientos activos con autocompletado predictivo.
-    /// Formato: "{Nombre/Descripcion} - Precio: {Precio:C2}".
-    /// </summary>
+    // Carga el catálogo de tratamientos activos con autocompletado predictivo.
+    // Formato: "{Nombre/Descripcion} - Precio: {Precio:C2}".
     public async Task CargarCatalogoTratamientosAsync()
     {
         if (_tratamientoControlador is null) return;
@@ -178,11 +160,8 @@ public partial class FormTratamientos : Form
             _cargandoTratamientos = false;
         }
     }
-
-    /// <summary>
-    /// Carga las consultas de la mascota seleccionada ordenadas de la más reciente a la más antigua.
-    /// Formato: "{FechaHora:dd/MM/yyyy HH:mm} - Diagnóstico: {DiagnosticoCorto}".
-    /// </summary>
+    // Carga las consultas de la mascota seleccionada ordenadas de la más reciente a la más antigua.
+    // Formato: "{FechaHora:dd/MM/yyyy HH:mm} - Diagnóstico: {DiagnosticoCorto}".
     private async Task CargarConsultasDeMascotaAsync(long idMascota)
     {
         if (_consultaControlador is null) return;
@@ -232,11 +211,8 @@ public partial class FormTratamientos : Form
             _cargandoConsultas = false;
         }
     }
-
-    /// <summary>
-    /// Consulta y puebla asíncronamente los tratamientos aplicados a la consulta clínica activa.
-    /// Recalcula el total acumulado de la consulta.
-    /// </summary>
+    // Consulta y puebla asíncronamente los tratamientos aplicados a la consulta clínica activa.
+    // Recalcula el total acumulado de la consulta.
     private async Task CargarTratamientosConsultaAsync(long idConsulta)
     {
         if (_tratamientoControlador is null) return;
@@ -284,10 +260,7 @@ public partial class FormTratamientos : Form
     #endregion
 
     #region Eventos Interactivos de Controles
-
-    /// <summary>
-    /// Actualiza la ficha resumen de la mascota y recarga sus consultas clínicas en cascada.
-    /// </summary>
+    // Actualiza la ficha resumen de la mascota y recarga sus consultas clínicas en cascada.
     private async void CboMascotas_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoMascotas) return;
@@ -316,10 +289,7 @@ public partial class FormTratamientos : Form
         await CargarCatalogoTratamientosAsync();
         await CargarConsultasDeMascotaAsync(idMascota.Value);
     }
-
-    /// <summary>
-    /// Al cambiar la consulta seleccionada, actualiza la grilla con los tratamientos de esa consulta.
-    /// </summary>
+    // Al cambiar la consulta seleccionada, actualiza la grilla con los tratamientos de esa consulta.
     private async void CboConsultas_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoConsultas) return;
@@ -335,27 +305,18 @@ public partial class FormTratamientos : Form
             ReiniciarTotal();
         }
     }
-
-    /// <summary>
-    /// Al cambiar el tratamiento seleccionado, recalcula dinámicamente el Subtotal en tiempo real.
-    /// </summary>
+    // Al cambiar el tratamiento seleccionado, recalcula dinámicamente el Subtotal en tiempo real.
     private void CboTratamientos_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_cargandoTratamientos) return;
         RecalcularSubtotal();
     }
-
-    /// <summary>
-    /// Al variar la cantidad, recalcula el Subtotal en tiempo real.
-    /// </summary>
+    // Al variar la cantidad, recalcula el Subtotal en tiempo real.
     private void NumCantidad_ValueChanged(object? sender, EventArgs e)
     {
         RecalcularSubtotal();
     }
-
-    /// <summary>
-    /// Calcula de forma reactiva Subtotal = Cantidad * PrecioUnitario.
-    /// </summary>
+    // Calcula de forma reactiva Subtotal = Cantidad * PrecioUnitario.
     private void RecalcularSubtotal()
     {
         var cantidad = (int)numCantidad.Value;
@@ -384,10 +345,7 @@ public partial class FormTratamientos : Form
     #endregion
 
     #region Apertura de Formularios Modales Auxiliares
-
-    /// <summary>
-    /// Abre el diálogo modal de Alta de Tratamiento (#C88A96) y refresca el catálogo al confirmarse.
-    /// </summary>
+    // Abre el diálogo modal de Alta de Tratamiento (#C88A96) y refresca el catálogo al confirmarse.
     private async void BtnAltaTratamiento_Click(object? sender, EventArgs e)
     {
         using var modalAlta = new FormAltaTratamiento(_tratamientoControlador);
@@ -399,10 +357,7 @@ public partial class FormTratamientos : Form
             lblInfoEstado.Text = "Catálogo de tratamientos actualizado exitosamente.";
         }
     }
-
-    /// <summary>
-    /// Abre el diálogo modal de Modificación/Baja (#E2D9DC) y refresca el catálogo al confirmarse.
-    /// </summary>
+    // Abre el diálogo modal de Modificación/Baja (#E2D9DC) y refresca el catálogo al confirmarse.
     private async void BtnModificarTratamiento_Click(object? sender, EventArgs e)
     {
         var idTratamiento = ObtenerIdSeleccionado(cboTratamientos);
@@ -427,10 +382,7 @@ public partial class FormTratamientos : Form
     #endregion
 
     #region Acción Principal: Aplicar Tratamiento
-
-    /// <summary>
-    /// Registra la aplicación del tratamiento a la consulta clínica activa previa validación.
-    /// </summary>
+    // Registra la aplicación del tratamiento a la consulta clínica activa previa validación.
     private async void BtnAplicar_Click(object? sender, EventArgs e)
     {
         // 1. Validaciones preventivas de selección
@@ -581,11 +533,8 @@ public partial class FormTratamientos : Form
             btnAplicar.Enabled = true;
         }
     }
-
-    /// <summary>
-    /// Botón Limpiar: Restablece completamente el estado de la vista, limpiando selecciones
-    /// de paciente, consultas, tratamientos, detalles y la grilla de tratamientos aplicados.
-    /// </summary>
+    // Botón Limpiar: Restablece completamente el estado de la vista, limpiando selecciones
+    // de paciente, consultas, tratamientos, detalles y la grilla de tratamientos aplicados.
     private async void BtnLimpiar_Click(object? sender, EventArgs e)
     {
         btnLimpiar.Enabled = false;
@@ -599,10 +548,7 @@ public partial class FormTratamientos : Form
             btnLimpiar.Enabled = true;
         }
     }
-
-    /// <summary>
-    /// Restablece todos los controles y estados del formulario a sus valores iniciales predeterminados.
-    /// </summary>
+    // Restablece todos los controles y estados del formulario a sus valores iniciales predeterminados.
     public void RestablecerFormulario()
     {
         // 1. Limpiar selección y ficha resumen de paciente
@@ -641,10 +587,7 @@ public partial class FormTratamientos : Form
     #endregion
 
     #region Navegación y Helpers
-
-    /// <summary>
-    /// Configura restricciones de tipeo en tiempo real sobre los controles del formulario.
-    /// </summary>
+    // Configura restricciones de tipeo en tiempo real sobre los controles del formulario.
     private void ConfigurarRestriccionesTeclado()
     {
         cboMascotas.KeyPress += ValidarSoloLetras_KeyPress;
@@ -656,10 +599,7 @@ public partial class FormTratamientos : Form
             RecalcularSubtotal();
         };
     }
-
-    /// <summary>
-    /// Restringe la búsqueda en el selector de paciente exclusivamente a letras y espacios, bloqueando números y caracteres especiales.
-    /// </summary>
+    // Restringe la búsqueda en el selector de paciente exclusivamente a letras y espacios, bloqueando números y caracteres especiales.
     private void ValidarSoloLetras_KeyPress(object? sender, KeyPressEventArgs e)
     {
         // 1. Permitir teclas de control del sistema (retroceso, cortar/copiar, etc.)

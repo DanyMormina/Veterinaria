@@ -1,12 +1,9 @@
-using Veterinaria.Domain.Dtos;
+﻿using Veterinaria.Domain.Dtos;
 using Veterinaria.Domain.Entidades;
 using CoreSesion = Veterinaria.CrossCutting.Session.SesionActual;
 
 namespace Veterinaria.WinForms.Sesion;
-
-/// <summary>
-/// Fachada de sesión para la capa de presentación Windows Forms sincronizada con Veterinaria.CrossCutting.Session.
-/// </summary>
+// Fachada de sesión para la capa de presentación Windows Forms sincronizada con Veterinaria.CrossCutting.Session.
 public static class SesionActual
 {
     public static long? IdUsuario => CoreSesion.IdUsuario;

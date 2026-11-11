@@ -1,15 +1,12 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Secretario;
-
-/// <summary>
-/// Formulario de gestión y consulta de propietarios para el rol Secretario / Recepción.
-/// Cumple con las especificaciones de diseño "Ejecutivo Romántico Pastel" y validaciones defensivas en tiempo real.
-/// </summary>
+// Formulario de gestión y consulta de propietarios para el rol Secretario / Recepción.
+// Cumple con las especificaciones de diseño "Ejecutivo Romántico Pastel" y validaciones defensivas en tiempo real.
 public partial class FormPropietarios : Form
 {
     // =========================================================================
@@ -51,31 +48,19 @@ public partial class FormPropietarios : Form
     private bool _cargandoDatos = false;
     private bool _limpiando = false;
     private string? _snapshotEdicion;
-
-    /// <summary>
-    /// Si es true, el botón Volver indica retorno a mascotas (alta abierta desde FormMascotas).
-    /// </summary>
+    // Si es true, el botón Volver indica retorno a mascotas (alta abierta desde FormMascotas).
     [System.ComponentModel.Browsable(false)]
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public bool RetornarAMascotas { get; set; }
-
-    /// <summary>
-    /// Id del último propietario creado en esta sesión del formulario (si hubo alta exitosa).
-    /// </summary>
+    // Id del último propietario creado en esta sesión del formulario (si hubo alta exitosa).
     [System.ComponentModel.Browsable(false)]
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public long? UltimoIdCreado { get; private set; }
-
-    /// <summary>
-    /// Constructor por defecto requerido por el diseñador de Windows Forms.
-    /// </summary>
+    // Constructor por defecto requerido por el diseñador de Windows Forms.
     public FormPropietarios() : this(null, null)
     {
     }
-
-    /// <summary>
-    /// Constructor con inyección de dependencias de controladores y servicios de propietarios.
-    /// </summary>
+    // Constructor con inyección de dependencias de controladores y servicios de propietarios.
     public FormPropietarios(
         PropietarioControlador? propietarioControlador,
         PropietarioService? propietarioService = null)
@@ -89,10 +74,7 @@ public partial class FormPropietarios : Form
         ConfigurarRestriccionesTeclado();
         ConfigurarEventos();
     }
-
-    /// <summary>
-    /// Configura los eventos de interacción del formulario y sus botones de acción.
-    /// </summary>
+    // Configura los eventos de interacción del formulario y sus botones de acción.
     private void ConfigurarEventos()
     {
         btnGuardar.Click += async (_, _) => await GuardarPropietarioAsync();
@@ -200,10 +182,7 @@ public partial class FormPropietarios : Form
         if (!bloquear)
             lblInfoEstado.Text = string.Empty;
     }
-
-    /// <summary>
-    /// Configura las restricciones de entrada de teclado en tiempo real (KeyPress).
-    /// </summary>
+    // Configura las restricciones de entrada de teclado en tiempo real (KeyPress).
     private void ConfigurarRestriccionesTeclado()
     {
         // 1. txtNombre y txtApellido: permitir ÚNICAMENTE letras, espacios y vocales con acento
@@ -247,11 +226,8 @@ public partial class FormPropietarios : Form
             }
         };
     }
-
-    /// <summary>
-    /// Vincula los eventos Enter y TextChanged a los controles de entrada para restaurar
-    /// dinámicamente los bordes neutrales (#E2D9DC) y fondos blancos al interactuar.
-    /// </summary>
+    // Vincula los eventos Enter y TextChanged a los controles de entrada para restaurar
+    // dinámicamente los bordes neutrales (#E2D9DC) y fondos blancos al interactuar.
     private void ConfigurarValidacionVisual()
     {
         _controlesEntrada = [txtDNI, txtNombre, txtApellido, txtTelefono, txtCorreo, txtDireccion];
@@ -283,11 +259,7 @@ public partial class FormPropietarios : Form
         await CargarPropietariosGrillaAsync();
         LimpiarFormulario();
     }
-
-    /// <summary>
-    /// Valida integralmente los campos del formulario conforme a las especificaciones de negocio.
-    /// Retorna un Resultado indicando el éxito o el mensaje descriptivo junto con el control que falló.
-    /// </summary>
+    // Valida integralmente los campos del formulario conforme a las especificaciones de negocio.
     public Resultado ValidarCampos(out Control? controlConFoco)
     {
         RestablecerBordes();
@@ -368,20 +340,14 @@ public partial class FormPropietarios : Form
         controlConFoco = null;
         return Resultado.Exito();
     }
-
-    /// <summary>
-    /// Sobrecarga booleana de ValidarCampos para compatibilidad y simplicidad en flujos directos.
-    /// </summary>
+    // Sobrecarga booleana de ValidarCampos para compatibilidad y simplicidad en flujos directos.
     public bool ValidarCampos(out string mensajeError, out Control? controlConFoco)
     {
         var resultado = ValidarCampos(out controlConFoco);
         mensajeError = resultado.EsExitoso ? string.Empty : resultado.Mensaje;
         return resultado.EsExitoso;
     }
-
-    /// <summary>
-    /// Marca visualmente un control que falló la validación resaltando su contenedor en Borgoña suave (#B85D69).
-    /// </summary>
+    // Marca visualmente un control que falló la validación resaltando su contenedor en Borgoña suave (#B85D69).
     private void MarcarError(Control? control, string mensaje, bool enfocar = true)
     {
         if (control is null) return;
@@ -405,10 +371,7 @@ public partial class FormPropietarios : Form
             control.Focus();
         }
     }
-
-    /// <summary>
-    /// Restablece un control individual a sus colores neutros (#E2D9DC, fondo blanco, texto carbón).
-    /// </summary>
+    // Restablece un control individual a sus colores neutros (#E2D9DC, fondo blanco, texto carbón).
     private void LimpiarErrorDeControl(Control control)
     {
         if (control.Parent is Panel pnlContenedor)
@@ -424,10 +387,7 @@ public partial class FormPropietarios : Form
             etiqueta.ForeColor = ColorEtiquetaNormal;
         }
     }
-
-    /// <summary>
-    /// Restablece los bordes y fondos de todos los campos de entrada a estado neutral.
-    /// </summary>
+    // Restablece los bordes y fondos de todos los campos de entrada a estado neutral.
     private void RestablecerBordes()
     {
         foreach (var control in _controlesEntrada)
@@ -435,10 +395,7 @@ public partial class FormPropietarios : Form
             LimpiarErrorDeControl(control);
         }
     }
-
-    /// <summary>
-    /// Obtiene la etiqueta asociada a un control de entrada para manipular su color de forma reactiva.
-    /// </summary>
+    // Obtiene la etiqueta asociada a un control de entrada para manipular su color de forma reactiva.
     private Label? ObtenerEtiquetaDeControl(Control control) => control switch
     {
         _ when ReferenceEquals(control, txtDni) => lblDni,
@@ -449,10 +406,7 @@ public partial class FormPropietarios : Form
         _ when ReferenceEquals(control, txtDireccion) => lblDireccion,
         _ => null
     };
-
-    /// <summary>
-    /// Identifica el control que generó un conflicto a partir del mensaje devuelto por la capa de negocio.
-    /// </summary>
+    // Identifica el control que generó un conflicto a partir del mensaje devuelto por la capa de negocio.
     private Control IdentificarControlDesdeMensaje(string mensaje)
     {
         var msg = mensaje.ToLowerInvariant();
@@ -464,11 +418,8 @@ public partial class FormPropietarios : Form
         if (msg.Contains("nombre")) return txtNombre;
         return txtDNI;
     }
-
-    /// <summary>
-    /// Limpia todos los campos, restablece bordes neutrales, deselecciona filas de la grilla,
-    /// anula el ID seleccionado, activa el Modo Creación y ubica el foco en txtDNI.
-    /// </summary>
+    // Limpia todos los campos, restablece bordes neutrales, deselecciona filas de la grilla,
+    // anula el ID seleccionado, activa el Modo Creación y ubica el foco en txtDNI.
     private void LimpiarFormulario()
     {
         _limpiando = true;
@@ -498,15 +449,12 @@ public partial class FormPropietarios : Form
             _limpiando = false;
         }
     }
-
-    /// <summary>
-    /// Registra un nuevo propietario en el sistema previa validación de campos y unicidad de contacto.
-    /// Algoritmo paso a paso:
-    /// 1. Valida campos requeridos y formatos locales (DNI, Nombre, Apellido, Teléfono, Correo, Dirección).
-    /// 2. Construye el DTO de solicitud con los datos limpios.
-    /// 3. Llama al servicio asíncrono para comprobar unicidad y persistir en base de datos.
-    /// 4. Si la operación es exitosa, notifica al usuario, limpia el formulario y recarga la grilla.
-    /// </summary>
+    // Registra un nuevo propietario en el sistema previa validación de campos y unicidad de contacto.
+    // Algoritmo paso a paso:
+    // 1. Valida campos requeridos y formatos locales (DNI, Nombre, Apellido, Teléfono, Correo, Dirección).
+    // 2. Construye el DTO de solicitud con los datos limpios.
+    // 3. Llama al servicio asíncrono para comprobar unicidad y persistir en base de datos.
+    // 4. Si la operación es exitosa, notifica al usuario, limpia el formulario y recarga la grilla.
     private async Task GuardarPropietarioAsync()
     {
         // Paso 1: Validación local
@@ -537,43 +485,54 @@ public partial class FormPropietarios : Form
 
         try
         {
+            // Deshabilita el botón Guardar para evitar clics dobles accidentales mientras procesa
             btnGuardar.Enabled = false;
+            // Cambia el cursor a reloj de arena / espera para indicar al usuario que está trabajando
             Cursor = Cursors.WaitCursor;
 
-            // Paso 3: Persistir a través de PropietarioService o PropietarioControlador
+            // Envía los datos (DTO) al servicio o controlador para insertarlos en la base de datos
             var resultado = _propietarioService is not null
                 ? await _propietarioService.CrearAsync(dto)
                 : await _propietarioControlador!.CrearAsync(dto);
 
+            // Si la base de datos guardó con éxito:
             if (resultado.EsExitoso)
             {
+                // Guarda el ID del nuevo propietario para que FormMascotas lo pueda seleccionar automáticamente
                 UltimoIdCreado = resultado.Valor;
+                // Muestra cartel de éxito al usuario
                 MessageBox.Show(resultado.Mensaje ?? "Propietario registrado exitosamente.", "Registro Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Limpia todas las cajas de texto del formulario
                 LimpiarFormulario();
+                // Recarga la grilla para mostrar el nuevo propietario en la lista
                 await CargarPropietariosGrillaAsync();
             }
+            // Si hubo un error de validación o negocio (ej: DNI repetido):
             else
             {
+                // Busca qué caja de texto causó el problema según el mensaje de error
                 var ctrlFalla = IdentificarControlDesdeMensaje(resultado.Mensaje);
+                // Pinta el borde en rojo del campo que falló
                 MarcarError(ctrlFalla, resultado.Mensaje);
+                // Muestra un aviso de advertencia con la explicación del error
                 MessageBox.Show(resultado.Mensaje, "Error al Registrar", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
+        // El bloque finally se ejecuta SIEMPRE, haya salido bien o haya ocurrido un error
         finally
         {
+            // Vuelve a habilitar el botón Guardar
             btnGuardar.Enabled = true;
+            // Restablece el cursor del mouse a la flecha normal
             Cursor = Cursors.Default;
         }
     }
-
-    /// <summary>
-    /// Modifica los datos del propietario actualmente seleccionado en la grilla.
-    /// Algoritmo paso a paso:
-    /// 1. Verifica que exista un ID de propietario seleccionado válido.
-    /// 2. Valida los campos del formulario con ValidarCampos.
-    /// 3. Ejecuta la actualización asíncrona validando unicidad excluyendo el registro actual.
-    /// 4. Si la actualización es exitosa, notifica, limpia el formulario y actualiza la grilla.
-    /// </summary>
+    // Modifica los datos del propietario actualmente seleccionado en la grilla.
+    // Algoritmo paso a paso:
+    // 1. Verifica que exista un ID de propietario seleccionado válido.
+    // 2. Valida los campos del formulario con ValidarCampos.
+    // 3. Ejecuta la actualización asíncrona validando unicidad excluyendo el registro actual.
+    // 4. Si la actualización es exitosa, notifica, limpia el formulario y actualiza la grilla.
     private async Task ModificarPropietarioAsync()
     {
         if (!_idPropietarioSeleccionado.HasValue || _idPropietarioSeleccionado.Value <= 0)
@@ -637,19 +596,13 @@ public partial class FormPropietarios : Form
             Cursor = Cursors.Default;
         }
     }
-
-    /// <summary>
-    /// Ejecuta la búsqueda global multi-campo de propietarios en txtBuscar o recarga los activos si está vacío.
-    /// </summary>
+    // Ejecuta la búsqueda global multi-campo de propietarios en txtBuscar o recarga los activos si está vacío.
     private async Task BuscarPropietariosAsync()
     {
         await CargarPropietariosGrillaAsync(txtBuscar.Text.Trim());
     }
-
-    /// <summary>
-    /// Consulta asíncronamente los propietarios con AsNoTracking() aplicando el término de búsqueda si existe.
-    /// Refresca la grilla dgvPropietarios sin congelar la interfaz de usuario.
-    /// </summary>
+    // Consulta asíncronamente los propietarios con AsNoTracking() aplicando el término de búsqueda si existe.
+    // Refresca la grilla dgvPropietarios sin congelar la interfaz de usuario.
     private async Task CargarPropietariosGrillaAsync(string? terminoBusqueda = null)
     {
         try
@@ -720,11 +673,8 @@ public partial class FormPropietarios : Form
             _cargandoDatos = false;
         }
     }
-
-    /// <summary>
-    /// Sincroniza la fila seleccionada en dgvPropietarios poblando los campos de texto superiores,
-    /// asignando _idPropietarioSeleccionado y conmutando el formulario al Modo Edición.
-    /// </summary>
+    // Sincroniza la fila seleccionada en dgvPropietarios poblando los campos de texto superiores,
+    // asignando _idPropietarioSeleccionado y conmutando el formulario al Modo Edición.
     private void CargarPropietarioSeleccionado()
     {
         if (_cargandoDatos || _limpiando || dgvPropietarios.CurrentRow is null || dgvPropietarios.CurrentRow.Index < 0)

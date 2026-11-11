@@ -1,14 +1,11 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Entidades;
 
 namespace Veterinaria.Infrastructure;
-
-/// <summary>
-/// Contexto principal de Entity Framework Core para la base de datos de Veterinaria.
-/// Incluye mapeo Fluent segmentado por módulos, soft delete global y filtros automáticos.
-/// </summary>
+// Contexto principal de Entity Framework Core para la base de datos de Veterinaria.
+// Incluye mapeo Fluent segmentado por módulos, soft delete global y filtros automáticos.
 public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) : DbContext(options)
 {
     // =========================================================================
@@ -81,10 +78,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
         ConfigurarPagos(modelBuilder);
         ConfigurarSistema(modelBuilder);
     }
-
-    /// <summary>
-    /// Mapeo de entidades de Catálogo y Datos Maestros.
-    /// </summary>
+    // Mapeo de entidades de Catálogo y Datos Maestros.
     private static void ConfigurarCatalogos(ModelBuilder builder)
     {
         // TipoUsuario
@@ -191,10 +185,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
-
-    /// <summary>
-    /// Mapeo de entidades de Seguridad y Usuarios.
-    /// </summary>
+    // Mapeo de entidades de Seguridad y Usuarios.
     private static void ConfigurarSeguridad(ModelBuilder builder)
     {
         // Usuario
@@ -249,10 +240,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
-
-    /// <summary>
-    /// Mapeo de entidades de Clientes (Propietarios) y Pacientes (Mascotas).
-    /// </summary>
+    // Mapeo de entidades de Clientes (Propietarios) y Pacientes (Mascotas).
     private static void ConfigurarClientesPacientes(ModelBuilder builder)
     {
         // Propietario
@@ -315,10 +303,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
-
-    /// <summary>
-    /// Mapeo de entidades de Atención Clínica, Consultas, Detalles de Tratamiento y Vacunación.
-    /// </summary>
+    // Mapeo de entidades de Atención Clínica, Consultas, Detalles de Tratamiento y Vacunación.
     private static void ConfigurarClinicaConsultas(ModelBuilder builder)
     {
         // Consulta
@@ -417,10 +402,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
-
-    /// <summary>
-    /// Mapeo de entidades de Pagos y Cobranzas.
-    /// </summary>
+    // Mapeo de entidades de Pagos y Cobranzas.
     private static void ConfigurarPagos(ModelBuilder builder)
     {
         // Pago
@@ -447,10 +429,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
-
-    /// <summary>
-    /// Mapeo de entidades de Sistema y Copias de Seguridad.
-    /// </summary>
+    // Mapeo de entidades de Sistema y Copias de Seguridad.
     private static void ConfigurarSistema(ModelBuilder builder)
     {
         // Backup
@@ -474,10 +453,7 @@ public class ContextoVeterinaria(DbContextOptions<ContextoVeterinaria> options) 
             b.HasIndex(x => x.FechaCreacion).HasDatabaseName("IX_Backup_FechaCreacion");
         });
     }
-
-    /// <summary>
-    /// Intercepta el guardado de cambios para aplicar soft delete defensivo.
-    /// </summary>
+    // Intercepta el guardado de cambios para aplicar soft delete defensivo.
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         foreach (var entry in ChangeTracker.Entries<ISoftDeletable>())

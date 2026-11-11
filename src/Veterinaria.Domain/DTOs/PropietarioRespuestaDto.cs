@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Dtos;
-
-/// <summary>
-/// DTO de respuesta para la entidad Propietario.
-/// </summary>
+﻿namespace Veterinaria.Domain.Dtos;
+// DTO de respuesta para la entidad Propietario.
 public class PropietarioRespuestaDto
 {
     public long Id { get; set; }

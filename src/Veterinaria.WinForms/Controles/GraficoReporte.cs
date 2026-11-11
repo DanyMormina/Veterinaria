@@ -1,18 +1,12 @@
-using System.Drawing.Drawing2D;
+﻿using System.Drawing.Drawing2D;
 using System.Globalization;
 
 namespace Veterinaria.WinForms.Controles;
-
-/// <summary>
-/// Serie de valores para los gráficos de columnas, barras y línea.
-/// </summary>
+// Serie de valores para los gráficos de columnas, barras y línea.
 public sealed record SerieGrafico(string Nombre, Color Color, IReadOnlyList<decimal> Valores);
-
-/// <summary>
-/// Control de gráficos dibujado con GDI+ (sin librerías externas) para los reportes:
-/// columnas agrupadas, barras horizontales, dona y línea. Incluye tooltips interactivos,
-/// cabeceras adaptativas sin solapamiento y formato compacto de valores.
-/// </summary>
+// Control de gráficos dibujado con GDI+ (sin librerías externas) para los reportes:
+// columnas agrupadas, barras horizontales, dona y línea. Incluye tooltips interactivos,
+// cabeceras adaptativas sin solapamiento y formato compacto de valores.
 public sealed class GraficoReporte : Control
 {
     private enum TipoGrafico { Ninguno, Columnas, BarrasHorizontales, Dona, Linea }
@@ -178,10 +172,7 @@ public sealed class GraficoReporte : Control
         }
         base.Dispose(disposing);
     }
-
-    /// <summary>
-    /// Dibuja el gráfico actual dentro del área indicada (pantalla o página de impresión).
-    /// </summary>
+    // Dibuja el gráfico actual dentro del área indicada (pantalla o página de impresión).
     public void Dibujar(Graphics g, Rectangle area)
     {
         g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -445,12 +436,12 @@ public sealed class GraficoReporte : Control
             if (ancho > anchoLeyendaMaximo) anchoLeyendaMaximo = ancho;
         }
 
-        // Asignar espacio equilibrado entre la dona y la leyenda
-        var anchoLeyendaDeseado = Math.Clamp(anchoLeyendaMaximo + 26f, cuerpo.Width * 0.45f, cuerpo.Width * 0.60f);
-        var espacioDonut = cuerpo.Width - anchoLeyendaDeseado - 16f;
+        // Asignar espacio equilibrado entre la dona y la leyenda (dando prioridad a que la dona sea grande)
+        var anchoLeyendaDeseado = Math.Min(anchoLeyendaMaximo + 20f, cuerpo.Width * 0.44f);
+        var espacioDonut = cuerpo.Width - anchoLeyendaDeseado - 12f;
 
-        var diametro = Math.Min(cuerpo.Height - 12, (int)espacioDonut);
-        diametro = Math.Max(diametro, 80);
+        var diametro = Math.Min(cuerpo.Height - 16, (int)espacioDonut);
+        diametro = Math.Max(diametro, 130);
 
         var circulo = new Rectangle(
             (int)(cuerpo.Left + Math.Max(4, (espacioDonut - diametro) / 2)),
@@ -459,7 +450,7 @@ public sealed class GraficoReporte : Control
             diametro);
 
         var radioExterno = diametro / 2f;
-        var radioInterno = diametro / 4f;
+        var radioInterno = radioExterno * 0.56f;
         var centroX = circulo.Left + radioExterno;
         var centroY = circulo.Top + radioExterno;
 
@@ -485,13 +476,41 @@ public sealed class GraficoReporte : Control
             angulo += barrido;
         }
 
-        var hueco = Rectangle.Inflate(circulo, -(int)radioInterno, -(int)radioInterno);
+        // Hueco interior de la dona (amplio y circular)
+        var hueco = new RectangleF(centroX - radioInterno, centroY - radioInterno, radioInterno * 2f, radioInterno * 2f);
         using (var pincelFondo = new SolidBrush(Color.White))
             g.FillEllipse(pincelFondo, hueco);
 
-        using var fuenteTotal = new Font("Segoe UI", diametro > 140 ? 11F : 9.5F, FontStyle.Bold);
-        using var formatoCentroTotal = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-        g.DrawString($"Total\n{_formato(total)}", fuenteTotal, pincelTexto, hueco, formatoCentroTotal);
+        // Formateo del total en el centro: etiqueta 'TOTAL' arriba y valor numérico pequeño y elegante en una sola línea
+        var textoMonto = _formato(total);
+        float tamanoMonto = diametro > 150 ? 8.5f : 7.5f;
+        float anchoDisponibleHueco = radioInterno * 2f - 6f;
+
+        // Si el número es largo, reduce suavemente la fuente para que jamás se corte ni se divida en renglones
+        while (tamanoMonto > 5.5f)
+        {
+            using var fontPrueba = new Font("Segoe UI", tamanoMonto, FontStyle.Bold);
+            if (g.MeasureString(textoMonto, fontPrueba).Width <= anchoDisponibleHueco)
+                break;
+            tamanoMonto -= 0.5f;
+        }
+
+        using var fuenteTotalLabel = new Font("Segoe UI", 6.5f, FontStyle.Bold);
+        using var fuenteMonto = new Font("Segoe UI", tamanoMonto, FontStyle.Bold);
+        using var brushLabel = new SolidBrush(Color.FromArgb(130, 120, 125));
+        using var formatoCentroDona = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center,
+            FormatFlags = StringFormatFlags.NoWrap,
+            Trimming = StringTrimming.EllipsisCharacter
+        };
+
+        var rectTotalLabel = new RectangleF(hueco.Left, hueco.Top + hueco.Height * 0.22f, hueco.Width, hueco.Height * 0.26f);
+        var rectTotalMonto = new RectangleF(hueco.Left, hueco.Top + hueco.Height * 0.48f, hueco.Width, hueco.Height * 0.35f);
+
+        g.DrawString("TOTAL", fuenteTotalLabel, brushLabel, rectTotalLabel, formatoCentroDona);
+        g.DrawString(textoMonto, fuenteMonto, pincelTexto, rectTotalMonto, formatoCentroDona);
 
         // Leyenda
         var xLeyenda = circulo.Right + 16f;

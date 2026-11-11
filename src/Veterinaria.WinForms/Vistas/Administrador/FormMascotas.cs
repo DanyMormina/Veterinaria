@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.WinForms.Sesion;
@@ -33,17 +33,11 @@ public partial class FormMascotas : Form
     private List<MascotaRespuestaDto> _mascotas = [];
     private bool _cargandoDatos = false;
     private long? _idSeleccionado;
-
-    /// <summary>
-    /// Constructor por defecto para soporte del Diseñador de Windows Forms.
-    /// </summary>
+    // Constructor por defecto para soporte del Diseñador de Windows Forms.
     public FormMascotas() : this(null, null, null, null)
     {
     }
-
-    /// <summary>
-    /// Constructor con Inyección de Dependencias.
-    /// </summary>
+    // Constructor con Inyección de Dependencias.
     public FormMascotas(
         MascotaService? mascotaService,
         PropietarioControlador? propietarioControlador = null,
@@ -62,10 +56,7 @@ public partial class FormMascotas : Form
         ConfigurarRestriccionesTeclado();
         ConfigurarEventosInteraccion();
     }
-
-    /// <summary>
-    /// Inicializa el ErrorProvider y registra los controles que participan en la auditoría visual.
-    /// </summary>
+    // Inicializa el ErrorProvider y registra los controles que participan en la auditoría visual.
     private void ConfigurarValidacionVisual()
     {
         _errores.ContainerControl = this;
@@ -86,10 +77,7 @@ public partial class FormMascotas : Form
             }
         }
     }
-
-    /// <summary>
-    /// Aplica restricciones de tipeo en tiempo real (KeyPress) bloqueando caracteres no permitidos.
-    /// </summary>
+    // Aplica restricciones de tipeo en tiempo real (KeyPress) bloqueando caracteres no permitidos.
     private void ConfigurarRestriccionesTeclado()
     {
         var validarSoloTexto = new KeyPressEventHandler((sender, e) =>
@@ -100,7 +88,14 @@ public partial class FormMascotas : Form
             if (char.IsLetter(e.KeyChar))
                 return;
 
-            if (e.KeyChar == ' ' && sender is TextBox txt && !txt.Text.EndsWith(' '))
+            var textoActual = sender switch
+            {
+                TextBox txt => txt.Text,
+                ComboBox cbo => cbo.Text,
+                _ => string.Empty
+            };
+
+            if (e.KeyChar == ' ' && !string.IsNullOrEmpty(textoActual) && !textoActual.EndsWith(' '))
                 return;
 
             e.Handled = true;
@@ -114,11 +109,13 @@ public partial class FormMascotas : Form
 
         // 3. txtColor: Solo caracteres alfabéticos, tildes y espacios
         txtColor.KeyPress += validarSoloTexto;
-    }
 
-    /// <summary>
-    /// Asocia los eventos de botones y filtros en cascada de forma reactiva.
-    /// </summary>
+        // 4. Desplegables de búsqueda por especie y raza: solo letras y espacios (sin números)
+        cboEspecie.KeyPress += validarSoloTexto;
+        cboRaza.KeyPress += validarSoloTexto;
+        cboFiltroEspecie.KeyPress += validarSoloTexto;
+    }
+    // Asocia los eventos de botones y filtros en cascada de forma reactiva.
     private void ConfigurarEventosInteraccion()
     {
         // 1. Filtros reactivos instantáneos sobre la grilla
@@ -180,10 +177,7 @@ public partial class FormMascotas : Form
         txtColor.Clear();
         _idSeleccionado = null;
     }
-
-    /// <summary>
-    /// Puebla de forma asíncrona los ComboBox de Especies y Sexo, y configura sugerencias en Propietario.
-    /// </summary>
+    // Puebla de forma asíncrona los ComboBox de Especies y Sexo, y configura sugerencias en Propietario.
     private async Task InicializarCombosAsync()
     {
         _cargandoDatos = true;
@@ -251,12 +245,9 @@ public partial class FormMascotas : Form
             _cargandoDatos = false;
         }
     }
-
-    /// <summary>
-    /// Maneja la dependencia en cascada entre cboEspecie y cboRaza.
-    /// Si se selecciona una especie específica, carga asíncronamente solo las razas asociadas a ella.
-    /// Si se selecciona "(Todas)", resetea y deshabilita cboRaza.
-    /// </summary>
+    // Maneja la dependencia en cascada entre cboEspecie y cboRaza.
+    // Si se selecciona una especie específica, carga asíncronamente solo las razas asociadas a ella.
+    // Si se selecciona "(Todas)", resetea y deshabilita cboRaza.
     private async Task cboEspecie_SelectedIndexChangedAsync()
     {
         if (_cargandoDatos) return;
@@ -290,12 +281,8 @@ public partial class FormMascotas : Form
 
         cboRaza.SelectedIndex = 0;
     }
-
-
-    /// <summary>
-    /// Carga la nómina completa de mascotas desde la base de datos a la memoria
-    /// y aplica los filtros vigentes para renderizar la grilla.
-    /// </summary>
+    // Carga la nómina completa de mascotas desde la base de datos a la memoria
+    // y aplica los filtros vigentes para renderizar la grilla.
     private async Task CargarMascotasAsync()
     {
         if (_mascotaService is null)
@@ -315,11 +302,8 @@ public partial class FormMascotas : Form
         _mascotas = resultado.Valor.ToList();
         AplicarFiltros();
     }
-
-    /// <summary>
-    /// Aplica los filtros combinados de búsqueda en memoria sobre la lista de mascotas,
-    /// actualizando la grilla de forma instantánea conforme a la misma filosofía de FormPropietarios.
-    /// </summary>
+    // Aplica los filtros combinados de búsqueda en memoria sobre la lista de mascotas,
+    // actualizando la grilla de forma instantánea conforme a la misma filosofía de FormPropietarios.
     private void AplicarFiltros()
     {
         // 1. Obtener texto de búsqueda rápida y estado seleccionado
@@ -392,10 +376,7 @@ public partial class FormMascotas : Form
         var filtradas = consulta.ToList();
         MostrarMascotasEnGrilla(filtradas);
     }
-
-    /// <summary>
-    /// Llena las filas del DataGridView con los resultados de la consulta.
-    /// </summary>
+    // Llena las filas del DataGridView con los resultados de la consulta.
     private void MostrarMascotasEnGrilla(IEnumerable<MascotaRespuestaDto> mascotas)
     {
         dgvMascotas.Rows.Clear();
@@ -419,10 +400,7 @@ public partial class FormMascotas : Form
         _idSeleccionado = null;
         // El listado queda cargado; no precargar campos del formulario
     }
-
-    /// <summary>
-    /// Resalta visualmente un control en estado de error aplicando el estilo Ejecutivo Romántico Pastel.
-    /// </summary>
+    // Resalta visualmente un control en estado de error aplicando el estilo Ejecutivo Romántico Pastel.
     private void MarcarError(Control? control, string mensaje, bool enfocar = true)
     {
         if (control is null) return;
@@ -450,10 +428,7 @@ public partial class FormMascotas : Form
             control.Focus();
         }
     }
-
-    /// <summary>
-    /// Limpia el error visual de un control al interactuar con él (Enter, TextChanged, SelectedIndexChanged).
-    /// </summary>
+    // Limpia el error visual de un control al interactuar con él (Enter, TextChanged, SelectedIndexChanged).
     private void Control_LimpiarError(object? sender, EventArgs e)
     {
         if (sender is not Control control) return;
@@ -476,10 +451,7 @@ public partial class FormMascotas : Form
 
         _errores.SetError(control, string.Empty);
     }
-
-    /// <summary>
-    /// Restaura todos los controles de entrada a su estado visual neutral.
-    /// </summary>
+    // Restaura todos los controles de entrada a su estado visual neutral.
     private void LimpiarErroresValidacion()
     {
         _errores.Clear();
@@ -503,10 +475,7 @@ public partial class FormMascotas : Form
             }
         }
     }
-
-    /// <summary>
-    /// Devuelve la etiqueta correspondiente a un control de entrada para manipular su color de texto.
-    /// </summary>
+    // Devuelve la etiqueta correspondiente a un control de entrada para manipular su color de texto.
     private Label? ObtenerEtiquetaDeControl(Control control)
     {
         if (control == txtNombre) return lblNombre;
@@ -517,10 +486,7 @@ public partial class FormMascotas : Form
         if (control == txtColor) return lblColor;
         return null;
     }
-
-    /// <summary>
-    /// Selecciona un elemento en un ComboBox a partir de su ID encapsulado en un ItemCombo.
-    /// </summary>
+    // Selecciona un elemento en un ComboBox a partir de su ID encapsulado en un ItemCombo.
     private static void SeleccionarEnComboPorId(ComboBox cbo, long id)
     {
         for (int i = 0; i < cbo.Items.Count; i++)
@@ -532,11 +498,8 @@ public partial class FormMascotas : Form
             }
         }
     }
-
-    /// <summary>
-    /// Restablece todos los campos de búsqueda de la mascota a su estado inicial,
-    /// limpia los errores visuales y recarga el listado completo de mascotas.
-    /// </summary>
+    // Restablece todos los campos de búsqueda de la mascota a su estado inicial,
+    // limpia los errores visuales y recarga el listado completo de mascotas.
     private async Task RestablecerEstadoInicialAsync()
     {
         _cargandoDatos = true;
@@ -649,10 +612,7 @@ public partial class FormMascotas : Form
             _idSeleccionado = mascota.Id;
         }
     }
-
-    /// <summary>
-    /// Elemento auxiliar para vincular objetos con identificador numérico y texto en ComboBoxes.
-    /// </summary>
+    // Elemento auxiliar para vincular objetos con identificador numérico y texto en ComboBoxes.
     private sealed record ItemCombo(long? Id, string Texto)
     {
         public override string ToString() => Texto;

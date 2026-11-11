@@ -1,10 +1,7 @@
-using Veterinaria.Domain.Comunes;
+﻿using Veterinaria.Domain.Comunes;
 
 namespace Veterinaria.Domain.Entidades;
-
-/// <summary>
-/// Representa el registro histórico de una copia de seguridad generada en la base de datos.
-/// </summary>
+// Representa el registro histórico de una copia de seguridad generada en la base de datos.
 public class Backup : ISoftDeletable
 {
     public int IdBackup { get; set; }

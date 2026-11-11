@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Veterinaria.Controllers.Seguridad;
 using Veterinaria.Domain.Comunes;
@@ -15,7 +15,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
     private static readonly Regex RegexTelefono = new(@"^\d{6,13}$", RegexOptions.Compiled);
     private static readonly Regex RegexCorreo = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$", RegexOptions.Compiled);
 
-    /// <summary>Perfil que solo autoriza restauraciones; se administra únicamente desde la base de datos.</summary>
+    // <summary>Perfil que solo autoriza restauraciones; se administra únicamente desde la base de datos.</summary>
     public const string PerfilGerente = "Gerente";
 
     public async Task<Resultado<IEnumerable<UsuarioRespuestaDto>>> ObtenerTodosAsync()
@@ -368,19 +368,11 @@ public class UsuarioControlador(ContextoVeterinaria context)
     {
         return await CambiarEstadoAsync(id, activo: false, idUsuarioSesion);
     }
-
-    /// <summary>
-    /// Alias en inglés para compatibilidad arquitectónica de consulta por username.
-    /// </summary>
+    // Alias en inglés para compatibilidad arquitectónica de consulta por username.
     public async Task<Resultado<UsuarioRespuestaDto>> ObtenerPorUsernameAsync(string username) =>
         await ObtenerPorNombreUsuarioAsync(username);
-
-    /// <summary>
-    /// Valida que el usuario especificado exista, esté activo y posea privilegios exclusivos para restaurar la base de datos.
-    /// Realiza una consulta directa y en tiempo real a la base de datos proyectando únicamente las columnas requeridas.
-    /// </summary>
-    /// <param name="idUsuario">Identificador único del usuario.</param>
-    /// <returns>Resultado booleano indicando autorización.</returns>
+    // Valida que el usuario especificado exista, esté activo y posea privilegios exclusivos para restaurar la base de datos.
+    // Realiza una consulta directa y en tiempo real a la base de datos proyectando únicamente las columnas requeridas.
     public async Task<Resultado<bool>> ValidarAutorizacionRestoreAsync(long idUsuario)
     {
         if (idUsuario <= 0)
@@ -400,10 +392,7 @@ public class UsuarioControlador(ContextoVeterinaria context)
 
         return Resultado<bool>.Exito(true);
     }
-
-    /// <summary>
-    /// Valida los privilegios de restauración para el usuario que mantiene la sesión activa actualmente.
-    /// </summary>
+    // Valida los privilegios de restauración para el usuario que mantiene la sesión activa actualmente.
     public async Task<Resultado<bool>> ValidarAutorizacionRestoreAsync()
     {
         var idSesion = Veterinaria.CrossCutting.Session.SesionActual.IdUsuario;

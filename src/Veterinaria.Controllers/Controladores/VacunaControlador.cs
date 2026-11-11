@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Domain.Entidades;
@@ -205,8 +205,5 @@ public class VacunaControlador(ContextoVeterinaria context)
         return null;
     }
 }
-
-/// <summary>
-/// Alias de compatibilidad para VacunaControlador.
-/// </summary>
+// Alias de compatibilidad para VacunaControlador.
 public class VacunaController(ContextoVeterinaria context) : VacunaControlador(context);

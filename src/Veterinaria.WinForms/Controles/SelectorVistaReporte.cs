@@ -1,14 +1,11 @@
-namespace Veterinaria.WinForms.Controles;
-
-/// <summary>
-/// Agrega sobre la grilla de un reporte la opción "Ver como: Gráfico / Tabla", el selector
-/// "Agrupar por" (Automático / Día / Mes / Año) y el área de gráficos, ocupando el mismo lugar
-/// que la grilla. El área muestra un gráfico principal y, opcionalmente, uno secundario de resumen.
-/// Por defecto se muestra el gráfico.
-/// </summary>
+﻿namespace Veterinaria.WinForms.Controles;
+// Agrega sobre la grilla de un reporte la opción "Ver como: Gráfico / Tabla", el selector
+// "Agrupar por" (Automático / Día / Mes / Año) y el área de gráficos, ocupando el mismo lugar
+// que la grilla. El área muestra un gráfico principal y, opcionalmente, uno secundario de resumen.
+// Por defecto se muestra el gráfico.
 public sealed class SelectorVistaReporte
 {
-    private const float ProporcionPrincipal = 0.65f;
+    private const float ProporcionPrincipal = 0.52f;
 
     private readonly DataGridView _grilla;
     private readonly RadioButton _rbGrafico;
@@ -31,10 +28,10 @@ public sealed class SelectorVistaReporte
         _ => AgrupacionPeriodo.Automatico
     };
 
-    /// <summary>Se dispara al pasar de Gráfico a Tabla o viceversa.</summary>
+    // <summary>Se dispara al pasar de Gráfico a Tabla o viceversa.</summary>
     public event EventHandler? VistaCambiada;
 
-    /// <summary>Se dispara al cambiar la agrupación (día / mes / año) del eje temporal.</summary>
+    // <summary>Se dispara al cambiar la agrupación (día / mes / año) del eje temporal.</summary>
     public event EventHandler? AgrupacionCambiada;
 
     private SelectorVistaReporte(DataGridView grilla)
@@ -105,10 +102,7 @@ public sealed class SelectorVistaReporte
     }
 
     public static SelectorVistaReporte Configurar(DataGridView grilla) => new(grilla);
-
-    /// <summary>
-    /// Muestra u oculta el gráfico secundario de resumen al costado del principal.
-    /// </summary>
+    // Muestra u oculta el gráfico secundario de resumen al costado del principal.
     public void UsarGraficoSecundario(bool usar)
     {
         GraficoSecundario.Visible = usar;
@@ -121,29 +115,20 @@ public sealed class SelectorVistaReporte
         if (!usar)
             GraficoSecundario.Limpiar();
     }
-
-    /// <summary>
-    /// Habilita el selector "Agrupar por" solo en reportes con eje temporal (no aplica al censo).
-    /// </summary>
+    // Habilita el selector "Agrupar por" solo en reportes con eje temporal (no aplica al censo).
     public void PermitirAgrupacion(bool permitir)
     {
         _agrupacionDisponible = permitir;
         AplicarVista();
     }
-
-    /// <summary>
-    /// Limpia ambos gráficos (por ejemplo al cambiar de tipo de reporte).
-    /// </summary>
+    // Limpia ambos gráficos (por ejemplo al cambiar de tipo de reporte).
     public void LimpiarGraficos(string? mensaje = null)
     {
         if (mensaje is null) Grafico.Limpiar(); else Grafico.Limpiar(mensaje);
         UsarGraficoSecundario(false);
     }
-
-    /// <summary>
-    /// Dibuja el/los gráficos visibles en el área indicada (impresión / PDF).
-    /// En hojas verticales los apila uno debajo del otro; en horizontales los pone lado a lado.
-    /// </summary>
+    // Dibuja el/los gráficos visibles en el área indicada (impresión / PDF).
+    // En hojas verticales los apila uno debajo del otro; en horizontales los pone lado a lado.
     public void DibujarGraficos(Graphics g, Rectangle area)
     {
         if (!UsaGraficoSecundario)

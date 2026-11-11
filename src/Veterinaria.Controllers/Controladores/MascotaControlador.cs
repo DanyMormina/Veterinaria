@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Veterinaria.Domain.Comunes;
 using Veterinaria.Domain.Dtos;
 using Veterinaria.Domain.Entidades;
@@ -143,11 +143,8 @@ public class MascotaControlador(ContextoVeterinaria context)
     {
         return await CambiarEstadoAsync(id, false);
     }
-
-    /// <summary>
-    /// Modifica el estado de activación (Activo = true/false) de una mascota.
-    /// Utiliza IgnoreQueryFilters para permitir encontrar mascotas desactivadas y reactivarlas.
-    /// </summary>
+    // Modifica el estado de activación (Activo = true/false) de una mascota.
+    // Utiliza IgnoreQueryFilters para permitir encontrar mascotas desactivadas y reactivarlas.
     public async Task<Resultado> CambiarEstadoAsync(long id, bool activo)
     {
         try

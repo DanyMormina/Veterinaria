@@ -1,13 +1,10 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace Veterinaria.WinForms.Controles;
 
 public enum AgrupacionPeriodo { Automatico, Dia, Mes, Anio }
-
-/// <summary>
-/// Arma los períodos del eje de un gráfico por día, mes o año según la agrupación elegida.
-/// En modo automático depende del rango: por día (hasta 31 días), por mes (hasta 24 meses) o por año.
-/// </summary>
+// Arma los períodos del eje de un gráfico por día, mes o año según la agrupación elegida.
+// En modo automático depende del rango: por día (hasta 31 días), por mes (hasta 24 meses) o por año.
 public sealed class PeriodosGrafico
 {
     private static readonly CultureInfo Cultura = new("es-AR");
@@ -68,12 +65,9 @@ public sealed class PeriodosGrafico
     private const int MaximoMeses = 60;
     private const int MesesVistaMensual = 12;
     private const int AniosVistaAnual = 4;
-
-    /// <summary>
-    /// Fecha "desde" que necesita la agrupación elegida para mostrar varios períodos:
-    /// por mes los últimos 12 meses, por año los últimos 4 años y por día el mes de la fecha "hasta".
-    /// Si el rango elegido ya alcanza, se respeta.
-    /// </summary>
+    // Fecha "desde" que necesita la agrupación elegida para mostrar varios períodos:
+    // por mes los últimos 12 meses, por año los últimos 4 años y por día el mes de la fecha "hasta".
+    // Si el rango elegido ya alcanza, se respeta.
     public static DateTime DesdeParaAgrupacion(DateTime desde, DateTime hasta, AgrupacionPeriodo agrupacion)
     {
         desde = desde.Date;
@@ -89,17 +83,14 @@ public sealed class PeriodosGrafico
         };
     }
 
-    /// <summary>Etiqueta con mes y año, por ejemplo "Nov 2025".</summary>
+    // <summary>Etiqueta con mes y año, por ejemplo "Nov 2025".</summary>
     private static string EtiquetaMes(DateTime mes)
     {
         var nombre = Cultura.DateTimeFormat.GetAbbreviatedMonthName(mes.Month).TrimEnd('.');
         nombre = char.ToUpper(nombre[0], Cultura) + nombre[1..];
         return $"{nombre} {mes.Year}";
     }
-
-    /// <summary>
-    /// Suma el valor de cada elemento en su período; los períodos sin datos quedan en 0.
-    /// </summary>
+    // Suma el valor de cada elemento en su período; los períodos sin datos quedan en 0.
     public List<decimal> Acumular<T>(IEnumerable<T> datos, Func<T, DateTime> fecha, Func<T, decimal> valor)
     {
         var totales = Claves.ToDictionary(c => c, _ => 0m);

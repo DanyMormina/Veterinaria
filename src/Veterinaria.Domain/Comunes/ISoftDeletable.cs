@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Comunes;
-
-/// <summary>
-/// Contrato para entidades que admiten borrado lógico (Soft Delete).
-/// </summary>
+﻿namespace Veterinaria.Domain.Comunes;
+// Contrato para entidades que admiten borrado lógico (Soft Delete).
 public interface ISoftDeletable
 {
     bool Activo { get; set; }

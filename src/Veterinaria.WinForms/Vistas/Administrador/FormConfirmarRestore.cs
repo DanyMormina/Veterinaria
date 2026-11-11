@@ -1,9 +1,6 @@
-namespace Veterinaria.WinForms.Vistas.Administrador;
-
-/// <summary>
-/// Modal de doble factor para la autorización y confirmación de restauración de la base de datos.
-/// Adhiere a la estética "Ejecutivo Romántico Pastel".
-/// </summary>
+﻿namespace Veterinaria.WinForms.Vistas.Administrador;
+// Modal de doble factor para la autorización y confirmación de restauración de la base de datos.
+// Adhiere a la estética "Ejecutivo Romántico Pastel".
 public partial class FormConfirmarRestore : Form
 {
     public string NombreArchivo { get; }

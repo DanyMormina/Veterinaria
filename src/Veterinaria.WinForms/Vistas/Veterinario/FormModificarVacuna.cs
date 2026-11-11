@@ -1,12 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
 
 namespace Veterinaria.WinForms.Vistas.Veterinario;
-
-/// <summary>
-/// Diálogo modal auxiliar para modificar o dar de baja lógica vacunas existentes en el catálogo médico.
-/// </summary>
+// Diálogo modal auxiliar para modificar o dar de baja lógica vacunas existentes en el catálogo médico.
 public partial class FormModificarVacuna : Form
 {
     private readonly VacunaControlador? _vacunaControlador;

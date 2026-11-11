@@ -1,8 +1,5 @@
-namespace Veterinaria.Domain.Entidades;
-
-/// <summary>
-/// Precio fijo de la consulta clínica según la especie de la mascota. Se modifica solo desde la base de datos.
-/// </summary>
+﻿namespace Veterinaria.Domain.Entidades;
+// Precio fijo de la consulta clínica según la especie de la mascota. Se modifica solo desde la base de datos.
 public class PrecioConsulta
 {
     public long Id { get; set; }

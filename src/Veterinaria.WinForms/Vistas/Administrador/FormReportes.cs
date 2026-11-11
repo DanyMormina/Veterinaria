@@ -1,4 +1,4 @@
-using System.Drawing.Printing;
+﻿using System.Drawing.Printing;
 using System.Text;
 using Veterinaria.Controllers.Controladores;
 using Veterinaria.Domain.Dtos;
@@ -6,11 +6,8 @@ using Veterinaria.WinForms.Controles;
 using Veterinaria.WinForms.Sesion;
 
 namespace Veterinaria.WinForms.Vistas.Administrador;
-
-/// <summary>
-/// Vista administrativa para la generación, visualización, impresión y exportación
-/// de reportes clínicos y demográficos de la clínica veterinaria.
-/// </summary>
+// Vista administrativa para la generación, visualización, impresión y exportación
+// de reportes clínicos y demográficos de la clínica veterinaria.
 public partial class FormReportes : Form
 {
     private const string TipoConsultas = "Consultas con tratamientos y vacunas";
@@ -36,11 +33,8 @@ public partial class FormReportes : Form
         _reporteControlador = reporteControlador;
         _especieControlador = especieControlador;
     }
-
-    /// <summary>
-    /// Inicializa la sesión, configura los estilos del sistema de diseño romántico pastel,
-    /// y realiza la carga asíncrona de catálogos y filtros iniciales.
-    /// </summary>
+    // Inicializa la sesión, configura los estilos del sistema de diseño romántico pastel,
+    // y realiza la carga asíncrona de catálogos y filtros iniciales.
     private async void FormReportes_Load(object? sender, EventArgs e)
     {
         lblUsuarioSesion.Text = SesionActual.EstaAutenticado
@@ -82,10 +76,7 @@ public partial class FormReportes : Form
         await CargarVeterinariosAsync();
         await CargarEspeciesAsync();
     }
-
-    /// <summary>
-    /// Aplica la paleta de colores oficial "Ejecutivo Romántico Pastel" a la grilla de resultados.
-    /// </summary>
+    // Aplica la paleta de colores oficial "Ejecutivo Romántico Pastel" a la grilla de resultados.
     private void ConfigurarEstiloGrilla()
     {
         dgvReporte.AutoGenerateColumns = false;
@@ -104,10 +95,7 @@ public partial class FormReportes : Form
         dgvReporte.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(250, 244, 244); // Crema rubor (#FAF4F4)
         dgvReporte.RowTemplate.Height = 28;
     }
-
-    /// <summary>
-    /// Carga la lista de veterinarios activos en el ComboBox de profesionales.
-    /// </summary>
+    // Carga la lista de veterinarios activos en el ComboBox de profesionales.
     private async Task CargarVeterinariosAsync()
     {
         try
@@ -133,10 +121,7 @@ public partial class FormReportes : Form
             MessageBox.Show($"Error al cargar profesionales veterinarios: {ex.Message}", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
-
-    /// <summary>
-    /// Carga la lista de especies activas en el ComboBox de filtro por especie.
-    /// </summary>
+    // Carga la lista de especies activas en el ComboBox de filtro por especie.
     private async Task CargarEspeciesAsync()
     {
         try
@@ -162,10 +147,7 @@ public partial class FormReportes : Form
             MessageBox.Show($"Error al cargar especies: {ex.Message}", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
-
-    /// <summary>
-    /// Adapta la disponibilidad de filtros de acuerdo a la naturaleza del reporte seleccionado.
-    /// </summary>
+    // Adapta la disponibilidad de filtros de acuerdo a la naturaleza del reporte seleccionado.
     private void cboTipoReporte_SelectedIndexChanged(object? sender, EventArgs e)
     {
         RestaurarBordeFechas();
@@ -185,24 +167,22 @@ public partial class FormReportes : Form
         cboVeterinario.Enabled = true;
         cboEspecie.Enabled = true;
     }
-
-    /// <summary>
-    /// Restablece el color del contenedor de fechas a su estado neutral.
-    /// </summary>
+    // Restablece el color del contenedor de fechas a su estado neutral.
     private void RestaurarBordeFechas()
     {
         pnlContenedorFechas.BackColor = Color.FromArgb(226, 217, 220); // Gris pastel neutro (#E2D9DC)
     }
-
-    /// <summary>
-    /// Valida la consistencia de los filtros antes de iniciar la consulta.
-    /// </summary>
+    // PASO 1 DEL FLUJO: Valida que el rango de fechas sea coherente antes de consultar
     private bool ValidarFiltros()
     {
+        // 1. Comprueba si la fecha inicial es mayor a la fecha final
         if (dtpFechaDesde.Value.Date > dtpFechaHasta.Value.Date)
         {
-            pnlContenedorFechas.BackColor = Color.FromArgb(184, 93, 105); // Borgoña suave (#B85D69)
+            // Pinta el borde en Borgoña suave (#B85D69) para dar retroalimentación visual del error
+            pnlContenedorFechas.BackColor = Color.FromArgb(184, 93, 105);
+            // Hace foco en la fecha inicial para que el usuario la corrija
             dtpFechaDesde.Focus();
+            // Muestra mensaje de advertencia y detiene el flujo
             MessageBox.Show(
                 "La fecha inicial ('Fecha desde') no puede ser posterior a la fecha final ('Fecha hasta').",
                 "Rango de fechas inválido",
@@ -211,27 +191,30 @@ public partial class FormReportes : Form
             return false;
         }
 
+        // Si las fechas son válidas, restaura el borde a color neutro
         RestaurarBordeFechas();
         return true;
     }
 
-    /// <summary>
-    /// Ejecuta la consulta del reporte seleccionado y reconstruye dinámicamente las columnas de la grilla.
-    /// </summary>
+    // PASO 2 DEL FLUJO: Disparador del botón 'Generar' que empaqueta los filtros y llama al reporte
     private async void btnGenerar_Click(object? sender, EventArgs e)
     {
+        // 1. Ejecuta la validación de fechas; si falla, cancela la consulta
         if (!ValidarFiltros())
             return;
 
         try
         {
+            // 2. Deshabilita el botón temporalmente y muestra el cursor de reloj para evitar clics dobles
             btnGenerar.Enabled = false;
             Cursor = Cursors.WaitCursor;
 
+            // 3. Captura los valores seleccionados en los desplegables de la pantalla
             string tipo = cboTipoReporte.SelectedItem?.ToString() ?? string.Empty;
             long? idVet = (cboVeterinario.SelectedValue is long vId && vId > 0) ? vId : null;
             long? idEsp = (cboEspecie.SelectedValue is long eId && eId > 0) ? eId : null;
 
+            // 4. Empaqueta todos los criterios en el objeto DTO para viajar al controlador
             var filtro = new FiltroReporteDto
             {
                 TipoReporte = tipo,
@@ -241,11 +224,12 @@ public partial class FormReportes : Form
                 IdEspecie = idEsp
             };
 
-            // Metadatos para encabezados impresos y exportados
+            // 5. Prepara los textos informativos para el encabezado de impresión y PDF
             _tituloReporteActual = tipo.ToUpperInvariant();
             _filtrosReporteActual =
                 $"Rango: {filtro.FechaDesde:dd/MM/yyyy} al {filtro.FechaHasta:dd/MM/yyyy} | Profesional: {(idVet.HasValue ? cboVeterinario.Text : "Todos")} | Especie: {(idEsp.HasValue ? cboEspecie.Text : "Todas")}";
 
+            // 6. Rutea la ejecución al método específico según el tipo de reporte elegido
             switch (tipo)
             {
                 case TipoConsultas:
@@ -261,6 +245,7 @@ public partial class FormReportes : Form
         }
         catch (Exception ex)
         {
+            // Captura defensiva ante cualquier error inesperado
             MessageBox.Show(
                 $"Ocurrió un error inesperado al generar el reporte: {ex.Message}",
                 "Error",
@@ -269,16 +254,16 @@ public partial class FormReportes : Form
         }
         finally
         {
+            // 7. Restablece el botón de generar y el cursor normal
             btnGenerar.Enabled = true;
             Cursor = Cursors.Default;
         }
     }
 
-    /// <summary>
-    /// Reporte cruzado de consultas con sus tratamientos y vacunas. Gráfico: columnas agrupadas por período.
-    /// </summary>
+    // PASO 3 Y 4 DEL FLUJO: Consulta a base de datos y renderizado dual (Gráfico de barras / Tabla)
     private async Task GenerarReporteConsultasAsync(FiltroReporteDto filtro)
     {
+        // 1. LLAMADA AL BACKEND: Consulta SQL Server a través del controlador con .AsNoTracking()
         var res = await _reporteControlador.ObtenerReporteConsultasDetalladasAsync(filtro);
         if (!res.EsExitoso || res.Valor == null)
         {
@@ -286,6 +271,7 @@ public partial class FormReportes : Form
             return;
         }
 
+        // 2. CONFIGURACIÓN DE LA TABLA: Reconstruye las columnas del DataGridView
         dgvReporte.DataSource = null;
         dgvReporte.Columns.Clear();
 
@@ -300,9 +286,11 @@ public partial class FormReportes : Form
         dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ImporteTotal", HeaderText = "Importe total", Width = 110, DefaultCellStyle = { Format = "C2", FormatProvider = CulturaArgentina } });
         dgvReporte.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Diagnostico", HeaderText = "Diagnóstico", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
 
+        // 3. POBLAR TABLA: Enlaza los datos recibidos a la grilla
         var datos = res.Valor.ToList();
         dgvReporte.DataSource = datos;
 
+        // 4. DIBUJAR GRÁFICO 1: Agrupa por período (mes, semana o día) y dibuja las barras con GDI+
         var periodos = PeriodosGrafico.Armar(filtro.FechaDesde, filtro.FechaHasta, _vista.Agrupacion);
         _vista.Grafico.MostrarEvolucion(
             $"Consultas, tratamientos y vacunas por {periodos.Unidad}",
@@ -313,7 +301,7 @@ public partial class FormReportes : Form
                 new SerieGrafico("Vacunas", GraficoReporte.Paleta[2], periodos.Acumular(datos, d => d.FechaHora, d => d.CantidadVacunas))
             ]);
 
-        // Resumen: cómo se compone lo facturado
+        // 5. DIBUJAR GRÁFICO 2: Gráfico de dona con la distribución de importes (Consultas vs Tratamientos vs Vacunas)
         var conceptos = new (string Nombre, decimal Importe)[]
         {
             ("Consultas", datos.Sum(d => d.ImporteConsulta)),
@@ -327,14 +315,12 @@ public partial class FormReportes : Form
             conceptos.Select(c => c.Importe).ToList(),
             v => v.ToString("C0", CulturaArgentina));
 
+        // 6. ACTUALIZAR TOTALES: Recuento de registros e importe total en el pie de página
         ActualizarResumen(datos.Count);
         lblTotalRegistros.Text = $"Consultas: {datos.Count} | Tratamientos: {datos.Sum(d => d.CantidadTratamientos)} | Vacunas: {datos.Sum(d => d.CantidadVacunas)}";
         MostrarTotalImporte("Total facturable", datos.Sum(d => d.ImporteTotal));
     }
-
-    /// <summary>
-    /// Reporte cruzado de pagos (Pago × Consulta × Mascota × Propietario × MetodoPago). Gráfico: línea de lo cobrado por período.
-    /// </summary>
+    // Reporte cruzado de pagos (Pago × Consulta × Mascota × Propietario × MetodoPago). Gráfico: línea de lo cobrado por período.
     private async Task GenerarReportePagosAsync(FiltroReporteDto filtro)
     {
         var res = await _reporteControlador.ObtenerReporteCobrosAsync(new FiltroReporteCobroDto
@@ -394,11 +380,8 @@ public partial class FormReportes : Form
         lblTotalFacturado.Text = $"{titulo}: {importe.ToString("C2", CulturaArgentina)}";
         lblTotalFacturado.Visible = true;
     }
-
-    /// <summary>
-    /// Censo de animales con sus propietarios (Mascota × Raza × Especie × Propietario).
-    /// Gráfico: dona por especie, o por raza si se filtró una especie.
-    /// </summary>
+    // Censo de animales con sus propietarios (Mascota × Raza × Especie × Propietario).
+    // Gráfico: dona por especie, o por raza si se filtró una especie.
     private async Task GenerarReporteCensoMascotasAsync(FiltroReporteDto filtro, string? especieFiltrada)
     {
         var res = await _reporteControlador.ObtenerReporteCensoMascotasAsync(filtro);
@@ -448,10 +431,7 @@ public partial class FormReportes : Form
         ActualizarResumen(datos.Count);
         lblTotalRegistros.Text = $"Mascotas: {datos.Count} | Propietarios: {datos.Select(m => m.Propietario).Distinct().Count()}";
     }
-
-    /// <summary>
-    /// Actualiza las métricas del pie y el estado de habilitación de exportación e impresión.
-    /// </summary>
+    // Actualiza las métricas del pie y el estado de habilitación de exportación e impresión.
     private void ActualizarResumen(int total)
     {
         lblTotalRegistros.Text = $"Total de registros: {total}";
@@ -467,10 +447,7 @@ public partial class FormReportes : Form
                 MessageBoxIcon.Information);
         }
     }
-
-    /// <summary>
-    /// Construye y configura el objeto PrintDocument para orientación apaisada y márgenes óptimos.
-    /// </summary>
+    // Construye y configura el objeto PrintDocument para orientación apaisada y márgenes óptimos.
     private PrintDocument CrearPrintDocument()
     {
         // 1. Instanciamos el componente estándar de .NET para impresión (System.Drawing.Printing)
@@ -491,10 +468,7 @@ public partial class FormReportes : Form
         pd.PrintPage += ImprimirPaginaReporte;
         return pd;
     }
-
-    /// <summary>
-    /// Abre el cuadro de diálogo de vista previa de impresión.
-    /// </summary>
+    // Abre el cuadro de diálogo de vista previa de impresión.
     private void btnImprimir_Click(object? sender, EventArgs e)
     {
         // Validación: no permitir imprimir si la grilla está vacía
@@ -525,10 +499,7 @@ public partial class FormReportes : Form
             MessageBox.Show($"Error al preparar la vista previa de impresión: {ex.Message}", "Error de Impresión", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
-
-    /// <summary>
-    /// Exporta los datos a formato PDF (o CSV como alternativa compatible) según las capacidades del sistema.
-    /// </summary>
+    // Exporta los datos a formato PDF (o CSV como alternativa compatible) según las capacidades del sistema.
     private void btnExportarPdf_Click(object? sender, EventArgs e)
     {
         // Validación: verificar que existan registros cargados en pantalla
@@ -609,10 +580,7 @@ public partial class FormReportes : Form
             MessageBox.Show($"Error al exportar el reporte: {ex.Message}", "Error de Exportación", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
-
-    /// <summary>
-    /// Genera un archivo CSV con formato UTF-8 y delimitador estándar de lista.
-    /// </summary>
+    // Genera un archivo CSV con formato UTF-8 y delimitador estándar de lista. --- Es para que pueda abrir de excel sin problemas
     private void ExportarCsv(string rutaArchivo)
     {
         var sb = new StringBuilder();
@@ -639,10 +607,7 @@ public partial class FormReportes : Form
 
         File.WriteAllText(rutaArchivo, sb.ToString(), Encoding.UTF8);
     }
-
-    /// <summary>
-    /// Dibuja cada página de impresión respetando paginación, proporciones de columnas y diseño institucional.
-    /// </summary>
+    // Dibuja cada página de impresión respetando paginación, proporciones de columnas y diseño institucional.
     private void ImprimirPaginaReporte(object sender, PrintPageEventArgs e)
     {
         _paginaActual++;
@@ -791,10 +756,7 @@ public partial class FormReportes : Form
         e.HasMorePages = false;
         DibujarPieDePagina(g, bounds, fontPie, brushTexto, penSeparador);
     }
-
-    /// <summary>
-    /// Renderiza el pie de página institucional en cada hoja impresa.
-    /// </summary>
+    // Renderiza el pie de página institucional en cada hoja impresa.
     private void DibujarPieDePagina(Graphics g, Rectangle bounds, Font fontPie, Brush brushTexto, Pen penSeparador)
     {
         float yPie = bounds.Bottom - 20;
@@ -806,10 +768,7 @@ public partial class FormReportes : Form
         var sz = g.MeasureString(textoPagina, fontPie);
         g.DrawString(textoPagina, fontPie, brushTexto, bounds.Right - sz.Width, yPie);
     }
-
-    /// <summary>
-    /// Cierra el formulario y regresa al panel administrativo principal.
-    /// </summary>
+    // Cierra el formulario y regresa al panel administrativo principal.
     private void btnVolver_Click(object? sender, EventArgs e)
     {
         Close();

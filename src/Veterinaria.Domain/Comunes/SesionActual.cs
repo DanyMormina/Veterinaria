@@ -1,11 +1,8 @@
-using Veterinaria.Domain.Dtos;
+﻿using Veterinaria.Domain.Dtos;
 using Veterinaria.Domain.Entidades;
 
 namespace Veterinaria.CrossCutting.Session;
-
-/// <summary>
-/// Mantiene el estado en memoria de la sesión autenticada actual del sistema.
-/// </summary>
+// Mantiene el estado en memoria de la sesión autenticada actual del sistema.
 public static class SesionActual
 {
     public static long? IdUsuario { get; private set; }
@@ -14,10 +11,7 @@ public static class SesionActual
     public static string TipoUsuario { get; private set; } = string.Empty;
     public static string Rol => TipoUsuario;
     public static bool EstaAutenticado => IdUsuario.HasValue && IdUsuario.Value > 0;
-
-    /// <summary>
-    /// Inicia sesión a partir de una entidad de dominio Usuario.
-    /// </summary>
+    // Inicia sesión a partir de una entidad de dominio Usuario.
     public static void IniciarSesion(Usuario usuario)
     {
         ArgumentNullException.ThrowIfNull(usuario);
@@ -27,10 +21,7 @@ public static class SesionActual
         NombreCompleto = $"{usuario.Nombre} {usuario.Apellido}".Trim();
         TipoUsuario = usuario.TipoUsuario != null ? usuario.TipoUsuario.Nombre : string.Empty;
     }
-
-    /// <summary>
-    /// Inicia sesión a partir de un DTO de respuesta de usuario.
-    /// </summary>
+    // Inicia sesión a partir de un DTO de respuesta de usuario.
     public static void IniciarSesion(UsuarioRespuestaDto usuario)
     {
         ArgumentNullException.ThrowIfNull(usuario);
@@ -40,10 +31,7 @@ public static class SesionActual
         NombreCompleto = $"{usuario.Nombre} {usuario.Apellido}".Trim();
         TipoUsuario = usuario.NombreTipoUsuario;
     }
-
-    /// <summary>
-    /// Inicia sesión de forma manual con parámetros explícitos.
-    /// </summary>
+    // Inicia sesión de forma manual con parámetros explícitos.
     public static void IniciarSesion(long idUsuario, string nombreUsuario, string nombreCompleto, string tipoUsuario)
     {
         IdUsuario = idUsuario;
@@ -51,10 +39,7 @@ public static class SesionActual
         NombreCompleto = nombreCompleto;
         TipoUsuario = tipoUsuario;
     }
-
-    /// <summary>
-    /// Restablece los datos de sesión activa a su estado inicial.
-    /// </summary>
+    // Restablece los datos de sesión activa a su estado inicial.
     public static void CerrarSesion()
     {
         IdUsuario = null;
