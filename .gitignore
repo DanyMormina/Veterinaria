@@ -86,3 +86,4 @@ secrets.json
 *.md
 !README.md
 !MANUAL_USUARIO.md
+!docs/ERS_v2.md
